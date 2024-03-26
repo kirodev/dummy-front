@@ -1,0 +1,304 @@
+<!-- Table for rows with defined licensee -->
+
+<div id='myDiv'></div>
+
+
+<h1>{{ dynamicTitle }} :</h1>
+
+<table class="terms-table">
+  <thead>
+    <tr >
+      <th>ID</th>
+      <th>License_ID</th>
+      <th>Licensor</th>
+      <th>Licensee</th>
+      <th>Affiliate</th>
+      <th>Indication</th>
+      <th>Signed date</th>
+      <th>Signed year quarter</th>
+      <th>Expiration date</th>
+      <th>Expiration year quarter</th>
+      <th>Exists</th>
+      <th>Exists during period start_date</th>
+      <th>Exists during period end date</th>
+      <th>Does not exist period start date</th>
+      <th>Does not exist period end date</th>
+      <th>Action period start date</th>
+      <th>Legal action period end date</th>
+      <th>Information Type</th>
+      <th>2G</th>
+      <th>3G</th>
+      <th>4G</th>
+      <th>5G</th>
+      <th>6G</th>
+      <th>WiFi</th>
+      <th>Other technologies</th>
+      <th>Payment Amount (in thousands USD)</th>
+      <th>Payment type</th>
+      <th>Geographical scope</th>
+      <th>Details</th>
+      <th>Document date</th>
+      <th>Reference Page</th>
+      <th>tools</th>
+
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Use Angular directives to iterate over your data and fill the table rows -->
+    <ng-container *ngFor="let item of filteredDataDefined">
+      <tr>
+
+        <td>{{ item.id }}</td>
+        <td>{{ item.license_ID }}</td>
+        <td>{{ item.licensor }}</td>
+        <td>{{ item.licensee }}</td>
+        <td>{{ item.affiliate }}</td>
+        <td>{{ item.indication }}</td>
+        <td>{{ item.signed_date }}</td>
+        <td>{{ item.signed_year_quarter}}</td>
+        <td>{{ item.expiration_date }}</td>
+        <td>{{ item.expiration_year_quarter}}</td>
+        <td>{{ item.exist}}</td>
+        <td>{{ item.exists_during_period_start_date}}</td>
+        <td>{{ item.exists_during_period_end_date}}</td>
+        <td>{{ item.does_not_exist_period_start_date}}</td>
+        <td>{{ item.does_not_exist_period_end_date}}</td>
+        <td>{{ item.legal_action_period_start_date}}</td>
+        <td>{{ item.legal_action_period_end_date}}</td>
+        <td>{{ item.information_type }}</td>
+        <td>{{ item._2G }}</td>
+        <td>{{ item._3G }}</td>
+        <td>{{ item._4G }}</td>
+        <td>{{ item._5G }}</td>
+        <td>{{ item._6G }}</td>
+        <td>{{ item.wiFi }}</td>
+        <td>{{ item.other_technologies }}</td>
+        <td>{{ item.payment_amount }}</td>
+        <td>{{ item.payment_type }}</td>
+        <td>{{ item.geographical_scope }}</td>
+        <td>{{ item.document_name }}</td>
+        <td>{{ item.document_date}}</td>
+        <td>
+          <!-- Editable field -->
+          <div *ngIf="!item.editing && item.showDetails; else editingMode">
+            {{ item.details }}
+          </div>
+          <ng-template #editingMode>
+            <span *ngIf="item.editing"> <!-- Only show if item.editing is true -->
+              <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
+              <button (click)="saveDetails(item)">Save</button>
+              <button (click)="cancelEditing(item)">Cancel</button>
+            </span>
+          </ng-template>
+          <br>
+          <button (click)="toggleEditingMode(item)">Edit</button>
+          <button (click)="toggleDetailsVisibility(item)">Show</button>
+          <button (click)="openPDFViewerPopup(item.document_name, item.details)">Open PDF in New Window</button>
+        </td>
+        <td>
+          <button *ngIf="item.modified" (click)="undoUpdateLicense(item)">Unkown</button>
+        </td>
+
+         
+      </tr>
+    </ng-container>
+  </tbody>
+</table>
+
+
+
+
+
+<!-- Table for rows with defined licensee -->
+
+<h1>{{ dynamicTitle }} :</h1>
+
+<table class="terms-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Showed In</th>
+      <th>Licensor</th>
+      <th>Multiplier</th>
+      <th>Qualifiers</th>
+      <th>Known Licensee</th>
+      <th>Type of Information</th>
+      <th>Year</th>
+      <th>Quarter</th>
+      <th>Statement</th>
+      <th>Value in KUSD</th>
+      <th>Percentage</th>
+      <th>Value Type</th>
+      <th>Directory Path</th>
+    </tr>
+  </thead>
+  <tbody>
+    <ng-container *ngFor="let item of multipleLicensees ;let i = index">
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.showedIn }}</td>
+        <td>{{ item.licensor }}</td>
+        <td>{{ item.multiplier }}</td>
+        <td>{{ item.qualifiers }}</td>
+        <td>{{ item.knownLicensee }}</td>
+        <td>{{ item.typeOfInformation }}</td>
+        <td>{{ item.year }}</td>
+        <td>{{ item.quarter }}</td>
+        <td>{{ item.statement }}</td>
+        <td>{{ item.valueInKUSD }}</td>
+        <td>{{ item.percentage }}</td>
+        <td>{{ item.valueType }}</td>
+        <td>{{ item.directoryPath }}</td>
+        <td>
+          <!-- Editable field -->
+          <div *ngIf="!item.editing && item.showDetails; else editingMode">
+            {{ item.details }}
+          </div>
+          <ng-template #editingMode>
+            <span *ngIf="item.editing"> <!-- Only show if item.editing is true -->
+              <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
+              <button (click)="saveDetails(item)">Save</button>
+              <button (click)="cancelEditing(item)">Cancel</button>
+            </span>
+          </ng-template>
+          <br>
+          <button (click)="toggleEditingMode(item)">Edit</button>
+          <button (click)="toggleDetailsVisibility(item)">Show</button>
+          <button (click)="openPDFViewerPopup(item.document_name, item.details)">Open PDF in New Window</button>
+        </td>
+        <td>
+          <ng-container *ngIf="uniqueLicensees.length > 0">
+            <!-- Assign a unique ID to each dropdown -->
+            <select id="licenseeDropdown{{i}}" [(ngModel)]="item.selectedLicensee">
+                <!-- Default option prompting user to select -->
+                <option value="" selected>Select Licensee to assign:</option>
+                <!-- Iterating through uniqueLicensees to generate options -->
+                <option *ngFor="let licensee of uniqueLicensees" [value]="licensee">{{ licensee }}</option>
+            </select>
+        </ng-container>
+        
+          <button (click)="addToKnownLicensees(item)">Add to knownLicensee</button>
+
+        
+          
+
+          
+            <button *ngIf="item.modified" (click)="undoUpdateLicense(item)">Unkown</button>
+
+        </td>
+
+
+
+      </tr>
+    </ng-container>
+  </tbody>
+</table>
+
+
+
+<h1>{{this.licensorName}} Vs. Unknown :</h1>
+<table class="terms-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>License_ID</th>
+      <th>Licensor</th>
+      <th>Licensee</th>
+      <th>Affiliate</th>
+      <th>Indication</th>
+      <th>Signed date</th>
+      <th>Signed year quarter</th>
+      <th>Expiration date</th>
+      <th>Expiration year quarter</th>
+      <th>Exists</th>
+      <th>Exists during period start_date</th>
+      <th>Exists during period end date</th>
+      <th>Does not exist period start date</th>
+      <th>Does not exist period end date</th>
+      <th>Action period start date</th>
+      <th>Legal action period end date</th>
+      <th>Information Type</th>
+      <th>2G</th>
+      <th>3G</th>
+      <th>4G</th>
+      <th>5G</th>
+      <th>6G</th>
+      <th>WiFi</th>
+      <th>Other technologies</th>
+      <th>Payment Amount (in thousands USD)</th>
+      <th>Payment type</th>
+      <th>Geographical scope</th>
+      <th>Details</th>
+      <th>Document date</th>
+      <th>Reference Page</th>
+      <th>assign Licensee</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Use Angular directives to iterate over your data and fill the table rows -->
+    <ng-container *ngFor="let item of filteredDataUnknown">
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.license_ID }}</td>
+        <td>{{ item.licensor }}</td>
+        <td>{{ item.licensee }}</td>
+        <td>{{ item.affiliate }}</td>
+        <td>{{ item.indication }}</td>
+        <td>{{ item.signed_date }}</td>
+        <td>{{ item.signed_year_quarter}}</td>
+        <td>{{ item.expiration_date }}</td>
+        <td>{{ item.expiration_year_quarter}}</td>
+        <td>{{ item.exist}}</td>
+        <td>{{ item.exists_during_period_start_date}}</td>
+        <td>{{ item.exists_during_period_end_date}}</td>
+        <td>{{ item.does_not_exist_period_start_date}}</td>
+        <td>{{ item.does_not_exist_period_end_date}}</td>
+        <td>{{ item.legal_action_period_start_date}}</td>
+        <td>{{ item.legal_action_period_end_date}}</td>
+        <td>{{ item.information_type }}</td>
+        <td>{{ item._2G }}</td>
+        <td>{{ item._3G }}</td>
+        <td>{{ item._4G }}</td>
+        <td>{{ item._5G }}</td>
+        <td>{{ item._6G }}</td>
+        <td>{{ item.wiFi }}</td>
+        <td>{{ item.other_technologies }}</td>
+        <td>{{ item.payment_amount }}</td>
+        <td>{{ item.payment_type }}</td>
+        <td>{{ item.geographical_scope }}</td>
+        <td>{{ item.document_name }}</td>
+        <td>{{ item.document_date}}</td>
+        <td>
+          <!-- Editable field -->
+          <div *ngIf="!item.editing && item.showDetails; else editingMode">
+            {{ item.details }}
+          </div>
+          <ng-template #editingMode>
+            <span *ngIf="item.editing"> <!-- Only show if item.editing is true -->
+              <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
+              <button (click)="saveDetails(item)">Save</button>
+              <button (click)="cancelEditing(item)">Cancel</button>
+            </span>
+          </ng-template>
+          <br>
+          <button (click)="toggleEditingMode(item)">Edit</button>
+          <button (click)="toggleDetailsVisibility(item)">Show</button>
+          <button (click)="openPDFViewerPopup(item.document_name, item.details)">Open PDF in New Window</button>
+        </td>
+        <td>
+          <button (click)="updateRow(item)">{{licenseeName}}</button>
+        </td>
+
+
+      </tr>
+    </ng-container>
+  </tbody>
+</table>
+
+<div class="popup-overlay" *ngIf="showPopup">
+  <div class="popup-content">
+    <button (click)="closePopup()">Close</button>
+    <!-- PDF viewer component -->
+    <app-example-pdf-viewer [pdfSrc]="selectedPDF"></app-example-pdf-viewer>
+  </div>
+</div>

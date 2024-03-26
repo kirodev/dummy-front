@@ -1,0 +1,93 @@
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-radius: 8px;
+    position: relative; /* Add position relative to .navbar */
+    z-index: 1; /* Set a z-index to ensure it's above other content */
+    background-color: #fff;
+}
+
+
+.logo {
+    
+    color: #fff;
+    width: 197px;
+    height: 70px;
+}
+
+.descp {
+    font-size: 24px;
+    color: #ff8c00;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    color: #ff8c00;
+    font-family: Constantia;
+    font-size: 18px;
+    transition: color 0.3s;
+    text-decoration: none; 
+}
+.nav-links a.grey-link {
+    color: grey; /* This rule is now more specific */
+}
+.nav-links a:hover {
+    color: #005DAC;
+}
+
+/* Other CSS rules */
+
+/* Dropdown */
+.dropdown {
+    position: relative;
+    display: inline-block;
+    z-index: 0; /* Set a higher z-index than the tabs */
+}
+
+.dropdown-nav-links a:hover {
+    color: #000000;
+}
+
+.dropdown-btn {
+    background-color: transparent;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    outline: none;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background: linear-gradient(to bottom, #E57A45, #E57A45);
+    width: 160px;
+    z-index: 0; /* Set a higher z-index than the tabs */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Adjust the font-size and padding for .dropdown-content a */
+.dropdown-content a {
+    color: #fff;
+    padding: 8px 4px; /* Increase top and bottom padding for spacing */
+    display: block;
+    text-decoration: none;
+    transition: background-color 0.3s;
+    font-size: 14px; /* Change the font size as needed */
+    border-bottom: 1px solid #fff; /* Add a white bottom border between lines */
+}
+
+/* Show dropdown content on hover */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+.grey-link {
+    color: grey;
+}

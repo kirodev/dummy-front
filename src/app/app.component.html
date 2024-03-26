@@ -1,0 +1,31 @@
+<nav>
+  <div class="navbar">
+    <div class="logo">
+      <img src="assets/LOGO+Slogan 1.svg" alt="FRANDLY Logo">
+    </div>
+
+    <div class="nav-links">
+      <a routerLink="/home">Home</a>
+
+      <!-- Use a container div for the dropdown menu -->
+      <div class="dropdown">
+        <a routerLink="/far-licences" class="dropdown-btn">FRAND Licenses</a>
+        <div class="dropdown-content">
+          <!-- Vertical dropdown items -->
+          <a routerLink="/mobile">Mobile</a>
+          <a routerLink="/automotive">Connected Vehicles</a>
+          <a routerLink="/iot">IoT</a>
+          <a routerLink="/audiovisual">Audio Visual</a>
+        </div>
+      </div>
+
+      <a routerLink="/ip-portfolios" class="grey-link">IP Portfolios</a>
+      <a routerLink="/roi" class="grey-link">Return On Investment</a>
+
+    </div>
+  </div>
+</nav>
+
+
+  <router-outlet></router-outlet>
+

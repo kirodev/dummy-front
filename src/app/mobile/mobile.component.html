@@ -1,0 +1,41 @@
+<h1>Mobile Basic Matrix</h1>
+<h2>Find your focal license in The Matrix below:</h2>
+<div class="container">
+  <div class="table-container">
+    <table>
+      <tbody>
+        <tr>
+          <th class="empty-header"></th>
+          <th *ngFor="let licensee of licensees" class="vertical-header">{{ licensee }}</th>
+        </tr>
+        <tr *ngFor="let licensor of licensors; let rowIndex = index">
+          <td class="row-name">{{ licensor }}</td>
+          <td
+            *ngFor="let cell of tableData[rowIndex]; let colIndex = index"
+            [ngClass]="{
+              'green-cell': cell === 'green',
+              'white-cell': cell === 'white',
+              'red-cell': cell === 'red',
+            }"
+            (click)="cellClick(rowIndex, colIndex)"
+            [title]="getCellDescription(rowIndex, colIndex)"
+          ></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Legend for Colors -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-color green"></div>
+      <span class="legend-text">Available</span>
+    </div>
+
+    <div class="legend-item">
+      <div class="legend-color white"></div>
+      <span class="legend-text">Not Available</span>
+    </div>
+  </div>
+  <div class="popup"></div>
+</div>
