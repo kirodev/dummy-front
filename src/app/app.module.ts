@@ -27,6 +27,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { LicenseTableComponent } from './license-table-component/license-table-component.component';
 import { ExamplePdfViewerComponent } from './example-pdf-viewer/example-pdf-viewer.component';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
+import { PaymentTableComponent } from './payment-table/payment-table.component';
 
 
 
@@ -49,7 +50,8 @@ import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
     EstimateComponent,
     Focallicences2Component,
     LicenseTableComponent,
-    ExamplePdfViewerComponent
+    ExamplePdfViewerComponent,
+    PaymentTableComponent
   ],
   
   imports: [

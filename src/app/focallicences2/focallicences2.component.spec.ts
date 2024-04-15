@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Focallicences2Component } from './focallicences2.component';
+import { Focallicenses2Component } from './focallicences2.component';
 
-describe('Focallicences2Component', () => {
-  let component: Focallicences2Component;
-  let fixture: ComponentFixture<Focallicences2Component>;
+describe('Focallicenses2Component', () => {
+  let component: Focallicenses2Component;
+  let fixture: ComponentFixture<Focallicenses2Component>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [Focallicences2Component]
+      declarations: [Focallicenses2Component]
     });
-    fixture = TestBed.createComponent(Focallicences2Component);
+    fixture = TestBed.createComponent(Focallicenses2Component);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

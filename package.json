@@ -32,7 +32,7 @@
     "moment": "^2.29.4",
     "ng2-charts": "^5.0.3",
     "ngx-bootstrap": "^11.0.2",
-    "ngx-extended-pdf-viewer": "^18.0.1",
+    "ngx-extended-pdf-viewer": "^18.1.14",
     "pdfjs-dist": "^3.10.111",
     "plotly.js": "^2.25.2",
     "plotly.js-dist": "^2.25.2",

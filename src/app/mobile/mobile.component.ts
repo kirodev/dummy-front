@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CellSelectionService } from '../cell-selection-service.service';
 import { ConnectionService } from '../connection.service';
+import { PaymentConnection } from '../payment-connection.service';
 
 @Component({
   selector: 'app-mobile',
@@ -13,11 +14,14 @@ export class MobileComponent {
   licensors: string[] = [];
   tableData: string[][] = [];
   fetchedData: any[] = [];
+    paymentsData: any[] = []; // Array to store payments data
+
 
   constructor(
     private router: Router,
     private cellSelectionService: CellSelectionService,
-    private connectionService: ConnectionService
+    private connectionService: ConnectionService,
+    private paymentConnection: PaymentConnection
   ) {}
 
   ngOnInit(): void {
@@ -25,16 +29,25 @@ export class MobileComponent {
   }
 
   fetchLicenseData(): void {
-    this.connectionService.getData().subscribe(data => {
-      console.log(data); // Log the fetched data to the console
-      this.fetchedData = data; // Populate fetchedData with the fetched data
-      const uniqueRows = [...new Set(data.map(item => item.licensor))];
-      this.licensors = uniqueRows;
-      const uniqueColumns = [...new Set(data.map(item => item.licensee))];
-      // Filter out "Unknown" and "Null" values from licensees
-      this.licensees = uniqueColumns.filter(licensee => licensee !== 'Unknown' && licensee !== null);
+    this.connectionService.getData().subscribe((data: any[]) => {
+      console.log(data);
+      this.fetchedData = data;
+      const uniqueLicensors = [...new Set(data.map((item: any) => item.licensor))];
+      this.licensors = uniqueLicensors;
+      const uniqueLicensees = [...new Set(data.map((item: any) => item.licensee))];
+      this.licensees = uniqueLicensees.filter(licensee => licensee !== 'Unknown' && licensee !== null);
 
-      this.initializeTableData(); // Initialize tableData after fetching unique rows
+      // Fetch payments data and merge licensees and licensors
+      this.paymentConnection.getPayments().subscribe((payments: any[]) => {
+        this.paymentsData = payments;
+        const paymentLicensors = [...new Set(payments.map((item: any) => item.licensor))];
+        this.licensors = [...new Set([...this.licensors, ...paymentLicensors])];
+        const paymentLicensees = [...new Set(payments.map((item: any) => item.licensee))];
+        this.licensees = [...new Set([...this.licensees, ...paymentLicensees])];
+
+        // Initialize tableData after fetching unique licensors and licensees
+        this.initializeTableData();
+      });
     });
   }
 
@@ -51,10 +64,18 @@ export class MobileComponent {
       this.tableData.push(row);
     }
 
-    // Iterate over the fetched data and set corresponding cells to green
+    // Set corresponding cells to green based on fetched data and payments data
     for (const dataItem of this.fetchedData) {
       const licensorIndex = this.licensors.indexOf(dataItem.licensor);
       const licenseeIndex = this.licensees.indexOf(dataItem.licensee);
+      if (licensorIndex !== -1 && licenseeIndex !== -1) {
+        this.tableData[licensorIndex][licenseeIndex] = 'green';
+      }
+    }
+
+    for (const payment of this.paymentsData) {
+      const licensorIndex = this.licensors.indexOf(payment.licensor);
+      const licenseeIndex = this.licensees.indexOf(payment.licensee);
       if (licensorIndex !== -1 && licenseeIndex !== -1) {
         this.tableData[licensorIndex][licenseeIndex] = 'green';
       }
@@ -84,9 +105,9 @@ export class MobileComponent {
   
     // Navigate based on cell color and clickable cases
     if (cellColor === 'green') {
-      this.router.navigate(['/licence']);
+      this.router.navigate(['/payment']);
     } else {
-      this.router.navigate(['/focallicences2', dynamicTitle]);
+      this.router.navigate(['/license']);
     }
   
     // Save unselected cells to local storage

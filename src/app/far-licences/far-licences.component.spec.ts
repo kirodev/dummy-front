@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FarLicencesComponent } from './far-licences.component';
+import { FarlicensesComponent } from './far-licences.component';
 
-describe('FarLicencesComponent', () => {
-  let component: FarLicencesComponent;
-  let fixture: ComponentFixture<FarLicencesComponent>;
+describe('FarlicensesComponent', () => {
+  let component: FarlicensesComponent;
+  let fixture: ComponentFixture<FarlicensesComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [FarLicencesComponent]
+      declarations: [FarlicensesComponent]
     });
-    fixture = TestBed.createComponent(FarLicencesComponent);
+    fixture = TestBed.createComponent(FarlicensesComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

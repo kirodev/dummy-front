@@ -19,9 +19,11 @@ export class LicenseTableComponent implements OnInit {
   licensorName: string = '';
   licenseeName: string = '';
   @Input() pdfSrc: string = '';
-  multipleLicensees: any[] = [];
-  uniqueLicensees: string[] = [];
-  selectedLicensee: string = '';
+  multipleLicenses: any[] = [];
+  uniqueLicenses: string[] = [];
+  filteredMultipleLicenses: any[] = []; 
+  selectedLicense: string = ''; 
+
 
   constructor(private connectionService: ConnectionService, private http: HttpClient) {}
 
@@ -30,9 +32,9 @@ export class LicenseTableComponent implements OnInit {
     this.licenseeName = localStorage.getItem('licenseeName') || 'licenseeName';
     this.dynamicTitle = `${this.licensorName} vs ${this.licenseeName}`;
     this.fetchLicenseData();
-    this.fetchMultipleLicenseesData();
-    this.fetchDistinctLicensees(); 
-    this.fetchAllLicensees();
+    this.fetchMultipleLicensesData();
+    this.multipleLicenses;
+    this.fetchDistinctLicenses(); 
     this.loadPlotlyScript().then(() => {
       console.log('Plotly.js script loaded successfully');
       this.plotData();
@@ -73,12 +75,13 @@ export class LicenseTableComponent implements OnInit {
     );
   }
 
+
   showPDFViewer: boolean = false;
   selectedPDF: string = '';
   showPopup: boolean = false;
 
-  openPDFViewerPopup(documentName: string, details: string): void {
-    const url = `/assets/${documentName}`;
+  openPDFViewerPopup(directory_path: string, details: string): void {
+    const url = `/assets/${directory_path}`;
     this.selectedPDF = url;
     this.showPDFViewer = true;
     this.showPopup = true;
@@ -86,7 +89,6 @@ export class LicenseTableComponent implements OnInit {
       this.pdfViewer.searchPDF(details);
     }, 500);
   }
-
   closePopup() {
     this.showPopup = false;
   }
@@ -152,7 +154,7 @@ export class LicenseTableComponent implements OnInit {
   }
 
   plotData(): void {
-    // Your plotting logic here
+    // plotting logic
   }
 
   confirmAction(message: string, action: () => void): void {
@@ -164,7 +166,7 @@ export class LicenseTableComponent implements OnInit {
 
   updateRow(item: any): void {
     if (item.licensee === 'Unknown') {
-      item.licensee = this.licenseeName;
+      item.licensee = this.licenseeName; // Assign licenseeName to licensee
       this.confirmAction('Are you sure you want to update the licensee?', () => {
         this.connectionService.updateLicense(item.id, item).subscribe(
           (response) => {
@@ -180,6 +182,7 @@ export class LicenseTableComponent implements OnInit {
       window.alert('Licensee update failed!');
     }
   }
+  
 
   undoUpdateLicense(item: any): void {
     this.confirmAction('Are you sure you want to revert the licensee to Unknown?', () => {
@@ -197,13 +200,12 @@ export class LicenseTableComponent implements OnInit {
     });
   }
 
-  fetchDistinctLicensees(): void {
-    if (this.uniqueLicensees.length === 0) {
-      this.connectionService.getLicensees().subscribe(
-        (licensees: string[]) => {
-          this.uniqueLicensees = [...new Set(licensees)];
-          this.fetchAllLicensees();
-          console.log('Distinct Licensees:', this.uniqueLicensees);
+  fetchDistinctLicenses(): void {
+    if (this.uniqueLicenses.length === 0) {
+      this.connectionService.getData().subscribe(
+        (licenses: string[]) => {
+          this.uniqueLicenses = [...new Set(licenses)];
+          console.log('Distinct Licensees:', this.uniqueLicenses);
         },
         (error: any) => {
           console.error('Error fetching licensees:', error);
@@ -211,13 +213,28 @@ export class LicenseTableComponent implements OnInit {
       );
     }
   }
-  fetchMultipleLicenseesData(): void {
-    this.connectionService.getMultipleLicensees().subscribe(
+
+  fetchMultipleLicensesData(): void {
+    this.connectionService.getMultipleLicenses().subscribe(
       (data: any[]) => {
-        console.log('Licensee data from server:', data);
-        this.multipleLicensees = data;
-        this.initializeUniqueLicensees(); 
-        console.log('Unique Licensees:', this.uniqueLicensees);
+        console.log('Payments data from server:', data);
+        
+        // Filtered based on both licensor and known licensee conditions
+        this.filteredMultipleLicenses = data.filter(item => {
+          const meetsLicensorCondition = item.licensor === this.licensorName;
+          const knownLicenseeString = item.licensee || '';
+          const meetsKnownLicenseeCondition = knownLicenseeString.includes(this.licenseeName); // Use includes method
+          return meetsLicensorCondition && meetsKnownLicenseeCondition;
+        });
+  
+        // Filtered based on licensor only
+        const confirmedTableRows = this.filteredMultipleLicenses.map(item => item.id);
+        this.multipleLicenses = data.filter(item => !confirmedTableRows.includes(item.id) && item.licensor === this.licensorName);
+        const matchingRowsLicenseeOnly = data.filter(item => item.licensee === this.licenseeName); // Filter for licenseeName only
+
+        
+        this.initializeUniqueLicenses();
+        console.log('Unique Licenses:', this.uniqueLicenses); // Log the unique licensees array
       },
       (error) => {
         console.error('Error fetching data for multiple licensees:', error);
@@ -225,48 +242,86 @@ export class LicenseTableComponent implements OnInit {
     );
   }
 
-  initializeUniqueLicensees(): void {
-    const uniqueLicensees = this.multipleLicensees.reduce((acc: string[], curr: any) => {
+  
+  
+
+ initializeUniqueLicenses(): void {
+  console.log("multipleLicenses",this.uniqueLicenses)
+    const uniqueLicenses = this.multipleLicenses.reduce((acc: string[], curr: any) => {
       if (!acc.includes(curr.licensee)) {
         acc.push(curr.licensee);
       }
       return acc;
     }, []);
-    this.uniqueLicensees = uniqueLicensees;
+    this.uniqueLicenses = uniqueLicenses;
   }
 
-  fetchAllLicensees(): void {
-    this.connectionService.getLicensees().subscribe(
-      (licensees: string[]) => {
-        this.uniqueLicensees = [...new Set(licensees)];
-        console.log('Unique Licensees:', this.uniqueLicensees);
-      },
-      (error) => {
-        console.error('Error fetching licensees:', error);
-      }
-    );
-  }
-  addToKnownLicensees(item: any): void {
-    if (item.selectedLicensees && item.selectedLicensees.length > 0) {
-      const selectedLicenseesString = item.selectedLicensees.join(' | ');
-      const knownLicensee = item.knownLicensee ? `${item.knownLicensee} | ${selectedLicenseesString}` : selectedLicenseesString;
-      const id = item.id; // Make sure to have the ID of the corresponding record
-      this.connectionService.updateKnownLicensees(id, knownLicensee).subscribe(
-        (response) => {
-          console.log('Response from server:', response);
-          item.knownLicensee = knownLicensee;
-          item.selectedLicensees = []; // Clear selectedLicensees after updating knownLicensee
-          console.log('Updated item:', item); // Log the updated item
-        },
-        (error) => {
-          console.error('Error adding known licensee:', error);
-        }
-      );
-    } else {
-      console.error('No licensee selected.');
+
+
+
+
+
+
+  updateMultipleLicenses(item: any): void {
+    // Concatenate this.licenseeName to the existing licensee value, separated by " | "
+    const updatedLicensee = item.licensee ? `${item.licensee} | ${this.licenseeName}` : this.licenseeName;
+  
+    // Ensure no duplicate names exist
+    const uniqueLicensees = new Set(updatedLicensee.split(' | '));
+    const updatedLicenseeString = Array.from(uniqueLicensees).join(' | ');
+  
+    // Update the licensee with the concatenated and unique names
+    item.licensee = updatedLicenseeString;
+  
+    // Decrease the multiplier until it reaches 0
+    if (item.multiplier > 0) {
+        item.multiplier--;
     }
-  }
   
-  
+    // Check if the multiplier has reached 0, then hide the row
+    if (item.multiplier === 0) {
+        const index = this.multipleLicenses.findIndex(license => license.id === item.id);
+        if (index !== -1) {
+            this.multipleLicenses.splice(index, 1);
+        }
+    }
+
+    // Ask for confirmation before updating
+    const confirmationMessage = 'Are you sure you want to update the licensee?';
+    if (window.confirm(confirmationMessage)) {
+        // Save the updated payment to the backend
+        this.connectionService.updateMultipleLicensee(item.id, item).subscribe(
+            (response) => {
+                console.log('license updated successfully:', response);
+                // Optionally, you can reload data or perform other actions after updating the payment
+            },
+            (error) => {
+                console.error('Error updating payment:', error);
+                window.alert('Licensee update failed!');
+            }
+        );
+    }
 }
 
+  
+}
+  
+  // addToKnownLicensees(itemId: number, selectedLicensee: string): void {
+  //   console.log('Selected Licensee:', selectedLicensee);
+  //   this.connectionService.updateKnownLicensee(itemId, selectedLicensee)
+  //     .subscribe(
+  //       response => {
+  //         console.log('Known Licensees updated successfully:', response);
+  //       },
+  //       error => {
+  //         console.error('Error updating known licensees:', error);
+  //       }
+  //     );
+  // }
+  
+  
+  
+  
+  
+
+  

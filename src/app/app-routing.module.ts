@@ -17,6 +17,7 @@ import { BottomUpComponent } from './bottom-up/bottom-up.component';
 import { EstimateComponent } from './estimate/estimate.component';
 import { Focallicences2Component } from './focallicences2/focallicences2.component';
 import { LicenseTableComponent } from './license-table-component/license-table-component.component';
+import { PaymentTableComponent } from './payment-table/payment-table.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent },
@@ -45,11 +46,11 @@ const routes: Routes = [
   { path: 'roi', component: RoiComponent },
   { path: 'spider-chart', component: SpiderChartComponent },
   { path: 'focallicences2/:dynamicTitle', component: Focallicences2Component },
-  { path: 'licence', component: LicenseTableComponent },
+  { path: 'license', component: LicenseTableComponent },
+  { path: 'payment', component: PaymentTableComponent },
 
-  { path: '', redirectTo: '/home', pathMatch: 'full' }, // This line makes 'home' the default route
-  { path: '**', redirectTo: '/home', pathMatch: 'full' } // Optional: Redirect invalid routes to 'home'
-
+  { path: '', redirectTo: '/home', pathMatch: 'full' }, 
+  { path: '**', redirectTo: '/home', pathMatch: 'full' } 
 ];
 
 @NgModule({

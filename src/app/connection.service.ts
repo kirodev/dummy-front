@@ -14,8 +14,27 @@ export class ConnectionService {
   constructor(private http: HttpClient) {}
 
 
+
+  
+  getTableData(): string[][] {
+    return this.tableData;
+  }
+
+  setTableData(data: string[][]): void {
+    this.tableData = data;
+  }
+
+  getCellColors(): { row: number; col: number; color: string }[] {
+    return this.cellColors;
+  }
+
+  setCellColors(colors: { row: number; col: number; color: string }[]): void {
+    this.cellColors = colors;
+  }
+
+
   getData(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/data`).pipe(
+    return this.http.get<any[]>(`${this.baseUrl}/licenses`).pipe(
       catchError(this.handleError)
     );
   }
@@ -36,7 +55,7 @@ export class ConnectionService {
     const modifiedValue = license.licensee === 'Unknown' ? id : null; 
     const body = { ...license, modified: modifiedValue };
   
-    return this.http.put<any>(`http://localhost:8080/${id}`, body);
+    return this.http.put<any>(`http://localhost:8080/licenses/${id}`, body);
   }
 
 
@@ -50,25 +69,12 @@ export class ConnectionService {
   deleteLicense(id: any): Observable<any> {
     return this.http.delete<any>(`${this.baseUrl}/${id}`);
   }
+  updateLicenseeName(id: any, license: any): Observable<any> {
+    const modifiedValue = license.licensee === 'Unknown' ? id : null; 
+    const body = { ...license, modified: modifiedValue };
   
-  getTableData(): string[][] {
-    return this.tableData;
+    return this.http.put<any>(`http://localhost:8080/licenses/${id}`, body);
   }
-
-  setTableData(data: string[][]): void {
-    this.tableData = data;
-  }
-
-  getCellColors(): { row: number; col: number; color: string }[] {
-    return this.cellColors;
-  }
-
-  setCellColors(colors: { row: number; col: number; color: string }[]): void {
-    this.cellColors = colors;
-  }
-
-
-
 
   updateDetails(id: number, updatedDetails: string): Observable<any> {
     const url = `${this.baseUrl}/${id}/details`;
@@ -85,26 +91,37 @@ export class ConnectionService {
       catchError(this.handleError)
     );
   }
-  getMultipleLicensees(): Observable<any[]> {
+  getMultipleLicenses(): Observable<any[]> {
     // Assuming you have an API endpoint to fetch multiple licensees data
-    return this.http.get<any[]>(`${this.baseUrl}/multiple-licensees`);
+    return this.http.get<any[]>(`${this.baseUrl}/multiple-licenses`);
   }
 
   updateKnownLicensees(id: any, knownLicensee: string): Observable<any> {
     // Assuming you have an API endpoint to update known licensees data
-    return this.http.put<any>(`${this.baseUrl}/multiple-licensees/${id}`, { knownLicensee });
+    return this.http.put<any>(`${this.baseUrl}/multiple-licenses/${id}`, { knownLicensee });
   }
 
 
-  getLicensees(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/licensees`).pipe(
+ 
+    // Define a method to fetch distinct licensee names from the server
+    getDistinctLicensees(): Observable<string[]> {
+      return this.http.get<string[]>('/licenses'); // Replace '/api/distinct/licensees' with your actual API endpoint
+    }
+
+  
+  getDataByLicensor(licensorName: string): Observable<any[]> {
+    const params = new HttpParams().set('licensor', licensorName);
+    return this.http.get<any[]>(`${this.baseUrl}/multiple-licenses`, { params }).pipe(
       catchError(this.handleError)
     );
   }
-    // Define a method to fetch distinct licensee names from the server
-    getDistinctLicensees(): Observable<string[]> {
-      return this.http.get<string[]>('/licensees'); // Replace '/api/distinct/licensees' with your actual API endpoint
-    }
+
+  updateMultipleLicensee(id: any, payment: any): Observable<any> {
+    const modifiedValue = payment.licensee === 'Unknown' ? id : null; 
+    const body = { ...payment, modified: modifiedValue };
+  
+    return this.http.put<any>(`${this.baseUrl}/multiple-licenses/${id}`, body);
+  }
 
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Unknown error occurred';
@@ -118,5 +135,4 @@ export class ConnectionService {
     console.error(errorMessage);
     return throwError(errorMessage);
   }
-  
 }
