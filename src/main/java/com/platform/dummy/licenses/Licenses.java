@@ -1,4 +1,4 @@
-package com.platform.dummy;
+package com.platform.dummy.licenses;
 
 import jakarta.persistence.*;
 
@@ -43,18 +43,13 @@ public class Licenses {
 
     private String modified;
 
+    private String comment;
+
     public Licenses() {
 
     }
-    @Override
-    public Licenses clone() {
-        try {
-            return (Licenses) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException("Cloning not supported for Licenses");
-        }
-    }
-    public Licenses(Long id, Long license_ID, String licensor, String licensee, String affiliate, String indication, String signed_date, String signed_year_quarter, String expiration_date, String expiration_year_quarter, String exist, String exist_during_period_start_date, String exist_during_period_end_date, String does_not_exist_period_start_date, String does_not_exist_period_end_date, String legal_action_period_start_date, String legal_action_period_end_date, String information_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi, String other_technologies, Float payment_amount, String payment_type, String geographical_scope, String details, String document_name, String document_date, String modified) {
+
+    public Licenses(Long id, Long license_ID, String licensor, String licensee, String affiliate, String indication, String signed_date, String signed_year_quarter, String expiration_date, String expiration_year_quarter, String exist, String exist_during_period_start_date, String exist_during_period_end_date, String does_not_exist_period_start_date, String does_not_exist_period_end_date, String legal_action_period_start_date, String legal_action_period_end_date, String information_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi, String other_technologies, Float payment_amount, String payment_type, String geographical_scope, String details, String document_name, String document_date, String modified, String comment) {
         this.id = id;
         License_ID = license_ID;
         this.licensor = licensor;
@@ -87,6 +82,7 @@ public class Licenses {
         this.document_name = document_name;
         this.document_date = document_date;
         this.modified = modified;
+        this.comment = comment;
     }
 
     public Long getId() {
@@ -169,27 +165,27 @@ public class Licenses {
         this.expiration_year_quarter = expiration_year_quarter;
     }
 
-    public String getexist() {
+    public String getExist() {
         return exist;
     }
 
-    public void setexist(String exist) {
+    public void setExist(String exist) {
         this.exist = exist;
     }
 
-    public String getexist_during_period_start_date() {
+    public String getExist_during_period_start_date() {
         return exist_during_period_start_date;
     }
 
-    public void setexist_during_period_start_date(String exist_during_period_start_date) {
+    public void setExist_during_period_start_date(String exist_during_period_start_date) {
         this.exist_during_period_start_date = exist_during_period_start_date;
     }
 
-    public String getexist_during_period_end_date() {
+    public String getExist_during_period_end_date() {
         return exist_during_period_end_date;
     }
 
-    public void setexist_during_period_end_date(String exist_during_period_end_date) {
+    public void setExist_during_period_end_date(String exist_during_period_end_date) {
         this.exist_during_period_end_date = exist_during_period_end_date;
     }
 
@@ -337,12 +333,20 @@ public class Licenses {
         this.document_date = document_date;
     }
 
-    public String getmodified() {
+    public String getModified() {
         return modified;
     }
 
-    public void setmodified(String modified) {
+    public void setModified(String modified) {
         this.modified = modified;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 }
 

@@ -1,4 +1,4 @@
-package com.platform.dummy;
+package com.platform.dummy.licenses;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,7 +15,7 @@ public class LicensesController {
     private LicenseRepository licenseRepository;
 
     // Get all licenses
-    @GetMapping("/data")
+    @GetMapping("/licenses")
     public ResponseEntity<List<Licenses>> getData() {
         try {
             List<Licenses> licenseData = licenseRepository.findAll();
@@ -41,7 +41,7 @@ public class LicensesController {
         return new ResponseEntity<>(createdLicense, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/licenses/{id}")
     public ResponseEntity<Licenses> updateLicense(@PathVariable("id") Long id, @RequestBody Licenses licenseDetails) {
         Optional<Licenses> optionalLicense = licenseRepository.findById(id);
         if (optionalLicense.isPresent()) {
@@ -51,7 +51,7 @@ public class LicensesController {
             if (existingLicense.getLicensee().equals("Unknown")) {
                 // Update the licensee and set the modified column only if it's "Unknown"
                 existingLicense.setLicensee(licenseDetails.getLicensee());
-                existingLicense.setmodified(String.valueOf(id)); // Set modified column
+                existingLicense.setModified(String.valueOf(id)); // Set modified column
             } else {
                 // Update the licensee for all other cases
                 existingLicense.setLicensee(licenseDetails.getLicensee());
@@ -75,7 +75,7 @@ public class LicensesController {
 
             // Update the licensee to 'Unknown'
             existingLicense.setLicensee("Unknown");
-            existingLicense.setmodified(String.valueOf(id)); // Set modified column
+            existingLicense.setModified(String.valueOf(id)); // Set modified column
 
             // Save the updated license entity to the database
             Licenses updatedLicense = licenseRepository.save(existingLicense);
@@ -96,11 +96,6 @@ public class LicensesController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-    @GetMapping("/licensees")
-    public ResponseEntity<List<String>> getAllLicensees() {
-        List<String> licensees = licenseRepository.findAllUniqueLicensees();
-        return ResponseEntity.ok(licensees);
     }
 
 

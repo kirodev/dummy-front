@@ -1,15 +1,18 @@
-package com.platform.dummy;
+package com.platform.dummy.payments;
 
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "Payments")
+@Table(name = "payments")
 public class Payments {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long ID;
+    private Long id;
+    private Long snippet_id;
+    private Long pair_id;
+
     private String licensor;
-    private String Licensee;
+    private String licensee;
     private String licensee_Affiliate;
     private String License_sales;
     private String Indication;
@@ -19,19 +22,28 @@ public class Payments {
     private Float Payment_amount;
     private String Payment_amount_in_local_currency;
     private String Local_currency;
+    private String Royalty_rate;
+    private String Royalty_min;
+    private String Royalty_max;
     private String Percentage_value;
+
     private String Payment_type;
-    private String statement;
+    private String details;
     private String directory_path;
+    private String document_name;
+
     private String document_date;
+    private String modified;
 
-    public Payments(){}
+    public Payments() {
+    }
 
-
-    public Payments(Long ID, String licensor, String licensee, String licensee_Affiliate, String license_sales, String indication, Integer year, String yearly_quarters, String information_type, Float payment_amount, String payment_amount_in_local_currency, String local_currency, String percentage_value, String payment_type, String statement, String directory_path, String document_date) {
-        this.ID = ID;
+    public Payments(Long id, Long snippet_id, Long pair_id, String licensor, String licensee, String licensee_Affiliate, String license_sales, String indication, Integer year, String yearly_quarters, String information_type, Float payment_amount, String payment_amount_in_local_currency, String local_currency, String royalty_rate, String royalty_min, String royalty_max, String percentage_value, String payment_type, String details, String directory_path, String document_name, String document_date, String modified) {
+        this.id = id;
+        this.snippet_id = snippet_id;
+        this.pair_id = pair_id;
         this.licensor = licensor;
-        Licensee = licensee;
+        this.licensee = licensee;
         this.licensee_Affiliate = licensee_Affiliate;
         License_sales = license_sales;
         Indication = indication;
@@ -41,19 +53,40 @@ public class Payments {
         Payment_amount = payment_amount;
         Payment_amount_in_local_currency = payment_amount_in_local_currency;
         Local_currency = local_currency;
+        Royalty_rate = royalty_rate;
+        Royalty_min = royalty_min;
+        Royalty_max = royalty_max;
         Percentage_value = percentage_value;
         Payment_type = payment_type;
-        this.statement = statement;
+        this.details = details;
         this.directory_path = directory_path;
+        this.document_name = document_name;
         this.document_date = document_date;
+        this.modified = modified;
     }
 
     public Long getID() {
-        return ID;
+        return id;
     }
 
-    public void setID(Long ID) {
-        this.ID = ID;
+    public void setID(Long id) {
+        this.id = id;
+    }
+
+    public Long getSnippet_id() {
+        return snippet_id;
+    }
+
+    public void setSnippet_id(Long snippet_id) {
+        this.snippet_id = snippet_id;
+    }
+
+    public Long getPair_id() {
+        return pair_id;
+    }
+
+    public void setPair_id(Long pair_id) {
+        this.pair_id = pair_id;
     }
 
     public String getLicensor() {
@@ -65,11 +98,11 @@ public class Payments {
     }
 
     public String getLicensee() {
-        return Licensee;
+        return licensee;
     }
 
     public void setLicensee(String licensee) {
-        Licensee = licensee;
+        this.licensee = licensee;
     }
 
     public String getLicensee_Affiliate() {
@@ -144,6 +177,30 @@ public class Payments {
         Local_currency = local_currency;
     }
 
+    public String getRoyalty_rate() {
+        return Royalty_rate;
+    }
+
+    public void setRoyalty_rate(String royalty_rate) {
+        Royalty_rate = royalty_rate;
+    }
+
+    public String getRoyalty_min() {
+        return Royalty_min;
+    }
+
+    public void setRoyalty_min(String royalty_min) {
+        Royalty_min = royalty_min;
+    }
+
+    public String getRoyalty_max() {
+        return Royalty_max;
+    }
+
+    public void setRoyalty_max(String royalty_max) {
+        Royalty_max = royalty_max;
+    }
+
     public String getPercentage_value() {
         return Percentage_value;
     }
@@ -160,12 +217,12 @@ public class Payments {
         Payment_type = payment_type;
     }
 
-    public String getStatement() {
-        return statement;
+    public String getDetails() {
+        return details;
     }
 
-    public void setStatement(String statement) {
-        this.statement = statement;
+    public void setDetails(String details) {
+        this.details = details;
     }
 
     public String getDirectory_path() {
@@ -176,11 +233,27 @@ public class Payments {
         this.directory_path = directory_path;
     }
 
+    public String getDocument_name() {
+        return document_name;
+    }
+
+    public void setDocument_name(String document_name) {
+        this.document_name = document_name;
+    }
+
     public String getDocument_date() {
         return document_date;
     }
 
     public void setDocument_date(String document_date) {
         this.document_date = document_date;
+    }
+
+    public String getModified() {
+        return modified;
+    }
+
+    public void setModified(String modified) {
+        this.modified = modified;
     }
 }
