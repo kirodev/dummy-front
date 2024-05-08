@@ -1,21 +1,26 @@
 package com.platform.dummy.licenses;
 
+import com.platform.dummy.payments.Payments;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
+@RequestMapping("/licenses")
+
+
 public class LicensesController {
 
     @Autowired
     private LicenseRepository licenseRepository;
 
     // Get all licenses
-    @GetMapping("/licenses")
+    @GetMapping
     public ResponseEntity<List<Licenses>> getData() {
         try {
             List<Licenses> licenseData = licenseRepository.findAll();
@@ -28,6 +33,7 @@ public class LicensesController {
     }
     // Get license by ID
     @GetMapping("/{id}")
+
     public ResponseEntity<Licenses> getLicenseById(@PathVariable("id") Long id) {
         Optional<Licenses> license = licenseRepository.findById(id);
         return license.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
@@ -36,13 +42,20 @@ public class LicensesController {
 
     // Create a new license
     @PostMapping
+
     public ResponseEntity<Licenses> createLicense(@RequestBody Licenses license) {
         Licenses createdLicense = licenseRepository.save(license);
         return new ResponseEntity<>(createdLicense, HttpStatus.CREATED);
     }
 
-    @PutMapping("/licenses/{id}")
-    public ResponseEntity<Licenses> updateLicense(@PathVariable("id") Long id, @RequestBody Licenses licenseDetails) {
+    @PutMapping("/{id}")
+
+    public ResponseEntity<Licenses> updateLicense(
+            @PathVariable("id") Long id,
+            @RequestBody Licenses licenseDetails) {
+
+        String comment = licenseDetails.getComment();
+
         Optional<Licenses> optionalLicense = licenseRepository.findById(id);
         if (optionalLicense.isPresent()) {
             Licenses existingLicense = optionalLicense.get();
@@ -56,6 +69,8 @@ public class LicensesController {
                 // Update the licensee for all other cases
                 existingLicense.setLicensee(licenseDetails.getLicensee());
             }
+            existingLicense.setComment(comment);
+
 
             // Save the updated license entity to the database
             Licenses updatedLicense = licenseRepository.save(existingLicense);
@@ -65,6 +80,7 @@ public class LicensesController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
 
 
     @PutMapping("/{id}/undo")
@@ -73,22 +89,23 @@ public class LicensesController {
         if (optionalLicense.isPresent()) {
             Licenses existingLicense = optionalLicense.get();
 
-            // Update the licensee to 'Unknown'
+            // Revert the licensee field to "Unknown"
             existingLicense.setLicensee("Unknown");
             existingLicense.setModified(String.valueOf(id)); // Set modified column
 
-            // Save the updated license entity to the database
-            Licenses updatedLicense = licenseRepository.save(existingLicense);
+            // Save the updated payment entity to the database
+            Licenses updatedLicense  = licenseRepository.save(existingLicense);
 
-            return new ResponseEntity<>(updatedLicense, HttpStatus.OK);
+            return ResponseEntity.ok(updatedLicense);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
     }
 
 
     // Delete a license
     @DeleteMapping("/{id}")
+
     public ResponseEntity<HttpStatus> deleteLicense(@PathVariable("id") Long id) {
         try {
             licenseRepository.deleteById(id);
@@ -98,6 +115,35 @@ public class LicensesController {
         }
     }
 
+    @PutMapping("/{id}/mappingId")
 
+    public ResponseEntity<Licenses> updateMappingId(
+            @PathVariable("id") Long id,
+            @RequestBody String mappingId) {
+        Optional<Licenses> optionalLicense = licenseRepository.findById(id);
+        if (optionalLicense.isPresent()) {
+            Licenses existingLicense = optionalLicense.get();
+            existingLicense.setMapping_id(mappingId);
+            Licenses updatedLicense = licenseRepository.save(existingLicense);
+            return new ResponseEntity<>(updatedLicense, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PutMapping("/{id}/details") // Adjust the mapping to match the correct URL
+    public ResponseEntity<Licenses> updateDetails(
+            @PathVariable("id") Long id,
+            @RequestParam("details") String updatedDetails) {
+        Optional<Licenses> optionalLicense = licenseRepository.findById(id);
+        if (optionalLicense.isPresent()) {
+            Licenses existingLicense = optionalLicense.get();
+            existingLicense.setDetails(updatedDetails); // Set the updated details
+            Licenses updatedLicense = licenseRepository.save(existingLicense);
+            return new ResponseEntity<>(updatedLicense, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 
 }

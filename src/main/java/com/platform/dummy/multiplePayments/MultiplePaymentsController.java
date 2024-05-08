@@ -1,14 +1,20 @@
 package com.platform.dummy.multiplePayments;
 
+import com.platform.dummy.multipleLicenses.MultipleLicenses;
+import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/multiple-payments")
+
 public class MultiplePaymentsController {
 
     private final MultiplePaymentsRepository multiplePaymentsRepository;
@@ -17,10 +23,10 @@ public class MultiplePaymentsController {
     public MultiplePaymentsController(MultiplePaymentsRepository multiplePaymentsRepository) {
         this.multiplePaymentsRepository = multiplePaymentsRepository;
     }
-
     @GetMapping
-    public List<MultiplePayments> getAllMultiplePayments() {
-        return multiplePaymentsRepository.findAll();
+    public ResponseEntity<List<MultiplePayments>> getAllMultiplePayments() {
+        List<MultiplePayments> multiplepayments = multiplePaymentsRepository.findAll();
+        return ResponseEntity.ok(multiplepayments);
     }
 
     @GetMapping("/{id}")
@@ -41,6 +47,9 @@ public class MultiplePaymentsController {
         if (optionalMultiplePayments.isPresent()) {
             MultiplePayments existingMultiplePayments = optionalMultiplePayments.get();
 
+            // Set modified with the ID
+            existingMultiplePayments.setModified(String.valueOf(id));
+
             // Check if the updated multiplier is not null and not already zero
             Integer updatedMultiplier = updatedMultiplePayments.getMultiplier();
             if (updatedMultiplier != null && updatedMultiplier > 0) {
@@ -51,6 +60,9 @@ public class MultiplePaymentsController {
 
             existingMultiplePayments.setLicensee(updatedMultiplePayments.getLicensee());
 
+            // Set the comment
+            existingMultiplePayments.setComment(updatedMultiplePayments.getComment());
+
             // Save the updated entity
             MultiplePayments savedMultiplePayments = multiplePaymentsRepository.save(existingMultiplePayments);
             return ResponseEntity.ok(savedMultiplePayments);
@@ -58,6 +70,53 @@ public class MultiplePaymentsController {
             return ResponseEntity.notFound().build();
         }
     }
+
+
+    @PutMapping("/{id}/undo")
+    public ResponseEntity<MultiplePayments> undoUpdateMultiplePayment(@PathVariable("id") Long id, @RequestBody String comment) throws JSONException {
+        // Here, the 'comment' parameter will directly contain the string value of the comment
+        Optional<MultiplePayments> optionalPayment = multiplePaymentsRepository.findById(id);
+        if (optionalPayment.isPresent()) {
+            MultiplePayments existingPayment = optionalPayment.get();
+
+            // Retrieve the current licensee value
+            String licensee = existingPayment.getLicensee();
+
+            // Remove the last value after the last " | " delimiter
+            int lastIndex = licensee.lastIndexOf(" | ");
+            if (lastIndex != -1) {
+                licensee = licensee.substring(0, lastIndex);
+            } else {
+                // If there's no " | " delimiter, set licensee to an empty string
+                licensee = "";
+            }
+
+            // Update the payment with the modified licensee
+            existingPayment.setLicensee(licensee);
+
+            // Set modified to null to indicate the restoration of the original state
+            existingPayment.setModified(null);
+
+            // Create a JSONObject from the comment string
+            JSONObject commentJson = new JSONObject(comment);
+
+            // Extract the comment value from the JSONObject
+            String extractedComment = commentJson.getString("comment");
+
+            // Set the extracted comment to the existingPayment
+            existingPayment.setComment(extractedComment);
+
+            // Save the updated payment entity to the database
+            MultiplePayments updatedPayment = multiplePaymentsRepository.save(existingPayment);
+
+            // Return the updated payment entity
+            return ResponseEntity.ok(updatedPayment);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+
+
 
 
     @DeleteMapping("/{id}")

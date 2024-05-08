@@ -1,16 +1,22 @@
 package com.platform.dummy.payments;
 
 import com.platform.dummy.licenses.Licenses;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/payments")
+@PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
+
 public class PaymentsController {
 
     private final PaymentsRepository paymentsRepository;
@@ -37,7 +43,13 @@ public class PaymentsController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Payments> updatePayment(@PathVariable("id") Long id, @RequestBody Payments licenseDetails) {
+    public ResponseEntity<Payments> updatePayment(
+            @PathVariable("id") Long id,
+            @RequestBody Payments licenseDetails) throws JSONException {
+
+        // Extract comment from the licenseDetails object
+        String comment = licenseDetails.getComment();
+
         Optional<Payments> optionalPayment = paymentsRepository.findById(id);
         if (optionalPayment.isPresent()) {
             Payments payments = optionalPayment.get();
@@ -51,6 +63,9 @@ public class PaymentsController {
                 // Update the licensee for all other cases
                 payments.setLicensee(licenseDetails.getLicensee());
             }
+
+            // Set the comment to the existing payment
+            payments.setComment(comment);
 
             // Save the updated license entity to the database
             Payments updatedPayment = paymentsRepository.save(payments);
@@ -83,5 +98,21 @@ public class PaymentsController {
     @DeleteMapping("/{id}")
     public void deletePayment(@PathVariable Long id) {
         paymentsRepository.deleteById(id);
+    }
+
+
+    @PutMapping("/{id}/details") // Adjust the mapping to match the correct URL
+    public ResponseEntity<Payments> updateDetails(
+            @PathVariable("id") Long id,
+            @RequestParam("details") String updatedDetails) {
+        Optional<Payments> optionalPayment = paymentsRepository.findById(id);
+        if (optionalPayment.isPresent()) {
+            Payments existingPayment = optionalPayment.get();
+            existingPayment.setDetails(updatedDetails); // Set the updated details
+            Payments updatedPayment = paymentsRepository.save(existingPayment);
+            return new ResponseEntity<>(updatedPayment, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }

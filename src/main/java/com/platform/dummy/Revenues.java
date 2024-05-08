@@ -1,6 +1,7 @@
 package com.platform.dummy;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
+
 
 @Entity
 @Table(name = "total_revenues")

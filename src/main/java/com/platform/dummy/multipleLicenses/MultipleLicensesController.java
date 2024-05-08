@@ -2,9 +2,11 @@ package com.platform.dummy.multipleLicenses;
 
 import com.platform.dummy.multipleLicenses.MultipleLicenses;
 import com.platform.dummy.multipleLicenses.MultipleLicensesRepository;
+import com.platform.dummy.multiplePayments.MultiplePayments;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/multiple-licenses")
+
 public class MultipleLicensesController {
 
     @Autowired
@@ -46,73 +49,70 @@ public class MultipleLicensesController {
 
 
 
+
     @PutMapping("/{id}")
     public ResponseEntity<MultipleLicenses> updateMultiplelicense(@PathVariable Long id, @RequestBody MultipleLicenses updatedMultiplelicenses) {
-        Optional<MultipleLicenses> optionalMultiplelicenses = multiplelicensesRepository.findById(id);
-        if (optionalMultiplelicenses.isPresent()) {
-            MultipleLicenses existingMultiplelicenses = optionalMultiplelicenses.get();
+        Optional<MultipleLicenses> optionalMultipleLicenses = multiplelicensesRepository.findById(id);
+        if (optionalMultipleLicenses.isPresent()) {
+            MultipleLicenses existingMultiplelicenses = optionalMultipleLicenses.get();
 
-            // Check if the updated multiplier is negative
-            if (updatedMultiplelicenses.getMultiplier() != null && updatedMultiplelicenses.getMultiplier() < 0) {
-                // Invalid multiplier value
-                return ResponseEntity.badRequest().build();
+            // Set modified with the ID
+            existingMultiplelicenses.setModified(String.valueOf(id));
+
+            // Check if the updated multiplier is not null and not already zero
+            Integer updatedMultiplier = updatedMultiplelicenses.getMultiplier();
+            if (updatedMultiplier != null && updatedMultiplier > 0) {
+                // Decrease the multiplier by 1
+                int newMultiplier = updatedMultiplier - 1;
+                existingMultiplelicenses.setMultiplier(newMultiplier);
             }
 
-            // Check if the updated multiplier is null or equal to 0
-            if (updatedMultiplelicenses.getMultiplier() == null || updatedMultiplelicenses.getMultiplier() == 0) {
-                // Don't decrease the multiplier
-            } else {
-                // Update the licensee
-                existingMultiplelicenses.setLicensee(updatedMultiplelicenses.getLicensee());
+            existingMultiplelicenses.setLicensee(updatedMultiplelicenses.getLicensee());
 
-                // Decrease the multiplier if it's greater than 0
-                if (existingMultiplelicenses.getMultiplier() > 0) {
-                    existingMultiplelicenses.setMultiplier(existingMultiplelicenses.getMultiplier() - 1);
-                }
-            }
+            // Set the comment
+            existingMultiplelicenses.setComment(updatedMultiplelicenses.getComment());
 
             // Save the updated entity
-            MultipleLicenses savedMultiplelicenses = multiplelicensesRepository.save(existingMultiplelicenses);
-            return ResponseEntity.ok(savedMultiplelicenses);
+            MultipleLicenses savedMultipleLicenses = multiplelicensesRepository.save(existingMultiplelicenses);
+            return ResponseEntity.ok(savedMultipleLicenses);
         } else {
             return ResponseEntity.notFound().build();
         }
-        //existingMultiplelicenses.setPreviousLicensee(existingMultiplelicenses.getLicensee());
-       // existingMultiplelicenses.setLicensee(updatedMultiplelicenses.getLicensee());
     }
-
-
-
     @PutMapping("/{id}/undo")
-    public ResponseEntity<MultipleLicenses> undoUpdatelicense(@PathVariable("id") Long id) {
+    public ResponseEntity<MultipleLicenses> undoUpdateMultiplelicense(@PathVariable("id") Long id) {
         Optional<MultipleLicenses> optionalLicense = multiplelicensesRepository.findById(id);
         if (optionalLicense.isPresent()) {
             MultipleLicenses existingLicense = optionalLicense.get();
 
-            // Retrieve the current licensee value
-            String licensee = existingLicense.getLicensee();
+            // Assuming 'modified' is a property in the MultipleLicenses entity
+            String modifications = existingLicense.getModified();
 
-            // Remove the last value after the last " | " delimiter
-            int lastIndex = licensee.lastIndexOf(" | ");
-            if (lastIndex != -1) {
-                licensee = licensee.substring(0, lastIndex);
-            } else {
-                // If there's no " | " delimiter, set licensee to an empty string
-                licensee = "";
+            if (modifications != null && !modifications.isEmpty()) {
+                // Retrieve the current licensee value
+                String licensee = existingLicense.getLicensee();
+
+                // Remove the last value after the last " | " delimiter
+                int lastIndex = licensee.lastIndexOf(" | ");
+                if (lastIndex != -1) {
+                    licensee = licensee.substring(0, lastIndex);
+                } else {
+                    // If there's no " | " delimiter, set licensee to an empty string
+                    licensee = "";
+                }
+
+                // Update the license with the modified licensee
+                existingLicense.setLicensee(licensee);
+
+                // Save the updated license entity to the database
+                MultipleLicenses updatedLicense = multiplelicensesRepository.save(existingLicense);
+                return new ResponseEntity<>(updatedLicense, HttpStatus.OK);
             }
-
-            // Update the license with the modified licensee
-            existingLicense.setLicensee(licensee);
-
-            // Save the updated license entity to the database
-            MultipleLicenses updatedLicense = multiplelicensesRepository.save(existingLicense);
-            return new ResponseEntity<>(updatedLicense, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-       // existingLicense.setLicensee(existingLicense.getPreviousLicensee());
-
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+
+
 
 
     // Delete a multiple license

@@ -1,6 +1,7 @@
 package com.platform.dummy.licenses;
 
-import jakarta.persistence.*;
+
+import javax.persistence.*;
 
 @Entity
 @Table(name = "existing_licenses")
@@ -10,22 +11,17 @@ public class Licenses {
 
 
     private Long id;
-    private Long License_ID;
+    private Long license_id;
+
     private String licensor;
     private String licensee;
-    private String Affiliate;
+    private String affiliate;
     private String indication;
     private String signed_date;
     private String signed_year_quarter;
     private String expiration_date;
     private String expiration_year_quarter;
-    private String exist;
-    private String exist_during_period_start_date;
-    private String exist_during_period_end_date;
-    private String Does_not_exist_period_start_date;
-    private String Does_not_exist_period_end_date;
-    private String Legal_action_period_start_date;
-    private String Legal_action_period_end_date;
+
     private String information_type;
     private String _2G;
     private String _3G;
@@ -33,40 +29,34 @@ public class Licenses {
     private String _5G;
     private String _6G;
     private String wifi;
-    private String other_technologies;
+    private String technologies;
     private Float payment_amount;
     private String payment_type;
     private String geographical_scope;
     private String details;
-    private String document_name;
+    private String directory_path;
     private String document_date;
-
-    private String modified;
-
     private String comment;
+    private String modified;
+    private String mapping_id;
+
+
 
     public Licenses() {
 
     }
 
-    public Licenses(Long id, Long license_ID, String licensor, String licensee, String affiliate, String indication, String signed_date, String signed_year_quarter, String expiration_date, String expiration_year_quarter, String exist, String exist_during_period_start_date, String exist_during_period_end_date, String does_not_exist_period_start_date, String does_not_exist_period_end_date, String legal_action_period_start_date, String legal_action_period_end_date, String information_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi, String other_technologies, Float payment_amount, String payment_type, String geographical_scope, String details, String document_name, String document_date, String modified, String comment) {
+    public Licenses(Long id, Long license_id, String licensor, String licensee, String affiliate, String indication, String signed_date, String signed_year_quarter, String expiration_date, String expiration_year_quarter, String information_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi, String technologies, Float payment_amount, String payment_type, String geographical_scope, String details, String directory_path, String document_date, String comment, String modified, String mapping_id) {
         this.id = id;
-        License_ID = license_ID;
+        this.license_id = license_id;
         this.licensor = licensor;
         this.licensee = licensee;
-        Affiliate = affiliate;
+        this.affiliate = affiliate;
         this.indication = indication;
         this.signed_date = signed_date;
         this.signed_year_quarter = signed_year_quarter;
         this.expiration_date = expiration_date;
         this.expiration_year_quarter = expiration_year_quarter;
-        this.exist = exist;
-        this.exist_during_period_start_date = exist_during_period_start_date;
-        this.exist_during_period_end_date = exist_during_period_end_date;
-        Does_not_exist_period_start_date = does_not_exist_period_start_date;
-        Does_not_exist_period_end_date = does_not_exist_period_end_date;
-        Legal_action_period_start_date = legal_action_period_start_date;
-        Legal_action_period_end_date = legal_action_period_end_date;
         this.information_type = information_type;
         this._2G = _2G;
         this._3G = _3G;
@@ -74,15 +64,16 @@ public class Licenses {
         this._5G = _5G;
         this._6G = _6G;
         this.wifi = wifi;
-        this.other_technologies = other_technologies;
+        this.technologies = technologies;
         this.payment_amount = payment_amount;
         this.payment_type = payment_type;
         this.geographical_scope = geographical_scope;
         this.details = details;
-        this.document_name = document_name;
+        this.directory_path = directory_path;
         this.document_date = document_date;
-        this.modified = modified;
         this.comment = comment;
+        this.modified = modified;
+        this.mapping_id = mapping_id;
     }
 
     public Long getId() {
@@ -93,12 +84,12 @@ public class Licenses {
         this.id = id;
     }
 
-    public Long getLicense_ID() {
-        return License_ID;
+    public Long getLicense_id() {
+        return license_id;
     }
 
-    public void setLicense_ID(Long license_ID) {
-        License_ID = license_ID;
+    public void setLicense_id(Long license_id) {
+        this.license_id = license_id;
     }
 
     public String getLicensor() {
@@ -118,11 +109,11 @@ public class Licenses {
     }
 
     public String getAffiliate() {
-        return Affiliate;
+        return affiliate;
     }
 
     public void setAffiliate(String affiliate) {
-        Affiliate = affiliate;
+        this.affiliate = affiliate;
     }
 
     public String getIndication() {
@@ -163,62 +154,6 @@ public class Licenses {
 
     public void setExpiration_year_quarter(String expiration_year_quarter) {
         this.expiration_year_quarter = expiration_year_quarter;
-    }
-
-    public String getExist() {
-        return exist;
-    }
-
-    public void setExist(String exist) {
-        this.exist = exist;
-    }
-
-    public String getExist_during_period_start_date() {
-        return exist_during_period_start_date;
-    }
-
-    public void setExist_during_period_start_date(String exist_during_period_start_date) {
-        this.exist_during_period_start_date = exist_during_period_start_date;
-    }
-
-    public String getExist_during_period_end_date() {
-        return exist_during_period_end_date;
-    }
-
-    public void setExist_during_period_end_date(String exist_during_period_end_date) {
-        this.exist_during_period_end_date = exist_during_period_end_date;
-    }
-
-    public String getDoes_not_exist_period_start_date() {
-        return Does_not_exist_period_start_date;
-    }
-
-    public void setDoes_not_exist_period_start_date(String does_not_exist_period_start_date) {
-        Does_not_exist_period_start_date = does_not_exist_period_start_date;
-    }
-
-    public String getDoes_not_exist_period_end_date() {
-        return Does_not_exist_period_end_date;
-    }
-
-    public void setDoes_not_exist_period_end_date(String does_not_exist_period_end_date) {
-        Does_not_exist_period_end_date = does_not_exist_period_end_date;
-    }
-
-    public String getLegal_action_period_start_date() {
-        return Legal_action_period_start_date;
-    }
-
-    public void setLegal_action_period_start_date(String legal_action_period_start_date) {
-        Legal_action_period_start_date = legal_action_period_start_date;
-    }
-
-    public String getLegal_action_period_end_date() {
-        return Legal_action_period_end_date;
-    }
-
-    public void setLegal_action_period_end_date(String legal_action_period_end_date) {
-        Legal_action_period_end_date = legal_action_period_end_date;
     }
 
     public String getInformation_type() {
@@ -277,12 +212,12 @@ public class Licenses {
         this.wifi = wifi;
     }
 
-    public String getOther_technologies() {
-        return other_technologies;
+    public String getTechnologies() {
+        return technologies;
     }
 
-    public void setOther_technologies(String other_technologies) {
-        this.other_technologies = other_technologies;
+    public void setTechnologies(String technologies) {
+        this.technologies = technologies;
     }
 
     public Float getPayment_amount() {
@@ -317,12 +252,12 @@ public class Licenses {
         this.details = details;
     }
 
-    public String getDocument_name() {
-        return document_name;
+    public String getDirectory_path() {
+        return directory_path;
     }
 
-    public void setDocument_name(String document_name) {
-        this.document_name = document_name;
+    public void setDirectory_path(String directory_path) {
+        this.directory_path = directory_path;
     }
 
     public String getDocument_date() {
@@ -333,6 +268,14 @@ public class Licenses {
         this.document_date = document_date;
     }
 
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
     public String getModified() {
         return modified;
     }
@@ -341,12 +284,11 @@ public class Licenses {
         this.modified = modified;
     }
 
-    public String getComment() {
-        return comment;
+    public String getMapping_id() {
+        return mapping_id;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setMapping_id(String mapping_id) {
+        this.mapping_id = mapping_id;
     }
 }
-

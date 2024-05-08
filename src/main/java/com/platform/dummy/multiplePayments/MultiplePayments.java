@@ -1,13 +1,15 @@
 package com.platform.dummy.multiplePayments;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 @Entity
 @Table(name = "multiple_payments")
 public class MultiplePayments {
 
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long ID;
+        private Long id;
+        private String mapping_id;
+
         private String snippet_id;
         private String licensor;
         private String licensee;
@@ -15,17 +17,20 @@ public class MultiplePayments {
 
         private Integer multiplier;
         private String qualifiers;
-        private String License_sales;
-        private Integer Year;
-        private String Yearly_quarters;
-        private String Information_type;
-        private Float Payment_amount;
-        private String Payment_amount_in_local_currency;
-        private String Local_currency;
+        private String license_sales;
+        private Integer year;
+        private String yearly_quarters;
+        private String period_start;
+        private String period_end;
 
-        private String Percentage_value;
+        private String information_type;
+        private Float payment_amount;
+        private String payment_amount_in_local_currency;
+        private String local_currency;
 
-        private String Payment_type;
+        private String percentage_value;
+
+        private String payment_type;
         private String details;
         private String directory_path;
 
@@ -36,35 +41,46 @@ public class MultiplePayments {
         public MultiplePayments() {
         }
 
-        public MultiplePayments(Long ID, String snippet_id, String licensor, String licensee, String licensee_Affiliate, Integer multiplier, String qualifiers, String license_sales, Integer year, String yearly_quarters, String information_type, Float payment_amount, String payment_amount_in_local_currency, String local_currency, String percentage_value, String payment_type, String details, String directory_path, String modified, String comment) {
-                this.ID = ID;
+        public MultiplePayments(Long id, String mapping_id, String snippet_id, String licensor, String licensee, String licensee_Affiliate, Integer multiplier, String qualifiers, String license_sales, Integer year, String yearly_quarters, String period_start, String period_end, String information_type, Float payment_amount, String payment_amount_in_local_currency, String local_currency, String percentage_value, String payment_type, String details, String directory_path, String modified, String comment) {
+                this.id = id;
+                this.mapping_id = mapping_id;
                 this.snippet_id = snippet_id;
                 this.licensor = licensor;
                 this.licensee = licensee;
                 this.licensee_Affiliate = licensee_Affiliate;
                 this.multiplier = multiplier;
                 this.qualifiers = qualifiers;
-                License_sales = license_sales;
-                Year = year;
-                Yearly_quarters = yearly_quarters;
-                Information_type = information_type;
-                Payment_amount = payment_amount;
-                Payment_amount_in_local_currency = payment_amount_in_local_currency;
-                Local_currency = local_currency;
-                Percentage_value = percentage_value;
-                Payment_type = payment_type;
+                this.license_sales = license_sales;
+                this.year = year;
+                this.yearly_quarters = yearly_quarters;
+                this.period_start = period_start;
+                this.period_end = period_end;
+                this.information_type = information_type;
+                this.payment_amount = payment_amount;
+                this.payment_amount_in_local_currency = payment_amount_in_local_currency;
+                this.local_currency = local_currency;
+                this.percentage_value = percentage_value;
+                this.payment_type = payment_type;
                 this.details = details;
                 this.directory_path = directory_path;
                 this.modified = modified;
                 this.comment = comment;
         }
 
-        public Long getID() {
-                return ID;
+        public Long getId() {
+                return id;
         }
 
-        public void setID(Long ID) {
-                this.ID = ID;
+        public void setId(Long id) {
+                this.id = id;
+        }
+
+        public String getMapping_id() {
+                return mapping_id;
+        }
+
+        public void setMapping_id(String mapping_id) {
+                this.mapping_id = mapping_id;
         }
 
         public String getSnippet_id() {
@@ -116,75 +132,91 @@ public class MultiplePayments {
         }
 
         public String getLicense_sales() {
-                return License_sales;
+                return license_sales;
         }
 
         public void setLicense_sales(String license_sales) {
-                License_sales = license_sales;
+                this.license_sales = license_sales;
         }
 
         public Integer getYear() {
-                return Year;
+                return year;
         }
 
         public void setYear(Integer year) {
-                Year = year;
+                this.year = year;
         }
 
         public String getYearly_quarters() {
-                return Yearly_quarters;
+                return yearly_quarters;
         }
 
         public void setYearly_quarters(String yearly_quarters) {
-                Yearly_quarters = yearly_quarters;
+                this.yearly_quarters = yearly_quarters;
+        }
+
+        public String getPeriod_start() {
+                return period_start;
+        }
+
+        public void setPeriod_start(String period_start) {
+                this.period_start = period_start;
+        }
+
+        public String getPeriod_end() {
+                return period_end;
+        }
+
+        public void setPeriod_end(String period_end) {
+                this.period_end = period_end;
         }
 
         public String getInformation_type() {
-                return Information_type;
+                return information_type;
         }
 
         public void setInformation_type(String information_type) {
-                Information_type = information_type;
+                this.information_type = information_type;
         }
 
         public Float getPayment_amount() {
-                return Payment_amount;
+                return payment_amount;
         }
 
         public void setPayment_amount(Float payment_amount) {
-                Payment_amount = payment_amount;
+                this.payment_amount = payment_amount;
         }
 
         public String getPayment_amount_in_local_currency() {
-                return Payment_amount_in_local_currency;
+                return payment_amount_in_local_currency;
         }
 
         public void setPayment_amount_in_local_currency(String payment_amount_in_local_currency) {
-                Payment_amount_in_local_currency = payment_amount_in_local_currency;
+                this.payment_amount_in_local_currency = payment_amount_in_local_currency;
         }
 
         public String getLocal_currency() {
-                return Local_currency;
+                return local_currency;
         }
 
         public void setLocal_currency(String local_currency) {
-                Local_currency = local_currency;
+                this.local_currency = local_currency;
         }
 
         public String getPercentage_value() {
-                return Percentage_value;
+                return percentage_value;
         }
 
         public void setPercentage_value(String percentage_value) {
-                Percentage_value = percentage_value;
+                this.percentage_value = percentage_value;
         }
 
         public String getPayment_type() {
-                return Payment_type;
+                return payment_type;
         }
 
         public void setPayment_type(String payment_type) {
-                Payment_type = payment_type;
+                this.payment_type = payment_type;
         }
 
         public String getDetails() {
