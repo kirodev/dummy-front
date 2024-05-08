@@ -18,6 +18,14 @@ import { EstimateComponent } from './estimate/estimate.component';
 import { Focallicences2Component } from './focallicences2/focallicences2.component';
 import { LicenseTableComponent } from './license-table-component/license-table-component.component';
 import { PaymentTableComponent } from './payment-table/payment-table.component';
+import { SechomeComponent } from './sechome/sechome.component';
+import { LoginComponent } from './login/login.component';
+
+import { ProfileComponent } from './profile/profile.component';
+import { BoardUserComponent } from './board-user/board-user.component';
+import { BoardModeratorComponent } from './board-moderator/board-moderator.component';
+import { BoardAdminComponent } from './board-admin/board-admin.component';
+import { RegisterComponent } from './register/register.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent },
@@ -26,7 +34,6 @@ const routes: Routes = [
   { path: 'top-down', component: TopDownComponent },
   { path: 'bottom-up', component: BottomUpComponent },
   { path: 'estimate', component: EstimateComponent },
-
   { path: 'spider-chart-result', component: SpiderChartResultComponent },
   {
     path: 'far-licences', component: FarLicencesComponent,
@@ -48,9 +55,19 @@ const routes: Routes = [
   { path: 'focallicences2/:dynamicTitle', component: Focallicences2Component },
   { path: 'license', component: LicenseTableComponent },
   { path: 'payment', component: PaymentTableComponent },
+  { path: 'sechome', component: SechomeComponent },
 
-  { path: '', redirectTo: '/home', pathMatch: 'full' }, 
-  { path: '**', redirectTo: '/home', pathMatch: 'full' } 
+
+  { path: 'register', component: RegisterComponent },
+  { path: 'login', component: LoginComponent },
+  { path: 'profile', component: ProfileComponent },
+  { path: 'user', component: BoardUserComponent },
+  { path: 'mod', component: BoardModeratorComponent },
+  { path: 'admin', component: BoardAdminComponent },
+
+
+  { path: '', redirectTo: '/register', pathMatch: 'full' }, 
+  { path: '**', redirectTo: '/register', pathMatch: 'full' } 
 ];
 
 @NgModule({

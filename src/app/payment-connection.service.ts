@@ -1,15 +1,23 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, throwError } from 'rxjs';
+import { TokenStorageService } from './_services/token-storage.service';
 @Injectable({
   providedIn: 'root'
 })
 export class PaymentConnection {
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private tokenStorageService: TokenStorageService) {}
 
   private baseUrl = 'http://localhost:8080';
 
+  private getHeaders(): HttpHeaders {
+    const token = this.tokenStorageService.getToken(); // Get the JWT token from your token storage service
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` // Include the JWT token in the Authorization header
+    });
+  }
 
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Unknown error occurred';
@@ -24,11 +32,20 @@ export class PaymentConnection {
     return throwError(errorMessage);
   }
 
+  getPayments(): Observable<any[]> {
+    const headers = this.getHeaders(); // Get the headers including the JWT token
+    return this.http.get<any[]>(`${this.baseUrl}/payments`, { headers }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   updateDetails(id: number, updatedDetails: string): Observable<any> {
-    const url = `${this.baseUrl}/${id}/details`;
+    const headers = this.getHeaders(); // Get the headers including the JWT token
+    const url = `${this.baseUrl}/payments/${id}/details`;
     const params = new HttpParams().set('details', updatedDetails); // Send updatedDetails as a request parameter
-    return this.http.put(url, {}, { params }); // Send an empty request body since details are sent as a parameter
-}
+    return this.http.put(url, {}, { params, headers }); // Send an empty request body since details are sent as a parameter
+  }
+  
 
   updateLicenseeName(id: any, license: any): Observable<any> {
     const modifiedValue = license.licensee === 'Unknown' ? id : null; 
@@ -38,21 +55,21 @@ export class PaymentConnection {
   }
 
 
-  getPayments(): Observable<any[]> {
-    // You can make a request to your Payments backend to establish a connection
-    return this.http.get<any[]>(`${this.baseUrl}/payments`).pipe(
-      catchError(this.handleError)
-    );
-  }
 
 
-  createPayment(payment: any): Observable<any> {
+
+  createPayment(payment: any,): Observable<any> {
     // Make an HTTP POST request to create a payment on your server
     return this.http.post<any>(`${this.baseUrl}/payments`, payment);
   }
-  updatePayment(id: number, payment: any): Observable<any> {
-    return this.http.put<any>(`http://localhost:8080/payments/${id}`, payment);
-  }
+  updatePayment(id: number, payment: any, comment: string): Observable<any> {
+    // Include the comment in the payment object
+    payment.comment = comment;
+    
+    // Make the PUT request with the modified payment object
+    return this.http.put<any>(`${this.baseUrl}/payments/${id}`, payment);
+}
+
 
 
   updatePaymentLicensee(id: any, payment: any): Observable<any> {
@@ -74,17 +91,20 @@ export class PaymentConnection {
   }
   
   getMultiplePayments(): Observable<any[]> {
-    // Assuming you have an API endpoint to fetch multiple payments data
-    return this.http.get<any[]>(`${this.baseUrl}/multiple-payments`);
+    const headers = this.getHeaders(); // Get the headers including the JWT token
+        return this.http.get<any[]>(`${this.baseUrl}/multiple-payments`,{ headers }).pipe(
+          catchError(this.handleError)
+        );
   }
 
   
-  createMultiplePayment(payment: any): Observable<any> {
+  createMultiplePayment(payment: any, headers?: HttpHeaders): Observable<any> {
+    const options = { headers: headers || this.getHeaders() }; // Use the passed headers or default to getHeaders()
     // Make an HTTP POST request to create a payment on your server
-    return this.http.post<any>(`${this.baseUrl}/multiple-payments`, payment);
-  }
+    return this.http.post<any>(`${this.baseUrl}/multiple-payments`, payment, options);
+}
 
-  updateMultiplePaymentLicensee(id: any, payment: any): Observable<any> {
+updateMultiplePaymentLicensee(id: any, payment: any, comment: string, headers?: HttpHeaders): Observable<any> {
     let modifiedValue = null;
     const licenseeRegex = /^([^|]+)(?:\s*\|\s*([^|]+))*$/;
 
@@ -96,27 +116,26 @@ export class PaymentConnection {
         modifiedValue = id;
     }
 
-    const body = { ...payment, modified: modifiedValue };
+    // Include the comment in the request body
+    const body = { ...payment, modified: modifiedValue, comment: comment };
 
-    return this.http.put<any>(`${this.baseUrl}/multiple-payments/${id}`, body);
+    const options = { headers: headers || this.getHeaders() }; // Use the passed headers or default to getHeaders()
+    return this.http.put<any>(`${this.baseUrl}/multiple-payments/${id}`, body, options); // Include the headers in the request
 }
+
 
   deleteMultiplePayment(id: number): Observable<void> {
     // Make an HTTP DELETE request to delete a payment on your server
     return this.http.delete<void>(`${this.baseUrl}/multiple-payments/${id}`);
   }
 
-  updateLicenseeNameMP(id: any, license: any): Observable<any> {
-    const modifiedValue = license.licensee === 'Unknown' ? id : null; 
-    const body = { ...license, modified: modifiedValue };
-  
-    return this.http.put<any>(`http://localhost:8080/update-Mp-LicenseeName/${id}`, body);
-  }
 
 
-  
-  undoUpdateMultiplePayment(id: any): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/multiple-payments/${id}/undo`, {});
+  undoUpdateMultiplePayment(id: any, comment: string): Observable<any> {
+    const headers = this.getHeaders();
+    return this.http.put<any>(`${this.baseUrl}/multiple-payments/${id}/undo`, { comment }, { headers });
   }
+  
+  
   
 }

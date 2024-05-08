@@ -2,12 +2,76 @@
     font-family: 'ROG Fonts';
     src: url('src/assets/7032-fontps.ttf') format('truetype');
   }
+  .table-container {
+    margin: 0 auto; /* Center the container horizontally */
+    max-width: calc(100% - 200px); /* Set maximum width with 100px space on each side */
+    padding: 0 50px; /* Add 50px padding on each side */
+}
+
   table {
     width: 200px;
     border-collapse: collapse;
     margin-bottom: 20px;
   }
   
+  .terms-table,
+.knownMP-table,
+.unknownMP-table,
+.unknown-table {
+    width: 50%; /* Set the width of the table to 50% */
+    font-size: 12px; /* Lower the font size */
+    margin: 0 auto; /* Center the table horizontally */
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+/* Style the table headers */
+.terms-table th,
+.knownMP-table th,
+.unknownMP-table th,
+.unknown-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    text-align: left;
+    padding: 5px; /* Reduce padding */
+    border: 1px solid #ccc;
+}
+
+/* Style the table cells */
+.terms-table td,
+.knownMP-table td,
+.unknownMP-table td,
+.unknown-table td {
+    padding: 10px; /* Reduce padding */
+    border: 1px solid #ccc;
+}
+
+/* Style the table rows alternatively for better readability */
+.terms-table tr:nth-child(even),
+.knownMP-table tr:nth-child(even),
+.unknownMP-table tr:nth-child(even),
+.unknown-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Style the images in the "Screenshot" column */
+.terms-table td img,
+.knownMP-table td img,
+.unknownMP-table td img,
+.unknown-table td img {
+    height: auto; /* Maintain the aspect ratio of the images */
+    cursor: pointer; /* Add a pointer cursor to indicate they are clickable */
+    transition: transform 0.2s; /* Add a smooth transition effect */
+}
+
+/* Apply a zoom effect to images on hover */
+.terms-table td img:hover,
+.knownMP-table td img:hover,
+.unknownMP-table td img:hover ,
+.unknown-table td img:hover{
+    transform: scale(1.1);
+}
+
   /* Style the table headers */
   th {
     background-color: #f2f2f2;
@@ -41,17 +105,7 @@
     transform: scale(1.1);
   }
   /* Style the pop-up overlay */
-  .popup-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 9999;
-    text-align: center;
-  }
+
   td button {
     margin-bottom: 10px; /* Add space between the button and the div */
   }
@@ -79,6 +133,47 @@
     margin-left:100px; /* Reset margin for h1 */
     margin-top: 50px;  
   }
+
+  
+  .modified-row {
+    background-color: lightgreen; /* Change this to the desired shade of green */
+  }
+  /* Adjust the size of the icon */
+/* Center the icon */
+/* Center the content vertically and horizontally */
+.tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 10px; /* Adjust the value to change the roundness */
+  padding: 5px;
+  z-index: 1;
+  display: none;
+}
+
+.tooltip.active {
+  display: block;
+}
+
+/* Adjust the size of the table cells to fit the icon size */
+td {
+  position: relative;
+  padding: 20px; /* Adjust the padding to fit the icon size */
+}
+
+/* Style the icon */
+.icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+}
+
+.icon.hidden {
+  display: none;
+}/* Define styles for the tables */
   /* Styles for the popup overlay */
   .popup-overlay {
     position: fixed;
@@ -99,9 +194,5 @@
     background-color: white; /* White background for content */
     padding: 20px;
     overflow: hidden; /* Prevent scrolling if content exceeds dimensions */
-  }
-  
-  .modified-row {
-    background-color: lightgreen; /* Change this to the desired shade of green */
   }
   

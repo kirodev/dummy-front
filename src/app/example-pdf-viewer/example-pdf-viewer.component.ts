@@ -1,7 +1,5 @@
-import { Component, ViewChild, AfterViewInit,Input  } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, Input } from '@angular/core';
 import { NgxExtendedPdfViewerComponent, NgxExtendedPdfViewerService } from 'ngx-extended-pdf-viewer';
-import { take } from 'rxjs/operators';
-
 
 @Component({
   selector: 'app-example-pdf-viewer',
@@ -13,22 +11,19 @@ export class ExamplePdfViewerComponent implements AfterViewInit {
   @Input() documentName: string = '';
   @Input() pdfSrc: string = '';
 
-
   constructor(private pdfViewerService: NgxExtendedPdfViewerService) { }
 
   ngAfterViewInit(): void {
-    this.pdfViewer.pdfLoaded.pipe(take(0)).subscribe(() => {
-      this.searchPDF('');
-    });
+    // Subscribe to pdfLoaded event to ensure PDF is loaded before searching
+   
   }
 
   searchPDF(text: string): void {
-    if (this.pdfViewer ) {
+    // Check if pdfViewer and pdfViewerService are available
+    if (this.pdfViewer && this.pdfViewerService && this.pdfViewerService.find) {
       this.pdfViewerService.find(text);
     } else {
-      console.error('PDF viewer is not initialized.');
+      console.error('PDF viewer is not initialized or search functionality is not available.');
     }
   }
-  
-
 }

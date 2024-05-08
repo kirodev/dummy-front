@@ -14,7 +14,9 @@ export class MobileComponent {
   licensors: string[] = [];
   tableData: string[][] = [];
   fetchedData: any[] = [];
-    paymentsData: any[] = []; // Array to store payments data
+  paymentsData: any[] = []; // Array to store payments data
+  multiplePayments: any[] = [];
+  multipleLicenses: any[] = []; 
 
 
   constructor(
@@ -30,13 +32,12 @@ export class MobileComponent {
 
   fetchLicenseData(): void {
     this.connectionService.getData().subscribe((data: any[]) => {
-      console.log(data);
       this.fetchedData = data;
       const uniqueLicensors = [...new Set(data.map((item: any) => item.licensor))];
       this.licensors = uniqueLicensors;
       const uniqueLicensees = [...new Set(data.map((item: any) => item.licensee))];
       this.licensees = uniqueLicensees.filter(licensee => licensee !== 'Unknown' && licensee !== null);
-
+  
       // Fetch payments data and merge licensees and licensors
       this.paymentConnection.getPayments().subscribe((payments: any[]) => {
         this.paymentsData = payments;
@@ -44,13 +45,33 @@ export class MobileComponent {
         this.licensors = [...new Set([...this.licensors, ...paymentLicensors])];
         const paymentLicensees = [...new Set(payments.map((item: any) => item.licensee))];
         this.licensees = [...new Set([...this.licensees, ...paymentLicensees])];
-
-        // Initialize tableData after fetching unique licensors and licensees
-        this.initializeTableData();
+  
+        this.paymentConnection.getMultiplePayments().subscribe((multiplePayments: any[]) => {
+          this.multiplePayments = multiplePayments;
+      
+  
+          // Initialize tableData after fetching unique licensors and licensees
+          this.initializeTableData();
+        }, (error) => {
+          console.error('Error fetching multiple payments data:', error);
+        });
+        this.connectionService.getMultipleLicenses().subscribe((multipleLicenses: any[]) => {
+          this.multipleLicenses = multipleLicenses;
+  
+          // Initialize tableData after fetching unique licensors and licensees
+          this.initializeTableData();
+        }, (error) => {
+          console.error('Error fetching multiple payments data:', error);
+        });
+      }, (error) => {
+        console.error('Error fetching payments data:', error);
       });
+  
+    }, (error) => {
+      console.error('Error fetching license data:', error);
     });
   }
-
+  
   initializeTableData(): void {
     // Clear existing tableData
     this.tableData = [];
@@ -64,7 +85,7 @@ export class MobileComponent {
       this.tableData.push(row);
     }
 
-    // Set corresponding cells to green based on fetched data and payments data
+    // Set corresponding cells to green based on fetched data, payments data, and multiple payments data
     for (const dataItem of this.fetchedData) {
       const licensorIndex = this.licensors.indexOf(dataItem.licensor);
       const licenseeIndex = this.licensees.indexOf(dataItem.licensee);
@@ -80,8 +101,38 @@ export class MobileComponent {
         this.tableData[licensorIndex][licenseeIndex] = 'green';
       }
     }
-  }
 
+// Include multiple payments data in the table
+for (const multiplePayment of this.multiplePayments) {
+  const licensorIndex = this.licensors.indexOf(multiplePayment.licensor);
+  if (licensorIndex !== -1 && multiplePayment.licensee) {
+    const licensees: string[] = multiplePayment.licensee.split('|').map((licensee: string) => licensee.trim());
+    for (const licensee of licensees) {
+      const licenseeIndex = this.licensees.indexOf(licensee);
+      if (licenseeIndex !== -1) {
+        // Set the corresponding cell in the table to green
+        this.tableData[licensorIndex][licenseeIndex] = 'green';
+      }
+    }
+  }
+}
+
+
+for (const multipleLicense of this.multipleLicenses) {
+  const licensorIndex = this.licensors.indexOf(multipleLicense.licensor);
+  if (licensorIndex !== -1 && multipleLicense.licensee) {
+    const licensees: string[] = multipleLicense.licensee.split('|').map((licensee: string) => licensee.trim());
+    for (const licensee of licensees) {
+      const licenseeIndex = this.licensees.indexOf(licensee);
+      if (licenseeIndex !== -1) {
+        // Set the corresponding cell in the table to green
+        this.tableData[licensorIndex][licenseeIndex] = 'green';
+      }
+    }
+  }
+}
+
+}
   dataContainsLicensorAndLicensee(licensor: string, licensee: string): boolean {
     // Check if the combination of licensor and licensee exists in the data array
     return this.fetchedData.some(item => item.licensor === licensor && item.licensee === licensee);

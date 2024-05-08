@@ -28,6 +28,10 @@ import { LicenseTableComponent } from './license-table-component/license-table-c
 import { ExamplePdfViewerComponent } from './example-pdf-viewer/example-pdf-viewer.component';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { PaymentTableComponent } from './payment-table/payment-table.component';
+import { SechomeComponent } from './sechome/sechome.component';
+import { FeedbackPopupComponent } from './feedback-popup/feedback-popup.component';
+import { LoginComponent } from './login/login.component';
+import { RegisterComponent } from './register/register.component';
 
 
 
@@ -51,7 +55,11 @@ import { PaymentTableComponent } from './payment-table/payment-table.component';
     Focallicences2Component,
     LicenseTableComponent,
     ExamplePdfViewerComponent,
-    PaymentTableComponent
+    PaymentTableComponent,
+    SechomeComponent,
+    FeedbackPopupComponent,
+    LoginComponent,
+    RegisterComponent
   ],
   
   imports: [
@@ -62,8 +70,10 @@ import { PaymentTableComponent } from './payment-table/payment-table.component';
     MatTabsModule,
     MatDialogModule,
     FormsModule, 
-    HttpClientModule, NgxExtendedPdfViewerModule
+    HttpClientModule, 
+    NgxExtendedPdfViewerModule,
     
+  
   ],
   providers: [ DataSharingService ],
   bootstrap: [AppComponent]

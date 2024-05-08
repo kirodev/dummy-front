@@ -1,29 +1,27 @@
 
+
+<button routerLink="/payment" >Payments </button>
+
+
 <div id='myDiv'></div>
 
-
+<div class="table-container">
 <h1>{{ dynamicTitle }} :</h1>
 
-<table class="existing-table">
+<table class="license-table">
   <thead>
-    <tr >
+    <tr>
       <th>ID</th>
-      <th>License_ID</th>
+      <th>License ID</th>
+      <th>Mapping ID</th>
       <th>Licensor</th>
       <th>Licensee</th>
       <th>Affiliate</th>
       <th>Indication</th>
       <th>Signed date</th>
-      <!-- <th>Signed year quarter</th>
+      <th>Signed year quarter</th>
       <th>Expiration date</th>
       <th>Expiration year quarter</th>
-      <th>Exists</th>
-      <th>Exists during period start_date</th>
-      <th>Exists during period end date</th>
-      <th>Does not exist period start date</th>
-      <th>Does not exist period end date</th>
-      <th>Action period start date</th>
-      <th>Legal action period end date</th> -->
       <th>Information Type</th>
       <th>2G</th>
       <th>3G</th>
@@ -35,7 +33,7 @@
       <th>Payment Amount (in thousands USD)</th>
       <th>Payment type</th>
       <th>Geographical scope</th>
-      <th>Details</th>
+      <th>Directory Path</th>
       <th>Document date</th>
 
     </tr>
@@ -46,22 +44,16 @@
       <tr>
 
         <td>{{ item.id }}</td>
-        <td>{{ item.license_ID }}</td>
+        <td>{{ item.license_id }}</td>
+        <td>{{ item.mapping_id }}</td>
         <td>{{ item.licensor }}</td>
         <td>{{ item.licensee }}</td>
         <td>{{ item.affiliate }}</td>
         <td>{{ item.indication }}</td>
         <td>{{ item.signed_date }}</td>
-        <!-- <td>{{ item.signed_year_quarter}}</td>
+        <td>{{ item.signed_year_quarter}}</td>
         <td>{{ item.expiration_date }}</td>
         <td>{{ item.expiration_year_quarter}}</td>
-        <td>{{ item.exist}}</td>
-        <td>{{ item.exists_during_period_start_date}}</td>
-        <td>{{ item.exists_during_period_end_date}}</td>
-        <td>{{ item.does_not_exist_period_start_date}}</td>
-        <td>{{ item.does_not_exist_period_end_date}}</td>
-        <td>{{ item.legal_action_period_start_date}}</td>
-        <td>{{ item.legal_action_period_end_date}}</td> -->
         <td>{{ item.information_type }}</td>
         <td>{{ item._2G }}</td>
         <td>{{ item._3G }}</td>
@@ -73,14 +65,14 @@
         <td>{{ item.payment_amount }}</td>
         <td>{{ item.payment_type }}</td>
         <td>{{ item.geographical_scope }}</td>
-        <td>{{ item.document_name }}</td>
+        <td>{{ item.directory_path }}</td>
         <td>{{ item.document_date}}</td>
         <td>
           <div *ngIf="!item.editing && item.showDetails; else editingMode">
             {{ item.details }}
           </div>
           <ng-template #editingMode>
-            <span *ngIf="item.editing"> <!-- Only show if item.editing is true -->
+            <span *ngIf="item.editing">
               <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
               <button (click)="saveDetails(item)">Save</button>
               <button (click)="cancelEditing(item)">Cancel</button>
@@ -89,13 +81,34 @@
           <br>
           <button (click)="toggleEditingMode(item)">Edit</button>
           <button (click)="toggleDetailsVisibility(item)">Show</button>
-          <button (click)="openPDFViewerPopup(item.document_name, item.details)">Open PDF in New Window</button>
+          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
         </td>
         <td>
-          <button *ngIf="item.modified" (click)="undoUpdateLicense(item)">-</button>
+          <!-- ng-container to conditionally render select dropdown and button -->
+
+          <ng-container *ngIf="uniqueLicenses.length > 0">
+            <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
+              <option value="" selected>Select Mapping ID to add :</option>
+              <ng-container *ngFor="let mappingId of uniqueMappingIds">
+                <option [value]="mappingId">{{ mappingId }}</option>
+              </ng-container>
+            </select>
+            
+        </ng-container>
+        <button (click)="AddMappingId(item.id,item, item.signed_date)">Mapping</button>
+        <button *ngIf="item.modified" (click)="openFeedbackAfterUndolicense(item)">Undo Modification</button>
+        <button (click)="deleteLicenseeFromDatabase(item.id)">Delete</button>
+
+
         </td>
 
-         
+        <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
+          <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+            <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
+              alt="Question Mark Icon">
+            <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
+          </ng-container>
+          
       </tr>
     </ng-container>
   </tbody>
@@ -111,22 +124,16 @@
   <thead>
     <tr>
       <th>ID</th>
-      <th>License_ID</th>
+      <th>License ID</th>
+      <th>Mapping ID</th>
       <th>Licensor</th>
       <th>Licensee</th>
       <th>Affiliate</th>
       <th>Indication</th>
       <th>Signed date</th>
-      <!-- <th>Signed year quarter</th>
+      <th>Signed year quarter</th>
       <th>Expiration date</th>
       <th>Expiration year quarter</th>
-      <th>Exists</th>
-      <th>Exists during period start_date</th>
-      <th>Exists during period end date</th>
-      <th>Does not exist period start date</th>
-      <th>Does not exist period end date</th>
-      <th>Action period start date</th>
-      <th>Legal action period end date</th> -->
       <th>Information Type</th>
       <th>2G</th>
       <th>3G</th>
@@ -138,7 +145,7 @@
       <th>Payment Amount (in thousands USD)</th>
       <th>Payment type</th>
       <th>Geographical scope</th>
-      <th>Details</th>
+      <th> directory path</th>
       <th>Document date</th>
 
     </tr>
@@ -148,22 +155,16 @@
     <ng-container *ngFor="let item of filteredDataUnknown">
       <tr>
         <td>{{ item.id }}</td>
-        <td>{{ item.license_ID }}</td>
+        <td>{{ item.license_id }}</td>
+        <td>{{ item.mapping_id }}</td>
         <td>{{ item.licensor }}</td>
         <td>{{ item.licensee }}</td>
         <td>{{ item.affiliate }}</td>
         <td>{{ item.indication }}</td>
         <td>{{ item.signed_date }}</td>
-        <!-- <td>{{ item.signed_year_quarter}}</td>
+        <td>{{ item.signed_year_quarter}}</td>
         <td>{{ item.expiration_date }}</td>
         <td>{{ item.expiration_year_quarter}}</td>
-        <td>{{ item.exist}}</td>
-        <td>{{ item.exists_during_period_start_date}}</td>
-        <td>{{ item.exists_during_period_end_date}}</td>
-        <td>{{ item.does_not_exist_period_start_date}}</td>
-        <td>{{ item.does_not_exist_period_end_date}}</td>
-        <td>{{ item.legal_action_period_start_date}}</td>
-        <td>{{ item.legal_action_period_end_date}}</td> -->
         <td>{{ item.information_type }}</td>
         <td>{{ item._2G }}</td>
         <td>{{ item._3G }}</td>
@@ -175,7 +176,7 @@
         <td>{{ item.payment_amount }}</td>
         <td>{{ item.payment_type }}</td>
         <td>{{ item.geographical_scope }}</td>
-        <td>{{ item.document_name }}</td>
+        <td>{{  item.directory_path }}</td>
         <td>{{ item.document_date}}</td>
         <td>
           <!-- Editable field -->
@@ -192,40 +193,60 @@
           <br>
           <button (click)="toggleEditingMode(item)">Edit</button>
           <button (click)="toggleDetailsVisibility(item)">Show</button>
-          <button (click)="openPDFViewerPopup(item.document_name, item.details)">Open PDF in New Window</button>
+          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
         </td>
+
+
         <td>
-          <button (click)="updateRow(item)">+</button>
+          <!-- ng-container to conditionally render select dropdown and button -->
+
+          <ng-container *ngIf="uniqueLicenses.length > 0">
+            <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
+              <option value="" selected>Select Mapping ID to add :</option>
+              <ng-container *ngFor="let mappingId of uniqueMappingIds">
+                <option [value]="mappingId">{{ mappingId }}</option>
+              </ng-container>
+            </select>
+            
+        </ng-container>
+        <button (click)="AddMappingId(item.id,item, item.signed_date)">Mapping</button>
+        <button (click)="openFeedbackAfterUpdate(item)">Add to Licensees</button>
+
         </td>
-
-
+        <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
+          <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+            <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
+              alt="Question Mark Icon">
+            <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
+          </ng-container>
+        </td>
       </tr>
     </ng-container>
   </tbody>
 </table>
 
 
+<!-- Multiple licensees table -->
 
 
 <h1>Multiple licensees table</h1>
 
 <h1>{{ dynamicTitle }} :</h1>
 
-<table class="existing-table">
+<table class="knownML-table">
   <thead>
     <tr>
       <td>ID</td>
       <td>license ID</td>
+      <th>Mapping ID</th>
       <td>licensor</td>
       <td>licensee</td>
       <td>affiliate</td>
       <td>multiplier</td>
       <td>qualifiers</td>
-      <td>signed date start</td>
-      <td>signed date end</td>
+      <td>signed date</td>
       <td>signed year quarter</td>
-      <td>expiration date start</td>
-      <td>expiration date end</td>
+      <td>expiration date</td>
       <td>expiration year quarter</td>
       <td>information type</td>
       <td>technologies</td>
@@ -241,24 +262,23 @@
       <tr>
         <td>{{ item.id }}</td>
         <td>{{ item.license_id }}</td>
+        <td>{{ item.mapping_id }}</td>
         <td>{{ item.licensor }}</td>
         <td>{{ item.licensee }}</td>
         <td>{{ item.affiliate }}</td>
         <td>{{ item.multiplier }}</td>
         <td>{{ item.qualifiers }}</td>
-        <td>{{item.signed_date_start}}</td>
-        <td>{{item.signed_date_end}}</td>
-        <td>{{item.signed_year_quarter}}</td>
-        <td>{{item.expiration_date_start}}</td>
-        <td>{{item.expiration_date_end}}</td>
-        <td>{{item.expiration_year_quarter}}</td>
+        <td>{{item.signed_date}}</td>
+        <td>{{item.signed_quarter}}</td>
+        <td>{{item.expiration_date}}</td>
+        <td>{{item.expiration_quarter}}</td>
         <td>{{item.information_type}}</td>
         <td>{{item.technologies}}</td>
         <td>{{item.payment_amount}}</td>
         <td>{{item.payment_type}}</td>
         <td>{{item.geographical_scope}}</td>
         <!-- <td>{{item.details}}</td> -->
-        <td>{{item.document_name}}</td>
+        <td>{{item.directory_path}}</td>
         <td>
           <!-- Editable field -->
           <div *ngIf="!item.editing && item.showDetails; else editingMode">
@@ -274,32 +294,57 @@
           <br>
           <button (click)="toggleEditingMode(item)">Edit</button>
           <button (click)="toggleDetailsVisibility(item)">Show</button>
-          <button (click)="openPDFViewerPopup(item.document_name, item.details)">Open PDF in New Window</button>
+          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
         </td>
+
+
         <td>
-          <!-- <button *ngIf="item.modified" (click)="undoUpdateLicenseForMultipleTables()">Unknown</button> -->
+          <!-- ng-container to conditionally render select dropdown and button -->
+
+          <ng-container *ngIf="uniqueLicenses.length > 0">
+            <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
+              <option value="" selected>Select Mapping ID to add :</option>
+              <ng-container *ngFor="let mappingId of uniqueMappingIds">
+                <option [value]="mappingId">{{ mappingId }}</option>
+              </ng-container>
+            </select>
+            
+        </ng-container>
+        <button (click)="AddMappingId(item.id,item, item.signed_date)">Mapping</button>
+        <button *ngIf="item.modified" (click)="openFeedbackAfterUndo(item)">Undo Modification</button>
+
+        </td>
+        <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
+          <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+            <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
+              alt="Question Mark Icon">
+            <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
+          </ng-container>
         </td>
       </tr>
     </ng-container>
   </tbody>
 </table>
+
+
+
+
 <h1>{{this.licensorName}} Vs. Multiple Unknowns :</h1>
 
-<table class="unknown-table">
+<table class="unknownML-table">
   <thead>
     <tr>
       <td>ID</td>
       <td>license ID</td>
+      <th>Mapping ID</th>
       <td>licensor</td>
       <td>licensee</td>
       <td>affiliate</td>
       <td>multiplier</td>
       <td>qualifiers</td>
-      <td>signed date start</td>
-      <td>signed date end</td>
+      <td>signed date</td>
       <td>signed year quarter</td>
-      <td>expiration date start</td>
-      <td>expiration date end</td>
+      <td>expiration date</td>
       <td>expiration year quarter</td>
       <td>information type</td>
       <td>technologies</td>
@@ -315,24 +360,23 @@
       <tr>
         <td>{{ item.id }}</td>
         <td>{{ item.license_id }}</td>
+        <td>{{ item.mapping_id }}</td>
         <td>{{ item.licensor }}</td>
         <td>{{ item.licensee }}</td>
         <td>{{ item.affiliate }}</td>
         <td>{{ item.multiplier }}</td>
         <td>{{ item.qualifiers }}</td>
-        <td>{{item.signed_date_start}}</td>
-        <td>{{item.signed_date_end}}</td>
-        <td>{{item.signed_year_quarter}}</td>
-        <td>{{item.expiration_date_start}}</td>
-        <td>{{item.expiration_date_end}}</td>
-        <td>{{item.expiration_year_quarter}}</td>
+        <td>{{item.signed_date}}</td>
+        <td>{{item.signed_quarter}}</td>
+        <td>{{item.expiration_date}}</td>
+        <td>{{item.expiration_quarter}}</td>
         <td>{{item.information_type}}</td>
         <td>{{item.technologies}}</td>
         <td>{{item.payment_amount}}</td>
         <td>{{item.payment_type}}</td>
         <td>{{item.geographical_scope}}</td>
         <!-- <td>{{item.details}}</td> -->
-        <td>{{item.document_name}}</td>
+        <td>{{item.directory_path}}</td>
         <td>
           <!-- Editable field -->
           <div *ngIf="!item.editing && item.showDetails; else editingMode">
@@ -348,24 +392,31 @@
           <br>
           <button (click)="toggleEditingMode(item)">Edit</button>
           <button (click)="toggleDetailsVisibility(item)">Show</button>
-          <button (click)="openPDFViewerPopup(item.document_name, item.details)">Open PDF in New Window</button>
+          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
         </td>
         <td>
-          <!-- <ng-container *ngIf="uniqueLicensees.length > 0">
-            <select [(ngModel)]="item.selectedLicensee" [id]="'licenseeSelect-' + item.id">
-              <option value="" selected>Select Known Licensee to add :</option>
-
-              <option *ngFor="let licensee of uniqueLicensees" [value]="licensee">{{ licensee }}</option>
-
+          <ng-container *ngIf="uniqueLicenses.length > 0">
+            <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
+              <option value="" selected>Select Mapping ID to add :</option>
+              <option *ngFor="let mappingId of uniqueMappingIds" [value]="mappingId">{{ mappingId }}</option>
             </select>
-            <button (click)="addToKnownLicensees(item.id, item.selectedLicensee)">Add to known licensees</button>
-          </ng-container> -->
-          <button (click)="updateMultipleLicenses(item)">+</button>
+            <button (click)="AddMappingId(item.id,item, item.signed_date)">Mapping</button>
+          </ng-container>
+          
+          <button (click)="openFeedbackAfterUpdateMultipleLicenses(item)">ADD to licensees</button>
 
         </td>
-        
+
       </tr>
 
     </ng-container>
   </tbody>
 </table>
+</div>
+
+<div class="popup-overlay" *ngIf="showPopup">
+  <div class="popup-content">
+    <button (click)="closePopup()">Close</button>
+    <app-example-pdf-viewer [pdfSrc]="selectedPDF"></app-example-pdf-viewer>
+  </div>
+</div>

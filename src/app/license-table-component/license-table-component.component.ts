@@ -2,6 +2,9 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ConnectionService } from '../connection.service';
 import { HttpClient } from '@angular/common/http';
 import { ExamplePdfViewerComponent } from '../example-pdf-viewer/example-pdf-viewer.component';
+import { FeedbackPopupComponent } from '../feedback-popup/feedback-popup.component';
+import { MatDialog } from '@angular/material/dialog';
+import { Observable, map } from 'rxjs';
 declare var Plotly: any;
 
 @Component({
@@ -11,6 +14,7 @@ declare var Plotly: any;
 })
 export class LicenseTableComponent implements OnInit {
   @ViewChild(ExamplePdfViewerComponent, { static: false }) pdfViewer!: ExamplePdfViewerComponent;
+  @Input() pdfSrc: string = '';
 
   licenseData: any[] = [];
   filteredDataDefined: any[] = []; 
@@ -18,14 +22,13 @@ export class LicenseTableComponent implements OnInit {
   dynamicTitle: string = '';
   licensorName: string = '';
   licenseeName: string = '';
-  @Input() pdfSrc: string = '';
   multipleLicenses: any[] = [];
   uniqueLicenses: string[] = [];
   filteredMultipleLicenses: any[] = []; 
   selectedLicense: string = ''; 
 
 
-  constructor(private connectionService: ConnectionService, private http: HttpClient) {}
+  constructor(private connectionService: ConnectionService, private http: HttpClient,private dialog: MatDialog) {}
 
   ngOnInit(): void {
     this.licensorName = localStorage.getItem('licensorName') || 'Licensor Name';
@@ -35,6 +38,7 @@ export class LicenseTableComponent implements OnInit {
     this.fetchMultipleLicensesData();
     this.multipleLicenses;
     this.fetchDistinctLicenses(); 
+    this.populateUniqueMappingIds(); 
     this.loadPlotlyScript().then(() => {
       console.log('Plotly.js script loaded successfully');
       this.plotData();
@@ -89,6 +93,8 @@ export class LicenseTableComponent implements OnInit {
       this.pdfViewer.searchPDF(details);
     }, 500);
   }
+
+
   closePopup() {
     this.showPopup = false;
   }
@@ -154,8 +160,41 @@ export class LicenseTableComponent implements OnInit {
   }
 
   plotData(): void {
-    // plotting logic
-  }
+    var trace1 = {
+      x: [2013, 2017, 2018,2023],
+      y: ['3G', '4G', '5G','WIFI'],
+      name: 'Signed IN',
+      orientation: 'h',
+      marker: {
+        color: 'rgba(55,128,191,0.6)',
+        width: 1
+      },
+      type: 'bar'
+    };
+    
+    var trace2 = {
+      x: [2013, 2017, 2018,2023],
+      y: ['3G', '4G', '5G','WIFI'],
+      name: 'Expired In',
+      orientation: 'h',
+      type: 'bar',
+      marker: {
+        color: 'rgba(255,153,51,0.6)',
+        width: 1
+      }
+    };
+    
+    var data = [trace1, trace2];
+    
+    var layout = {
+      title: 'Colored Bar Chart',
+      barmode: 'stack'
+    };
+    
+    Plotly.newPlot('myDiv', data, layout);
+    
+    
+      }
 
   confirmAction(message: string, action: () => void): void {
     const confirmDialog = confirm(message);
@@ -163,61 +202,78 @@ export class LicenseTableComponent implements OnInit {
       action(); 
     }
   }
-
-  updateRow(item: any): void {
-    if (item.licensee === 'Unknown') {
-      item.licensee = this.licenseeName; // Assign licenseeName to licensee
-      this.confirmAction('Are you sure you want to update the licensee?', () => {
-        this.connectionService.updateLicense(item.id, item).subscribe(
-          (response) => {
-            console.log('Row updated successfully:', response);
-            this.fetchLicenseData();
-          },
-          (error) => {
-            console.error('Error updating row:', error);
-          }
-        );
-      });
-    } else {
-      window.alert('Licensee update failed!');
-    }
+  showCommentTooltip(item: any): void {
+    item.showComment = true;
+  }
+  
+  hideCommentTooltip(item: any): void {
+    item.showComment = false;
   }
   
 
-  undoUpdateLicense(item: any): void {
-    this.confirmAction('Are you sure you want to revert the licensee to Unknown?', () => {
-      this.connectionService.undoUpdateLicensee(item.id).subscribe(
+  updateRow(item: any, comment: string): void {
+    console.log('updateLicense method called');
+    if (item.licensee === 'Unknown') {
+        item.licensee = this.licenseeName; // Assign licenseeName to licensee
+        console.log('Before confirmation dialog');
+        this.confirmAction('Are you sure you want to update the licensee?', () => {
+            console.log('Inside confirmation dialog');
+            // Include comment in the request body
+            this.connectionService.updateLicense(item.id, item, comment).subscribe(
+                (response) => {
+                    console.log('Row updated successfully:', response);
+                    this.fetchLicenseData();
+                },
+                (error) => {
+                    console.error('Error updating row:', error);
+                }
+            );
+        });
+    } else {
+        console.log('Licensee update failed!');
+        window.alert('Licensee update failed!');
+    }
+}
+
+  
+
+
+
+  undoUpdateLicense(item: any,comment: string): void {
+    this.confirmAction('Are you sure you want to revert the modification?', () => {
+      this.connectionService.undoUpdateLicensee(item.id, comment).subscribe(
         (response) => {
-          console.log('Licensee name reverted to Unknown:', response);
-          window.alert('Licensee name reverted to Unknown');
+          console.log('Modification reverted successfully:', response);
+          // After successful revert, fetch updated data if needed
           this.fetchLicenseData();
         },
         (error) => {
-          console.error('Error reverting licensee name:', error);
-          window.alert('Error reverting licensee name');
+          console.error('Error reverting modification:', error);
+          window.alert('Error reverting modification');
         }
       );
     });
   }
 
-  fetchDistinctLicenses(): void {
-    if (this.uniqueLicenses.length === 0) {
-      this.connectionService.getData().subscribe(
-        (licenses: string[]) => {
-          this.uniqueLicenses = [...new Set(licenses)];
-          console.log('Distinct Licensees:', this.uniqueLicenses);
-        },
-        (error: any) => {
-          console.error('Error fetching licensees:', error);
-        }
-      );
-    }
+fetchDistinctLicenses(): void {
+  if (this.uniqueLicenses.length === 0) {
+    this.connectionService.getData().subscribe(
+      (data: any[]) => {
+        // Extract unique licensees from the data array
+        const uniqueLicensees = [...new Set(data.map(item => item.licensee))];
+        this.uniqueLicenses = uniqueLicensees;
+      },
+      (error: any) => {
+        console.error('Error fetching licensees:', error);
+      }
+    );
   }
+}
+
 
   fetchMultipleLicensesData(): void {
     this.connectionService.getMultipleLicenses().subscribe(
       (data: any[]) => {
-        console.log('Payments data from server:', data);
         
         // Filtered based on both licensor and known licensee conditions
         this.filteredMultipleLicenses = data.filter(item => {
@@ -234,7 +290,6 @@ export class LicenseTableComponent implements OnInit {
 
         
         this.initializeUniqueLicenses();
-        console.log('Unique Licenses:', this.uniqueLicenses); // Log the unique licensees array
       },
       (error) => {
         console.error('Error fetching data for multiple licensees:', error);
@@ -246,7 +301,6 @@ export class LicenseTableComponent implements OnInit {
   
 
  initializeUniqueLicenses(): void {
-  console.log("multipleLicenses",this.uniqueLicenses)
     const uniqueLicenses = this.multipleLicenses.reduce((acc: string[], curr: any) => {
       if (!acc.includes(curr.licensee)) {
         acc.push(curr.licensee);
@@ -262,7 +316,7 @@ export class LicenseTableComponent implements OnInit {
 
 
 
-  updateMultipleLicenses(item: any): void {
+  updateMultipleLicenses(item: any, comment: string): void {
     // Concatenate this.licenseeName to the existing licensee value, separated by " | "
     const updatedLicensee = item.licensee ? `${item.licensee} | ${this.licenseeName}` : this.licenseeName;
   
@@ -275,49 +329,232 @@ export class LicenseTableComponent implements OnInit {
   
     // Decrease the multiplier until it reaches 0
     if (item.multiplier > 0) {
-        item.multiplier--;
+      item.multiplier--;
     }
   
     // Check if the multiplier has reached 0, then hide the row
     if (item.multiplier === 0) {
-        const index = this.multipleLicenses.findIndex(license => license.id === item.id);
-        if (index !== -1) {
-            this.multipleLicenses.splice(index, 1);
+      const index = this.multipleLicenses.findIndex(license => license.id === item.id);
+      if (index !== -1) {
+        this.multipleLicenses.splice(index, 1);
+      }
+    }
+  
+    // Save the updated license to the backend, including the comment in the request body
+    this.connectionService.updateMultipleLicensee(item.id, item, comment).subscribe(
+      (response) => {
+        console.log('license updated successfully:', response);
+        this.fetchMultipleLicensesData();
+      },
+      (error) => {
+        console.error('Error updating license:', error);
+      }
+    );
+
+
+
+}
+undoUpdateMultipleLicense(item: any,comment: string): void {
+  this.confirmAction('Are you sure you want to revert the modification?', () => {
+    this.connectionService.undoUpdateMultipleLicensee(item.id, comment).subscribe(
+      (response) => {
+        console.log('Modification reverted successfully:', response);
+        // After successful revert, fetch updated data if needed
+        this.fetchMultipleLicensesData();
+      },
+      (error) => {
+        console.error('Error reverting modification:', error);
+        window.alert('Error reverting modification');
+      }
+    );
+  });
+}
+
+    
+  
+openFeedbackAfterUndo(item: AnimationPlaybackEvent): void {
+  const dialogRef = this.dialog.open(FeedbackPopupComponent, {
+    data: { item: item } // Pass item or any other data you need
+  });
+
+  dialogRef.afterClosed().subscribe(comment => {
+    console.log('The dialog was closed');
+    console.log('Feedback comment:', comment); // Handle feedback comment here if needed
+    if (comment) {
+      // If comment is not empty, proceed with undo action passing the comment
+      this.undoUpdateMultipleLicense(item, comment);
+    }
+  });
+}
+
+
+openFeedbackAfterUndolicense(item: AnimationPlaybackEvent): void {
+  const dialogRef = this.dialog.open(FeedbackPopupComponent, {
+    data: { item: item } // Pass item or any other data you need
+  });
+
+  dialogRef.afterClosed().subscribe(comment => {
+    console.log('The dialog was closed');
+    console.log('Feedback comment:', comment); // Handle feedback comment here if needed
+    if (comment) {
+      // If comment is not empty, proceed with undo action passing the comment
+      this.undoUpdateLicense(item, comment);
+    }
+  });
+}
+
+openFeedbackAfterUpdateMultipleLicenses(item: any): void {
+  const dialogRef = this.dialog.open(FeedbackPopupComponent, {
+    data: { item: item } // Pass the updated license data to the feedback popup
+  });
+
+  dialogRef.afterClosed().subscribe(comment => {
+    console.log('The dialog was closed');
+    console.log('Feedback comment:', comment); // Handle feedback comment here if needed
+    if (comment) {
+      // If comment is not empty, proceed with update action passing the comment
+      this.updateMultipleLicenses(item, comment); // Pass the comment here
+    }
+  });
+}
+
+
+openFeedbackAfterUpdate(item: any): void {
+  const dialogRef = this.dialog.open(FeedbackPopupComponent, {
+    data: { item: item } // Pass the updated license data to the feedback popup
+  });
+
+  dialogRef.afterClosed().subscribe(comment => {
+    console.log('The dialog was closed');
+    console.log('Feedback comment:', comment); // Handle feedback comment here if needed
+    if (comment) {
+      // If comment is not empty, proceed with undo action passing the comment
+      this.updateRow(item, comment); // Pass the comment here
+    }
+  });
+}
+
+
+uniqueMappingIds: string[] = [];
+
+populateUniqueMappingIds(): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    this.connectionService.getData().subscribe(
+      (data: any[]) => {
+        // Assuming the mapping IDs are stored in a property called mapping_id
+        this.uniqueMappingIds = data
+          .filter(item => item.mapping_id) // Filter out items with undefined or null mapping_id
+          .map(item => item.mapping_id)
+          .filter((value, index, self) => self.indexOf(value) === index);
+
+        console.log('Unique Mapping IDs:', this.uniqueMappingIds); // Log uniqueMappingIds
+
+        resolve(); // Resolve the promise once unique mapping IDs are populated
+      },
+      error => {
+        console.error('Error fetching mapping IDs:', error);
+        reject(error); // Reject the promise if there's an error fetching data
+      }
+    );
+  });
+}
+
+
+
+
+// Function to extract the year from the signed date
+extractYear(signedDate: string): string {
+  let year = '';
+
+  if (signedDate) {
+    // Check if the signed date contains a dot (.)
+    if (signedDate.includes('.')) {
+      // Extract the year from the signed date (assuming it's in the format dd.mm.yyyy)
+      const dateParts = signedDate.split('.');
+      if (dateParts.length === 3) {
+        year = dateParts[2];
+      } else {
+        console.error('Invalid signed date format:', signedDate);
+      }
+    } else {
+      // Assume the signed date is already in the format yyyy
+      year = signedDate;
+    }
+  } else {
+    console.error('No signed date provided.');
+  }
+
+  return year;
+}
+
+
+
+AddMappingId(itemId: number, item: any, signedDate: string): void {
+  console.log('AddMappingId function called');
+
+  // Extract the year from the signed date
+  const year = this.extractYear(signedDate);
+
+  // Get the selected mapping ID from the dropdown
+  const selectedMappingId = item.selectedMappingId;
+
+  // If a mapping ID is selected from the dropdown, update the mapping_id with the selected value
+  if (selectedMappingId) {
+    item.mapping_id = selectedMappingId;
+
+    // Save the updated item to the backend
+    this.connectionService.updateMappingId(itemId, selectedMappingId)
+      .subscribe(
+        response => {
+          console.log('Mapping ID updated successfully:', response);
+          // Optionally, you can perform additional actions after successful update
+        },
+        error => {
+          console.error('Error updating mapping ID:', error);
+          // Handle error scenarios here
         }
-    }
+      );
+  } else {
+    // Generate a new mapping ID using the provided data
+    const licensee = item.licensee;
+    const licensor = item.licensor;
 
-    // Ask for confirmation before updating
-    const confirmationMessage = 'Are you sure you want to update the licensee?';
-    if (window.confirm(confirmationMessage)) {
-        // Save the updated payment to the backend
-        this.connectionService.updateMultipleLicensee(item.id, item).subscribe(
-            (response) => {
-                console.log('license updated successfully:', response);
-                // Optionally, you can reload data or perform other actions after updating the payment
-            },
-            (error) => {
-                console.error('Error updating payment:', error);
-                window.alert('Licensee update failed!');
-            }
+    if (licensee && licensor) {
+      const licenseeFirstLetter = licensee.charAt(0).toUpperCase();
+      const licensorFirstLetter = licensor.charAt(0).toUpperCase();
+
+      // Construct the mapping ID using the item's ID, licensee and licensor initials, and the year
+      const generatedMappingId = `${itemId}-${licensorFirstLetter}-${licenseeFirstLetter}-${year}`;
+
+      // Assign the generated mapping ID to the item
+      item.mapping_id = generatedMappingId;
+
+      // Save the updated item to the backend
+      this.connectionService.updateMappingId(itemId, generatedMappingId)
+        .subscribe(
+          response => {
+            console.log('New Mapping ID created and updated successfully:', response);
+            // Optionally, you can perform additional actions after successful update
+          },
+          error => {
+            console.error('Error creating new mapping ID:', error);
+            // Handle error scenarios here
+          }
         );
+    } else {
+      console.error('No licensee or licensor found.');
+      // Handle the scenario where licensee or licensor is missing
     }
+  }
 }
 
-  
+
+
+
+
+
 }
-  
-  // addToKnownLicensees(itemId: number, selectedLicensee: string): void {
-  //   console.log('Selected Licensee:', selectedLicensee);
-  //   this.connectionService.updateKnownLicensee(itemId, selectedLicensee)
-  //     .subscribe(
-  //       response => {
-  //         console.log('Known Licensees updated successfully:', response);
-  //       },
-  //       error => {
-  //         console.error('Error updating known licensees:', error);
-  //       }
-  //     );
-  // }
+
   
   
   
