@@ -32,46 +32,43 @@ export class MobileComponent {
 
   fetchLicenseData(): void {
     this.connectionService.getData().subscribe((data: any[]) => {
-      this.fetchedData = data;
-      const uniqueLicensors = [...new Set(data.map((item: any) => item.licensor))];
-      this.licensors = uniqueLicensors;
-      const uniqueLicensees = [...new Set(data.map((item: any) => item.licensee))];
-      this.licensees = uniqueLicensees.filter(licensee => licensee !== 'Unknown' && licensee !== null);
+        this.fetchedData = data;
+        const uniqueLicensors = [...new Set(data.map((item: any) => item.licensor))];
+        this.licensors = uniqueLicensors.filter(licensor => licensor !== null);
+        const uniqueLicensees = [...new Set(data.map((item: any) => item.licensee))];
+        this.licensees = uniqueLicensees.filter(licensee => licensee !== 'Unknown' && licensee !== null);
   
-      // Fetch payments data and merge licensees and licensors
-      this.paymentConnection.getPayments().subscribe((payments: any[]) => {
-        this.paymentsData = payments;
-        const paymentLicensors = [...new Set(payments.map((item: any) => item.licensor))];
-        this.licensors = [...new Set([...this.licensors, ...paymentLicensors])];
-        const paymentLicensees = [...new Set(payments.map((item: any) => item.licensee))];
-        this.licensees = [...new Set([...this.licensees, ...paymentLicensees])];
+        // Fetch payments data and merge licensees and licensors
+        this.paymentConnection.getPayments().subscribe((payments: any[]) => {
+            this.paymentsData = payments;
+            const paymentLicensors = [...new Set(payments.map((item: any) => item.licensor))];
+            this.licensors = [...new Set([...this.licensors, ...paymentLicensors.filter(licensor => licensor !== null)])];
+            const paymentLicensees = [...new Set(payments.map((item: any) => item.licensee))];
+            this.licensees = [...new Set([...this.licensees, ...paymentLicensees.filter(licensee => licensee !== 'Unknown' && licensee !== null)])];
   
-        this.paymentConnection.getMultiplePayments().subscribe((multiplePayments: any[]) => {
-          this.multiplePayments = multiplePayments;
-      
-  
-          // Initialize tableData after fetching unique licensors and licensees
-          this.initializeTableData();
+            this.paymentConnection.getMultiplePayments().subscribe((multiplePayments: any[]) => {
+                this.multiplePayments = multiplePayments;
+                // Initialize tableData after fetching unique licensors and licensees
+                this.initializeTableData();
+            }, (error) => {
+                console.error('Error fetching multiple payments data:', error);
+            });
+
+            this.connectionService.getMultipleLicenses().subscribe((multipleLicenses: any[]) => {
+                this.multipleLicenses = multipleLicenses;
+                // Initialize tableData after fetching unique licensors and licensees
+                this.initializeTableData();
+            }, (error) => {
+                console.error('Error fetching multiple licenses data:', error);
+            });
         }, (error) => {
-          console.error('Error fetching multiple payments data:', error);
+            console.error('Error fetching payments data:', error);
         });
-        this.connectionService.getMultipleLicenses().subscribe((multipleLicenses: any[]) => {
-          this.multipleLicenses = multipleLicenses;
-  
-          // Initialize tableData after fetching unique licensors and licensees
-          this.initializeTableData();
-        }, (error) => {
-          console.error('Error fetching multiple payments data:', error);
-        });
-      }, (error) => {
-        console.error('Error fetching payments data:', error);
-      });
-  
     }, (error) => {
-      console.error('Error fetching license data:', error);
+        console.error('Error fetching license data:', error);
     });
-  }
-  
+}
+
   initializeTableData(): void {
     // Clear existing tableData
     this.tableData = [];
