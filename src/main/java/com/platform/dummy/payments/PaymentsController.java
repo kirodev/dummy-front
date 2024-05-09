@@ -15,7 +15,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/payments")
-@PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
 
 public class PaymentsController {
 
