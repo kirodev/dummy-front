@@ -10,12 +10,11 @@
 }
 
 
-/* Apply some basic styling to the container */
-/* Apply some basic styling to the container */
+
 .container {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* Align the content at the top */
+  justify-content: flex-start; 
   align-items: left;
   height: 100vh;
   width: 120vh;
@@ -24,40 +23,37 @@
 
 }
 .bigger-table {
-  /* Add your styles to make the table bigger here */
-  width: 100%; /* Example: Set the table width to 100% */
-  height: 500px; /* Example: Set the table height to 500px */
-  /* Add any other styles you need */
-}
-/* Apply some basic styling to the spider chart container */
 
-/* Apply the same height to the table container as the spider chart container */
+  width: 100%; 
+  height: 500px; 
+ 
+}
+
+
 .table-container {
   width: 100%;
-  height: 50%; /* Set the same height as the spider chart container */
+  height: 50%; 
   overflow: scroll;
   margin-bottom: 10px;
-  flex-grow: 0; /* Don't let it grow to occupy extra space */
-  position: relative; /* Add this to establish a stacking context */
+  flex-grow: 0; 
+  position: relative; 
 
 }
 
 
   .button-container {
-    position: absolute; /* Add this to set an absolute position for the button container */
-    top: 20px; /* Adjust the top position as needed to position the buttons */
-    left: 20px; /* Adjust the left position as needed to position the buttons */
+    position: absolute; 
+    top: 20px;
+    left: 20px; 
   }
   
   
 
   .lighter-green-cell {
     background-color: lightgreen;
-    /* Add any other styles you want for the lighter green cells */
   }
   
   
-  /* Apply some basic styling to the table */
   table {
     width: 120%;
     border-collapse: collapse;
@@ -68,17 +64,15 @@
   td.red-cell {
     color: red !important;
   }
-  /* Style table headers and vertical headers */
   th {
     position: relative;
     top: 0;
     background-color: #ffffff;
-    z-index: 2; /* Ensure headers are above rows */
-    box-shadow: 0 4px 2px -2px rgba(0, 0, 0, 0.2); /* Add a shadow for the overlay effect */
-    padding: 3px; /* Add some padding to make it visually distinct from the row headers */
-    border-bottom: 1px solid #ccc; /* Add a border at the bottom to separate headers from rows */
+    z-index: 2; 
+    box-shadow: 0 4px 2px -2px rgba(0, 0, 0, 0.2); 
+    padding: 3px;
+    border-bottom: 1px solid #ccc; 
   }
-  /* Style vertical headers */
   .vertical-header {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
@@ -90,23 +84,20 @@
     position: sticky;
     left: 0;
     background-color: #ffffff;
-    z-index: 3; /* Ensure it's above headers and rows */
-    border-right: 1px solid #ccc; /* Add a border on the right to separate it from row headers */
+    z-index: 3; 
+    border-right: 1px solid #ccc;
   }
   tr {
     position: relative;
   }
   
-  /* Style row headers */
   td:first-child {
     position: sticky;
     left: 0;
     background-color: #ffffff;
-    z-index: 3; /* Ensure it's above headers and rows */
-    border-right: 1px solid #ccc; /* Add a border on the right to separate it from vertical headers */
+    z-index: 3;
+    border-right: 1px solid #ccc; 
   }
-  
-  /* Style table cells */
   td {
     border: 1px solid #ccc;
     padding: 3px;
@@ -114,45 +105,42 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    background-color: white; /* Set the background color for cells */
+    background-color: white; 
   }
-  /* Apply different background color to even rows */
+
   tbody tr:nth-child(even) {
     background-color: #f2f2f2;
   }
   
-  /* Increase row size and show popup inside the cells on hover */
   td:hover {
-    border-right: 1px solid #ccc; /* Add back the border on hover */
+    border-right: 1px solid #ccc;
   }
   
   
   td[title]:hover::before {
     content: attr(title);
     width: 200px;
-    height: auto; /* Allow the width to adjust based on content */
+    height: auto;
 
-    /* Limit the maximum width */
     background-color: rgba(255, 197, 62, 0.885);
     color: rgb(0, 0, 0);
     padding: 10px 20px;
     border-radius: 4px 40px 4px 40px;
     font-size: 12px;
-    white-space: pre-line; /* Use pre-line to allow line breaks */
+    white-space: pre-line; 
     z-index: 2;
     position:relative;
     top: 0;
     left: 0;
     display: flex;
     align-items: center;
-    overflow: visible; /* Hide overflowing content */
+    overflow: visible; 
   
   
   }
   
   
   
-  /* Define custom CSS classes for cell colors */
   .green-cell {
     background-color: rgb(60, 142, 60);
     cursor: pointer;
@@ -175,7 +163,6 @@
   }
   .orange-cell {
     background-color: orange;
-    /* Add any other styles you want for orange cells */
   }
   h2 {
     color: #808080;
@@ -184,7 +171,7 @@
     font-style: normal;
     font-weight: 400;
     line-height: normal;
-    margin-left:10px; /* Reset margin for h1 */
+    margin-left:10px; 
   }
   
 
@@ -201,7 +188,7 @@
     font-style: normal;
     font-weight: 400;
     line-height: normal;
-    margin-left:10px; /* Reset margin for h1 */
+    margin-left:10px;
     margin-top: 0px;  
   }
   .selected-cells-container {
@@ -210,9 +197,7 @@
   align-items: flex-start;
 }
 
-/* mobile.component.css */
 
-/* ... (previous CSS code) ... */
 
 .selected-cells-list {
   list-style-type: none;
@@ -222,16 +207,14 @@
   flex-wrap: wrap;
 }
 
-/* Style each list item */
 .selected-cells-list li {
-  width: calc(33.33% - 10px); /* Set a fixed width for each list item */
+  width: calc(33.33% - 10px); 
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   margin-right: 10px;
 }
 
-/* Style the button within each list item */
 .selected-cells-list li button {
   background-color: #ff0000;
   color: #ffffff;
@@ -242,31 +225,29 @@
   margin-right: 10px;
 }
 
-/* Style the text within each list item */
 .selected-cells-list li span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%; /* Allow the text to take up the full width of the list item */
+  max-width: 100%; 
   margin-right: 10px;
 }
 
 
   .BLU Products, Inc.e-cell {
-    background-color: #34db37; /* Set the background color to BLU Products, Inc.e */
+    background-color: #34db37; 
     cursor: pointer;
     transition: background-color 0.3s ease-in-out;
   }
   .red-cell {
-    background-color: red !important; /* Set the background color to red */
-    color: rgb(255, 0, 0)!important; /* Set the text color to white or any other color you prefer */
+    background-color: red !important; 
+    color: rgb(255, 0, 0)!important; 
   }
   
-  /* Add your default background image */
 .spider-button {
-  width: 41px; /* Adjust as needed for your icon size */
-  height: 41px; /* Adjust as needed for your icon size */
-  background-image: url('src/assets/Spider_Icons/Property 1=Default.svg'); /* Set the default background image */
+  width: 41px; 
+  height: 41px; 
+  background-image: url('src/assets/Spider_Icons/Property 1=Default.svg'); 
   background-size: cover;
   background-repeat: no-repeat;
   border: none;
@@ -275,16 +256,14 @@
   margin-right: 8px;
 }
 
-/* Add your hover background image */
 .spider-button:hover {
-  background-image: url('src/assets/Spider_Icons/Property 1=hover.svg'); /* Set the hover background image */
+  background-image: url('src/assets/Spider_Icons/Property 1=hover.svg'); 
 }
 
-/* Add your default background image */
 .mam-button {
-  width: 41px; /* Adjust as needed for your icon size */
-  height: 41px; /* Adjust as needed for your icon size */
-  background-image: url('src/assets/Matrix_Icons/Property 1=Default.svg'); /* Set the default background image */
+  width: 41px; 
+  height: 41px; 
+  background-image: url('src/assets/Matrix_Icons/Property 1=Default.svg'); 
   background-size: cover;
   background-repeat: no-repeat;
   border: none;
@@ -295,14 +274,13 @@
 
 }
 
-/* Add your hover background image */
 .mam-button:hover {
-  background-image: url('src/assets/Matrix_Icons/Property 1=hover.svg'); /* Set the hover background image */
+  background-image: url('src/assets/Matrix_Icons/Property 1=hover.svg'); 
 }
 .calculation-button {
-  width: 41px; /* Adjust as needed for your icon size */
-  height: 41px; /* Adjust as needed for your icon size */
-  background-image: url('src/assets/CalcSheet_icons/Property 1=Default.svg'); /* Set the default background image */
+  width: 41px; 
+  height: 41px; 
+  background-image: url('src/assets/CalcSheet_icons/Property 1=Default.svg'); 
   background-size: cover;
   background-repeat: no-repeat;
   border: none;
@@ -311,15 +289,13 @@
   margin-right: 8px;
 }
 
-/* Add your hover background image */
 .calculation-button:hover {
-  background-image: url('src/assets/CalcSheet_icons/Property 1=hover.svg'); /* Set the hover background image */
+  background-image: url('src/assets/CalcSheet_icons/Property 1=hover.svg'); 
 }
-/* Add your default background image */
 .report-button {
-  width: 41px; /* Adjust as needed for your icon size */
-  height: 41px; /* Adjust as needed for your icon size */
-  background-image: url('src/assets/Report_Icons/Property 1=Default.svg'); /* Set the default background image */
+  width: 41px; 
+  height: 41px;
+  background-image: url('src/assets/Report_Icons/Property 1=Default.svg'); 
   background-size: cover;
   background-repeat: no-repeat;
   border: none;
@@ -328,26 +304,22 @@
   margin-right: 8px;
 }
 
-/* Add your hover background image */
 .report-button:hover {
-  background-image: url('src/assets/Report_Icons/Property 1=hover.svg'); /* Set the hover background image */
+  background-image: url('src/assets/Report_Icons/Property 1=hover.svg'); 
 }
-/* Add styles to the button */
-/* Add styles to the specific button with the .custom-button class */
+
 .custom-button {
-  background-color: #CBB171; /* Change the background color to your desired color */
-  color: #AFCEE4; /* Change the default text color to your desired color */
-  padding: 10px 20px; /* Adjust padding to your desired values */
-  border: none; /* Remove the default button border */
-  cursor: pointer; /* Add a pointer cursor on hover to indicate interactivity */
-  border-radius: 5px; /* Add rounded corners */
-  font-size: 16px; /* Set the font size */
+  background-color: #CBB171; 
+  color: #AFCEE4; 
+  padding: 10px 20px; 
+  border: none; 
+  cursor: pointer; 
+  border-radius: 5px; 
+  font-size: 16px;
   margin-top: 10px;
 }
 
-/* Change the button style on hover */
 .custom-button:hover {
-  background-color: #AFCEE4; /* Change the background color on hover */
-  color: #000000; /* Change the text color on hover to your desired color */
-  /* You can also modify other styles on hover if desired */
+  background-color: #AFCEE4; 
+  color: #000000; 
 }
