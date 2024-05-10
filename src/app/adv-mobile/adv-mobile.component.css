@@ -292,21 +292,7 @@
 .calculation-button:hover {
   background-image: url('src/assets/CalcSheet_icons/Property 1=hover.svg'); 
 }
-.report-button {
-  width: 41px; 
-  height: 41px;
-  background-image: url('src/assets/Report_Icons/Property 1=Default.svg'); 
-  background-size: cover;
-  background-repeat: no-repeat;
-  border: none;
-  cursor: pointer;
-  outline: none;
-  margin-right: 8px;
-}
 
-.report-button:hover {
-  background-image: url('src/assets/Report_Icons/Property 1=hover.svg'); 
-}
 
 .custom-button {
   background-color: #CBB171; 
