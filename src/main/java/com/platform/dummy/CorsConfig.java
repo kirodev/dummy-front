@@ -14,9 +14,12 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true); // Allow credentials
-        config.addAllowedOriginPattern("*"); // Allow all origins. Replace this with specific origins if needed.
+        config.addAllowedOrigin("https://dummy-front-ace8d7bf3875.herokuapp.com"); // Specify allowed origin
+        config.addAllowedMethod("GET");
+        config.addAllowedMethod("POST");
+        config.addAllowedMethod("PUT");
+        config.addAllowedMethod("DELETE");
         config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
