@@ -1,14 +1,10 @@
 package com.platform.dummy.payments;
 
-import com.platform.dummy.licenses.Licenses;
-import org.json.JSONException;
-import org.json.JSONObject;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Optional;
@@ -84,9 +80,10 @@ public class PaymentsController {
 
             // Revert the licensee field to "Unknown"
             existingPayment.setLicensee("Unknown");
+            existingPayment.setModified(String.valueOf(id)); // Set modified column
 
             // Save the updated payment entity to the database
-            Payments updatedPayment = paymentsRepository.save(existingPayment);
+            Payments updatedPayment  = paymentsRepository.save(existingPayment);
 
             return ResponseEntity.ok(updatedPayment);
         } else {
@@ -115,22 +112,5 @@ public class PaymentsController {
         }
     }
 
-    @PutMapping("/{id}/undo")
-    public ResponseEntity<Payments> undoUpdateLicensee(@PathVariable("id") Long id) {
-        Optional<Payments> optionalPayment = paymentsRepository.findById(id);
-        if (optionalPayment.isPresent()) {
-            Payments existingPayment = optionalPayment.get();
 
-            // Revert the licensee field to "Unknown"
-            existingPayment.setLicensee("Unknown");
-            existingPayment.setModified(String.valueOf(id)); // Set modified column
-
-            // Save the updated payment entity to the database
-            Payments updatedPayment  = paymentsRepository.save(existingPayment);
-
-            return ResponseEntity.ok(updatedPayment);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-}
 }
