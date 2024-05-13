@@ -9,8 +9,8 @@ import { environment } from 'env/environment';
 })
 export class ConnectionService {
   private   url = environment.baseUrl;
-  private baseUrl = this.url +'/licenses';
-  private baseUrlML =  this.url +'/multiple-licenses';
+  private baseUrl = this.url +'licenses';
+  private baseUrlML =  this.url +'multiple-licenses';
 
   private tableData: string[][] = [];
   private cellColors: { row: number; col: number; color: string }[] = [];
