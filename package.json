@@ -5,8 +5,6 @@
     "ng": "ng",
     "heroku-postbuild": "ng build --configuration=production && npm install -g http-server-spa",
     "test": "ng test",
-    "lint": "ng lint",
-    "e2e": "ng e2e",
     "start": "http-server-spa dist/frandly_project_v1/ index.html $PORT"
 
   },
