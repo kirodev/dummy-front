@@ -44,7 +44,7 @@ public class PaymentsController {
     @PutMapping("/{id}")
     public ResponseEntity<Payments> updatePayment(
             @PathVariable("id") Long id,
-            @RequestBody Payments licenseDetails) throws JSONException {
+            @RequestBody Payments licenseDetails)  {
 
         // Extract comment from the licenseDetails object
         String comment = licenseDetails.getComment();
@@ -114,4 +114,23 @@ public class PaymentsController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+    @PutMapping("/{id}/undo")
+    public ResponseEntity<Payments> undoUpdateLicensee(@PathVariable("id") Long id) {
+        Optional<Payments> optionalPayment = paymentsRepository.findById(id);
+        if (optionalPayment.isPresent()) {
+            Payments existingPayment = optionalPayment.get();
+
+            // Revert the licensee field to "Unknown"
+            existingPayment.setLicensee("Unknown");
+            existingPayment.setModified(String.valueOf(id)); // Set modified column
+
+            // Save the updated payment entity to the database
+            Payments updatedPayment  = paymentsRepository.save(existingPayment);
+
+            return ResponseEntity.ok(updatedPayment);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+}
 }
