@@ -7,7 +7,7 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "start": "http-server-spa dist/frandly_project_v1/platform_alpha index.html 8080"
+    "start": "http-server-spa dist/frandly_project_v1 index.html 8080"
   },
   "private": true,
   "dependencies": {
