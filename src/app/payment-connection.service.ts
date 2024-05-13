@@ -97,7 +97,7 @@ export class PaymentConnection {
   undoUpdatePayment(id: any): Observable<any> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
 
-    return this.http.put<any>(`${this.baseUrl}/${id}/undo`, {headers});
+    return this.http.put<any>(`${this.baseUrl}/${id}/undoP`, {headers});
   }
   
   getMultiplePayments(): Observable<any[]> {
