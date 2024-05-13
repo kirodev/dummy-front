@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { TokenStorageService } from './_services/token-storage.service';
+import { environment } from 'env/environment';
 @Injectable({
   providedIn: 'root'
 })
@@ -9,7 +10,8 @@ export class PaymentConnection {
 
   constructor(private http: HttpClient, private tokenStorageService: TokenStorageService) {}
 
-  private baseUrl = 'http://localhost:8080';
+  private   baseUrl = environment.baseUrl;
+
 
   private getHeaders(): HttpHeaders {
     const token = this.tokenStorageService.getToken(); // Get the JWT token from your token storage service

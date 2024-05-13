@@ -2,14 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { TokenStorageService } from './_services/token-storage.service';
+import { environment } from 'env/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ConnectionService {
-
-  private baseUrl = 'http://localhost:8080/licenses';
-  private baseUrlML = 'http://localhost:8080/multiple-licenses';
+  private   url = environment.baseUrl;
+  private baseUrl = this.url +'/licenses';
+  private baseUrlML =  this.url +'/multiple-licenses';
 
   private tableData: string[][] = [];
   private cellColors: { row: number; col: number; color: string }[] = [];
