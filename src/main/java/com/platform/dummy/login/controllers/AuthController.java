@@ -34,7 +34,7 @@ import com.platform.dummy.login.security.services.UserDetailsImpl;
 
 import javax.validation.Valid;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/")
 public class AuthController {
