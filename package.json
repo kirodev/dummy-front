@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "heroku-postbuild": "ng build --configuration=production && npm install -g http-server-spa",
+    "heroku-postbuild": "ng build --configuration=prod && npm install -g http-server-spa",
     "test": "ng test",
     "start": "http-server-spa dist/frandly_project_v1/ index.html $PORT"
 
