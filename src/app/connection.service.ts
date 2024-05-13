@@ -88,7 +88,7 @@ updateLicenseeName(id: any, license: any): Observable<any> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
     const modifiedValue = license.licensee === 'Unknown' ? id : null; 
     const body = { ...license, modified: modifiedValue };
-    return this.http.put<any>(`http://localhost:8080/${id}`, body, { headers });
+    return this.http.put<any>(`${this.url}/${id}`, body, { headers });
 }
 
 updateDetails(id: number, updatedDetails: string): Observable<any> {

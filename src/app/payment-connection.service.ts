@@ -53,7 +53,7 @@ export class PaymentConnection {
     const modifiedValue = license.licensee === 'Unknown' ? id : null; 
     const body = { ...license, modified: modifiedValue };
   
-    return this.http.put<any>(`http://localhost:8080/payments/${id}`, body);
+    return this.http.put<any>(`${this.baseUrl}/payments/${id}`, body);
   }
 
 
