@@ -145,7 +145,7 @@ updateMultiplePaymentLicensee(id: any, payment: any, comment: string, headers?: 
 
   undoUpdateMultiplePayment(id: any, comment: string): Observable<any> {
     const headers = this.getHeaders();
-    return this.http.put<any>(`${this.baseUrl}/${id}/undo`, { comment }, { headers });
+    return this.http.put<any>(`${this.baseUrl}/${id}/undoP`, { comment }, { headers });
   }
   
   
