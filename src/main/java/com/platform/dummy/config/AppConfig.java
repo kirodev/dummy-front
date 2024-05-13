@@ -9,10 +9,11 @@ import javax.validation.constraints.NotNull;
 
 @Component
 @EnableConfigurationProperties
-@ConfigurationProperties(prefix = "app")
+@ConfigurationProperties(prefix = "dummy")
 public class AppConfig {
     @NotNull
     private String appUrl;
+
 
     public String getAppUrl() {
         return appUrl;
