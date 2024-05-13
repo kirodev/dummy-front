@@ -95,7 +95,7 @@ export class PaymentConnection {
   
   getMultiplePayments(): Observable<any[]> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
-        return this.http.get<any[]>(`${this.baseUrl}`,{ headers }).pipe(
+        return this.http.get<any[]>(`${this.baseUrlMP}`,{ headers }).pipe(
           catchError(this.handleError)
         );
   }
@@ -104,7 +104,7 @@ export class PaymentConnection {
   createMultiplePayment(payment: any, headers?: HttpHeaders): Observable<any> {
     const options = { headers: headers || this.getHeaders() }; // Use the passed headers or default to getHeaders()
     // Make an HTTP POST request to create a payment on your server
-    return this.http.post<any>(`${this.baseUrl}`, payment, options);
+    return this.http.post<any>(`${this.baseUrlMP}`, payment, options);
 }
 
 updateMultiplePaymentLicensee(id: any, payment: any, comment: string, headers?: HttpHeaders): Observable<any> {
@@ -123,20 +123,20 @@ updateMultiplePaymentLicensee(id: any, payment: any, comment: string, headers?: 
     const body = { ...payment, modified: modifiedValue, comment: comment };
 
     const options = { headers: headers || this.getHeaders() }; // Use the passed headers or default to getHeaders()
-    return this.http.put<any>(`${this.baseUrl}/${id}`, body, options); // Include the headers in the request
+    return this.http.put<any>(`${this.baseUrlMP}/${id}`, body, options); // Include the headers in the request
 }
 
 
   deleteMultiplePayment(id: number): Observable<void> {
     // Make an HTTP DELETE request to delete a payment on your server
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+    return this.http.delete<void>(`${this.baseUrlMP}/${id}`);
   }
 
 
 
   undoUpdateMultiplePayment(id: any, comment: string): Observable<any> {
     const headers = this.getHeaders();
-    return this.http.put<any>(`${this.baseUrl}/${id}/undo`, { comment }, { headers });
+    return this.http.put<any>(`${this.baseUrlMP}/${id}/undo`, { comment }, { headers });
   }
   
   
