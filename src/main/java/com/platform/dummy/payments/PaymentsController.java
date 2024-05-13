@@ -72,7 +72,7 @@ public class PaymentsController {
     }
 
 
-    @PutMapping("/{id}/undo")
+    @PutMapping("/{id}/undoP")
     public ResponseEntity<Payments> undoUpdatePayment(@PathVariable("id") Long id) {
         Optional<Payments> optionalPayment = paymentsRepository.findById(id);
         if (optionalPayment.isPresent()) {
