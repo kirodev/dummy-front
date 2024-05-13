@@ -72,7 +72,7 @@ public class MultiplePaymentsController {
     }
 
 
-    @PutMapping("/{id}/undo")
+    @PutMapping("/{id}/undoP")
     public ResponseEntity<MultiplePayments> undoUpdateMultiplePayment(@PathVariable("id") Long id, @RequestBody String comment) throws JSONException {
         // Here, the 'comment' parameter will directly contain the string value of the comment
         Optional<MultiplePayments> optionalPayment = multiplePaymentsRepository.findById(id);
