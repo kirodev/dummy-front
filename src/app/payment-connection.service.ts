@@ -12,7 +12,7 @@ export class PaymentConnection {
 
   private   url = environment.baseUrl;
   private baseUrl = this.url +'payments';
-  private baseUrlML =  this.url +'multiple-payments';
+  private baseUrlMP =  this.url +'multiple-payments';
 
   private getHeaders(): HttpHeaders {
     const token = this.tokenStorageService.getToken(); // Get the JWT token from your token storage service
@@ -37,7 +37,7 @@ export class PaymentConnection {
 
   getPayments(): Observable<any[]> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
-    return this.http.get<any[]>(`${this.baseUrl}/payments`, { headers }).pipe(
+    return this.http.get<any[]>(`${this.baseUrl}`, { headers }).pipe(
       catchError(this.handleError)
     );
   }
