@@ -146,7 +146,7 @@ export class PaymentTableComponent {
     this.showPopup = true;
     setTimeout(() => {
       this.pdfViewer.searchPDF(details);
-    }, 500);
+    }, 1000);
   }
 
 

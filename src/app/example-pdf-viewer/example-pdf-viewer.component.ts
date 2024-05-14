@@ -14,7 +14,6 @@ export class ExamplePdfViewerComponent implements AfterViewInit {
   constructor(private pdfViewerService: NgxExtendedPdfViewerService) { }
 
   ngAfterViewInit(): void {
-    // Subscribe to pdfLoaded event to ensure PDF is loaded before searching
    
   }
 
