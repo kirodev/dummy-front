@@ -91,7 +91,7 @@ export class LicenseTableComponent implements OnInit {
     this.showPopup = true;
     setTimeout(() => {
       this.pdfViewer.searchPDF(details);
-    }, 500);
+    }, 1000);
   }
 
 
