@@ -6,6 +6,7 @@
     margin: 0 auto; /* Center the container horizontally */
     max-width: calc(100% - 200px); /* Set maximum width with 100px space on each side */
     padding: 0 50px; /* Add 50px padding on each side */
+    
 }
 
   table {
@@ -195,4 +196,16 @@ td {
     padding: 20px;
     overflow: hidden; /* Prevent scrolling if content exceeds dimensions */
   }
+  #center-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
   
+  #center-button {
+    width: 150px; /* Static width for the button */
+    height: 50px; /* Static height for the button */
+    font-size: 16px; /* Font size */
+    padding: 10px; /* Padding for inner spacing */
+    text-align: center; /* Center text inside the button */
+  }

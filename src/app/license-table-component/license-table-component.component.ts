@@ -26,6 +26,7 @@ export class LicenseTableComponent implements OnInit {
   uniqueLicenses: string[] = [];
   filteredMultipleLicenses: any[] = []; 
   selectedLicense: string = ''; 
+  uniqueMappingIds: string[] = [];
 
 
   constructor(private connectionService: ConnectionService, private http: HttpClient,private dialog: MatDialog) {}
@@ -140,8 +141,9 @@ export class LicenseTableComponent implements OnInit {
     item.editing = false; 
   }
 
-  toggleDetailsVisibility(item: any): void {
+  toggleDetailsVisibility(item: any) {
     item.showDetails = !item.showDetails;
+    item.showButtonLabel = item.showDetails ? 'Hide' : 'Show';
   }
 
   loadPlotlyScript(): Promise<void> {
@@ -244,7 +246,6 @@ export class LicenseTableComponent implements OnInit {
       this.connectionService.undoUpdateLicensee(item.id, comment).subscribe(
         (response) => {
           console.log('Modification reverted successfully:', response);
-          // After successful revert, fetch updated data if needed
           this.fetchLicenseData();
         },
         (error) => {
@@ -271,31 +272,37 @@ fetchDistinctLicenses(): void {
 }
 
 
-  fetchMultipleLicensesData(): void {
-    this.connectionService.getMultipleLicenses().subscribe(
-      (data: any[]) => {
-        
-        // Filtered based on both licensor and known licensee conditions
-        this.filteredMultipleLicenses = data.filter(item => {
-          const meetsLicensorCondition = item.licensor === this.licensorName;
-          const knownLicenseeString = item.licensee || '';
-          const meetsKnownLicenseeCondition = knownLicenseeString.includes(this.licenseeName); // Use includes method
-          return meetsLicensorCondition && meetsKnownLicenseeCondition;
-        });
-  
-        // Filtered based on licensor only
-        const confirmedTableRows = this.filteredMultipleLicenses.map(item => item.id);
-        this.multipleLicenses = data.filter(item => !confirmedTableRows.includes(item.id) && item.licensor === this.licensorName);
-        const matchingRowsLicenseeOnly = data.filter(item => item.licensee === this.licenseeName); // Filter for licenseeName only
+fetchMultipleLicensesData(): void {
+  this.connectionService.getMultipleLicenses().subscribe(
+    (data: any[]) => {
+      console.log('Data received from backend:', data);
 
-        
-        this.initializeUniqueLicenses();
-      },
-      (error) => {
-        console.error('Error fetching data for multiple licensees:', error);
-      }
-    );
-  }
+      // Filtered based on both licensor and known licensee conditions
+      this.filteredMultipleLicenses = data.filter(item => {
+        const meetsLicensorCondition = item.licensor === this.licensorName;
+        const meetsLicenseeCondition = item.indiv_licensee === this.licenseeName;
+        return meetsLicensorCondition && meetsLicenseeCondition;
+      });
+
+      console.log('Filtered multiple licenses:', this.filteredMultipleLicenses);
+
+      // Filtered based on licensor only
+      const confirmedTableRows = this.filteredMultipleLicenses.map(item => item.id);
+      this.multipleLicenses = data.filter(item => !confirmedTableRows.includes(item.id) && item.licensor === this.licensorName);
+
+      console.log('Multiple licenses:', this.multipleLicenses);
+
+      // Filter for licenseeName only
+      const matchingRowsLicenseeOnly = data.filter(item => item.indiv_licensee === this.licenseeName);
+      console.log('Matching rows for licensee only:', matchingRowsLicenseeOnly);
+
+      this.initializeUniqueLicenses();
+    },
+    (error) => {
+      console.error('Error fetching data for multiple licensees:', error);
+    }
+  );
+}
 
   
   
@@ -312,67 +319,137 @@ fetchDistinctLicenses(): void {
 
 
 
-
-
-
-
   updateMultipleLicenses(item: any, comment: string): void {
-    // Concatenate this.licenseeName to the existing licensee value, separated by " | "
-    const updatedLicensee = item.licensee ? `${item.licensee} | ${this.licenseeName}` : this.licenseeName;
-  
-    // Ensure no duplicate names exist
-    const uniqueLicensees = new Set(updatedLicensee.split(' | '));
-    const updatedLicenseeString = Array.from(uniqueLicensees).join(' | ');
-  
-    // Update the licensee with the concatenated and unique names
-    item.licensee = updatedLicenseeString;
-  
-    // Decrease the multiplier until it reaches 0
-    if (item.multiplier > 0) {
-      item.multiplier--;
+    // Check if licenseeName already exists in the licensee string
+    const licenseeNames = item.licensee ? item.licensee.split(' | ') : [];
+    if (licenseeNames.includes(this.licenseeName)) {
+      alert(`${this.licenseeName} already exists in the licensee list.`);
+      return;
     }
   
-    // Check if the multiplier has reached 0, then hide the row
-    if (item.multiplier === 0) {
-      const index = this.multipleLicenses.findIndex(license => license.id === item.id);
-      if (index !== -1) {
-        this.multipleLicenses.splice(index, 1);
-      }
-    }
+    // Fetch all rows with the same snippet_id
+    const snippetId = item.snippet_id;
+    const itemsToUpdate = this.multipleLicenses.filter(license => license.snippet_id === snippetId);
   
-    // Save the updated license to the backend, including the comment in the request body
-    this.connectionService.updateMultipleLicensee(item.id, item, comment).subscribe(
+    // Iterate through each item and update the licensee field
+    itemsToUpdate.forEach(itemToUpdate => {
+      const currentLicenseeNames = itemToUpdate.licensee ? itemToUpdate.licensee.split(' | ') : [];
+      // Concatenate this.licenseeName to the existing licensee value, separated by " | "
+      const updatedLicensee = itemToUpdate.licensee
+        ? `${itemToUpdate.licensee} | ${this.licenseeName}`
+        : this.licenseeName;
+  
+      // Ensure no duplicate names exist
+      const uniqueLicensees = new Set(updatedLicensee.split(' | '));
+      const updatedLicenseeString = Array.from(uniqueLicensees).join(' | ');
+  
+      // Update the licensee and modified fields
+      itemToUpdate.licensee = updatedLicenseeString;
+      itemToUpdate.modified = `${itemToUpdate.snippet_id}_${itemToUpdate.id}`;
+    });
+  
+    // Save each updated item to the backend
+    itemsToUpdate.forEach(itemToUpdate => {
+      this.connectionService.updateMultipleLicensee(itemToUpdate.id, { ...itemToUpdate, licensee: itemToUpdate.licensee }, comment)
+        .subscribe(
+          (response) => {
+            console.log('License updated successfully:', response);
+            this.fetchMultipleLicensesData();
+          },
+          (error) => {
+            console.error('Error updating license:', error);
+          }
+        );
+    });
+  
+    // Clone the original row without duplicating the licenseeName
+    const updatedLicenseeNames = item.licensee ? item.licensee.split(' | ') : [];
+    if (!updatedLicenseeNames.includes(this.licenseeName)) {
+      updatedLicenseeNames.push(this.licenseeName);
+    }
+    const newRowLicenseeString = updatedLicenseeNames.join(' | ');
+  
+    const newRow = {
+      ...item,
+      id: undefined,
+      indiv_licensee: this.licenseeName,
+      licensee: newRowLicenseeString,
+      modified: `${item.snippet_id}_${item.id}`
+    };
+  
+    // Save the new row to the backend
+    this.connectionService.createMultipleLicensee(newRow).subscribe(
       (response) => {
-        console.log('license updated successfully:', response);
+        console.log('New license row created successfully:', response);
         this.fetchMultipleLicensesData();
       },
       (error) => {
-        console.error('Error updating license:', error);
+        console.error('Error creating new license row:', error);
       }
     );
+  }
+  
+  
+  
+  
+  
 
 
 
-}
-undoUpdateMultipleLicense(item: any,comment: string): void {
+undoUpdateML(item: any, comment: string): void {
   this.confirmAction('Are you sure you want to revert the modification?', () => {
-    this.connectionService.undoUpdateMultipleLicensee(item.id, comment).subscribe(
-      (response) => {
-        console.log('Modification reverted successfully:', response);
-        // After successful revert, fetch updated data if needed
-        this.fetchMultipleLicensesData();
-      },
-      (error) => {
-        console.error('Error reverting modification:', error);
-        window.alert('Error reverting modification');
-      }
-    );
+    const snippetId = item.snippet_id;
+
+    // Find all rows with the same snippet_id
+    const rowsToUpdate = this.multipleLicenses.filter(license => license.snippet_id === snippetId);
+
+    if (rowsToUpdate.length > 0) {
+      // Track the number of rows processed
+      let rowsProcessed = 0;
+
+      // Iterate through each row to update the licensee fields
+      rowsToUpdate.forEach((row) => {
+        // Remove the licenseeName from the licensee field
+        const licensees = row.licensee.split(' | ').filter((name: string) => name !== this.licenseeName);
+        row.licensee = licensees.join(' | ');
+
+        // Update each row in the backend
+        this.connectionService.updateMultipleLicensee(row.id, row, comment).subscribe(
+          (response) => {
+            console.log('Row updated successfully:', response);
+            rowsProcessed++;
+
+            // Check if all rows have been processed
+            if (rowsProcessed === rowsToUpdate.length) {
+              // Delete the new row
+              this.connectionService.deleteMultiplePayment(item.id).subscribe(
+                (deleteResponse) => {
+                  console.log('New payment row deleted successfully:', deleteResponse);
+                  // Refresh the data after all updates and deletion
+                  this.fetchMultipleLicensesData();
+                },
+                (deleteError) => {
+                  console.error('Error deleting new payment row:', deleteError);
+                }
+              );
+            }
+          },
+          (error) => {
+            console.error('Error updating row:', error);
+          }
+        );
+      });
+    } else {
+      console.error('No rows found with the provided snippet_id.');
+    }
   });
 }
 
     
   
-openFeedbackAfterUndo(item: AnimationPlaybackEvent): void {
+
+
+openFeedbackAfterUndoML(item: AnimationPlaybackEvent): void {
   const dialogRef = this.dialog.open(FeedbackPopupComponent, {
     data: { item: item } // Pass item or any other data you need
   });
@@ -382,12 +459,10 @@ openFeedbackAfterUndo(item: AnimationPlaybackEvent): void {
     console.log('Feedback comment:', comment); // Handle feedback comment here if needed
     if (comment) {
       // If comment is not empty, proceed with undo action passing the comment
-      this.undoUpdateMultipleLicense(item, comment);
+      this.undoUpdateML(item, comment);
     }
   });
 }
-
-
 openFeedbackAfterUndolicense(item: AnimationPlaybackEvent): void {
   const dialogRef = this.dialog.open(FeedbackPopupComponent, {
     data: { item: item } // Pass item or any other data you need
@@ -435,7 +510,6 @@ openFeedbackAfterUpdate(item: any): void {
 }
 
 
-uniqueMappingIds: string[] = [];
 
 populateUniqueMappingIds(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
@@ -461,95 +535,120 @@ populateUniqueMappingIds(): Promise<void> {
 
 
 
+maxCounter: number = 0; // Class-level variable to store the maximum counter value
+mappingIdCounter: Map<number, number> = new Map();
 
-// Function to extract the year from the signed date
-extractYear(signedDate: string): string {
-  let year = '';
+AddMappingId(itemId: number, item: any, tableType: 'licenses' | 'multipleLicenses', useMPMappingId: boolean = false): void {
+  console.log('AddMappingId function called for table:', tableType);
 
-  if (signedDate) {
-    // Check if the signed date contains a dot (.)
-    if (signedDate.includes('.')) {
-      // Extract the year from the signed date (assuming it's in the format dd.mm.yyyy)
-      const dateParts = signedDate.split('.');
-      if (dateParts.length === 3) {
-        year = dateParts[2];
-      } else {
-        console.error('Invalid signed date format:', signedDate);
-      }
-    } else {
-      // Assume the signed date is already in the format yyyy
-      year = signedDate;
-    }
-  } else {
-    console.error('No signed date provided.');
-  }
-
-  return year;
-}
-
-
-
-AddMappingId(itemId: number, item: any, signedDate: string): void {
-  console.log('AddMappingId function called');
-
-  // Extract the year from the signed date
-  const year = this.extractYear(signedDate);
-
-  // Get the selected mapping ID from the dropdown
   const selectedMappingId = item.selectedMappingId;
 
-  // If a mapping ID is selected from the dropdown, update the mapping_id with the selected value
-  if (selectedMappingId) {
-    item.mapping_id = selectedMappingId;
+  if (!selectedMappingId) {
+    let licensee = '';
+    let licensor = '';
 
-    // Save the updated item to the backend
-    this.connectionService.updateMappingId(itemId, selectedMappingId)
-      .subscribe(
-        response => {
-          console.log('Mapping ID updated successfully:', response);
-          // Optionally, you can perform additional actions after successful update
-        },
-        error => {
-          console.error('Error updating mapping ID:', error);
-          // Handle error scenarios here
-        }
-      );
-  } else {
-    // Generate a new mapping ID using the provided data
-    const licensee = item.licensee;
-    const licensor = item.licensor;
+    // Check if the table is multipleLicenses and indiv_licensee exists
+    if (tableType === 'multipleLicenses' && item.indiv_licensee) {
+      licensee = item.indiv_licensee;
+    } else if (item.licensee) { // Otherwise, use licensee
+      licensee = item.licensee;
+    }
 
+    // Check if licensor exists
+    if (item.licensor) {
+      licensor = item.licensor;
+    }
+
+    // Ensure both licensee and licensor are present
     if (licensee && licensor) {
-      const licenseeFirstLetter = licensee.charAt(0).toUpperCase();
-      const licensorFirstLetter = licensor.charAt(0).toUpperCase();
+      const licenseeFirstThreeLetters = licensee.substring(0, 3).toUpperCase();
+      const licensorFirstThreeLetters = licensor.substring(0, 3).toUpperCase();
 
-      // Construct the mapping ID using the item's ID, licensee and licensor initials, and the year
-      const generatedMappingId = `${itemId}-${licensorFirstLetter}-${licenseeFirstLetter}-${year}`;
+      // Increment the counter and generate the mapping ID
+      this.maxCounter += 1;
+      let generatedMappingId = `${licensorFirstThreeLetters}-${licenseeFirstThreeLetters}-${this.maxCounter}`;
 
-      // Assign the generated mapping ID to the item
+      // Ensure the generated mapping ID is unique
+      while (this.uniqueMappingIds.includes(generatedMappingId)) {
+        this.maxCounter += 1;
+        generatedMappingId = `${licensorFirstThreeLetters}-${licenseeFirstThreeLetters}-${this.maxCounter}`;
+      }
+
       item.mapping_id = generatedMappingId;
-
-      // Save the updated item to the backend
-      this.connectionService.updateMappingId(itemId, generatedMappingId)
-        .subscribe(
-          response => {
-            console.log('New Mapping ID created and updated successfully:', response);
-            // Optionally, you can perform additional actions after successful update
-          },
-          error => {
-            console.error('Error creating new mapping ID:', error);
-            // Handle error scenarios here
-          }
-        );
+      this.uniqueMappingIds.push(generatedMappingId); // Add the generated ID to the list of unique IDs
+      this.updateMappingId(itemId, generatedMappingId, tableType, useMPMappingId);
+      this.mappingIdCounter.set(itemId, this.maxCounter);
     } else {
       console.error('No licensee or licensor found.');
-      // Handle the scenario where licensee or licensor is missing
+      window.alert('Licensee or Licensor information is missing.');
     }
+  } else {
+    // If a mapping ID is already selected, update without generating a new one
+    this.updateMappingId(itemId, selectedMappingId, tableType, useMPMappingId);
   }
 }
 
+updateMappingId(itemId: number, mappingId: string, tableType: 'licenses' | 'multipleLicenses', useMappingId: boolean): void {
+  let updateObservable;
+
+  if (tableType === 'multipleLicenses') {
+    updateObservable = useMappingId ?
+      this.connectionService.updateMLMappingId(itemId, mappingId) :
+      this.connectionService.updateMLMappingId(itemId, mappingId); // Use updateMLMappingId for multipleLicenses
+  } else {
+    updateObservable = useMappingId ?
+      this.connectionService.updateLicenseMappingId(itemId, mappingId) :
+      this.connectionService.updateLicenseMappingId(itemId, mappingId); // Use updateLicenseMappingId for licenses
+  }
+
+  updateObservable.subscribe(
+    response => {
+      console.log('Mapping ID updated successfully:', response);
+      // Call the appropriate method to fetch updated data
+      if (tableType === 'multipleLicenses') {
+        this.fetchMultipleLicensesData();
+      } else {
+        this.fetchLicenseData();
+      }
+    },
+    error => {
+      console.error('Error updating mapping ID:', error);
+      window.alert('Error updating Mapping ID. Please try again.');
+    }
+  );
+}
 
 
+filterMappingIds(item: any, tableType: 'licenses' | 'multipleLicenses'): string[] {
+  if (tableType === 'licenses') {
+    // Logic for filtering mapping IDs for licenses
+    const licensorInitials = item.licensor.substring(0, 3).toUpperCase();
+    const licenseeInitials = item.licensee.substring(0, 3).toUpperCase();
+
+    return this.uniqueMappingIds.filter(mappingId => {
+      const parts = mappingId.split('-');
+      return (
+        parts.length === 3 &&
+        parts[0] === licensorInitials &&
+        parts[1] === licenseeInitials
+      );
+    });
+  } else if (tableType === 'multipleLicenses') {
+    // Logic for filtering mapping IDs for multiple licenses
+    // Adjust the filtering logic based on the structure of your multiple licenses data
+    // Example:
+    const licenseeInitials = item.indiv_licensee.substring(0, 3).toUpperCase();
+    return this.uniqueMappingIds.filter(mappingId => {
+      const parts = mappingId.split('-');
+      return (
+        parts.length === 3 &&
+        parts[1] === licenseeInitials
+      );
+    });
+  } else {
+    return [];
+  }
+}
 
 
 

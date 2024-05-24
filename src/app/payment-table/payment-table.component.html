@@ -1,12 +1,13 @@
 <!-- Table for rows with defined licensee -->
 
 
-<button routerLink="/license">Licenses </button>
-
-
-<div id='myDiv'></div>
 <div class="table-container">
+  <div id="center-button-container">
+    <button id="center-button" routerLink="/license">Licenses</button>
+  </div>
+  
 
+  <div id='myDiv'></div>
   <h1>Payment :</h1>
   <h1>{{ dynamicTitle }} :</h1>
 
@@ -91,12 +92,25 @@
             </ng-template>
             <br>
             <button (click)="toggleEditingMode(item)">Edit</button>
-            <button (click)="toggleDetailsVisibility(item)">Show</button>
-            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+            <button (click)="toggleDetailsVisibility(item)">
+              {{ item.showDetails ? 'Hide' : 'Show' }}
+            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
           </td>
           <td>
-            <button *ngIf="item.modified" (click)="undoUpdatePayment(item)">Undo Modification</button>
+            <ng-container *ngIf="uniquePayments.length > 0">
+              <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
+                <option value="" selected>Select Mapping ID to add :</option>
+                <ng-container *ngFor="let mappingId of filterMappingIds(item, 'payments')">
+                  <option [value]="mappingId">{{ mappingId }}</option>
+                </ng-container>
+              </select>
+            </ng-container>
+            <button (click)="AddMappingId(item.id, item, 'payments')">Mapping</button>
+            <button *ngIf="item.modified" (click)="openFeedbackAfterUndoPayment(item)">Undo Modification</button>
+            <button (click)="deletePayment(item.id)">Delete</button>
           </td>
+
+
           <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
             <ng-container *ngIf="item.comment !== null && item.comment !== ''">
               <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
@@ -104,13 +118,6 @@
               <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
             </ng-container>
           </td>
-
-
-
-
-
-
-
 
         </tr>
       </ng-container>
@@ -201,12 +208,21 @@
             </ng-template>
             <br>
             <button (click)="toggleEditingMode(item)">Edit</button>
-            <button (click)="toggleDetailsVisibility(item)">Show</button>
-            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+            <button (click)="toggleDetailsVisibility(item)">
+              {{ item.showDetails ? 'Hide' : 'Show' }}
+            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
           </td>
           <td>
             <button (click)="openFeedbackAfterUpdate(item)">Add to Licensees</button>
           </td>
+          <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
+            <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+              <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
+                alt="Question Mark Icon">
+              <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
+            </ng-container>
+          </td>
+
         </tr>
       </ng-container>
     </tbody>
@@ -223,6 +239,7 @@
         <th>Mapping ID</th>
         <th>Licensor</th>
         <th>Licensee</th>
+        <td>indiv licensee</td>
         <th>Licensee Affiliate</th>
         <th>Multiplier</th>
         <th>Qualifiers</th>
@@ -250,6 +267,7 @@
           <td>{{ item.mapping_id }}</td>
           <td>{{ item.licensor }}</td>
           <td>{{ item.licensee }}</td>
+          <td>{{ item.indiv_licensee }}</td>
           <td>{{ item.licensee_Affiliate }}</td>
           <td>{{ item.multiplier }}</td>
           <td>{{ item.qualifiers }}</td>
@@ -279,12 +297,25 @@
             </ng-template>
             <br>
             <button (click)="toggleEditingMode(item)">Edit</button>
-            <button (click)="toggleDetailsVisibility(item)">Show</button>
-            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+            <button (click)="toggleDetailsVisibility(item)">
+              {{ item.showDetails ? 'Hide' : 'Show' }}
+            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
           </td>
           <td>
-            <button *ngIf="item.modified" (click)="openFeedbackAfterUndo(item)">Undo Modification</button>
+            <ng-container *ngIf="uniquePayments.length > 0">
+              <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
+                <option value="" selected>Select Mapping ID to add :</option>
+                <ng-container *ngFor="let mappingId of filterMappingIds(item, 'multiplePayments')">
+                  <option [value]="mappingId">{{ mappingId }}</option>
+                </ng-container>
+              </select>
+            </ng-container>
+            
+            <button (click)="AddMappingId(item.id, item, 'multiplePayments')">Mapping</button>
+            <button *ngIf="item.modified" (click)="openFeedbackAfterUndoMP(item)">Undo Modification</button>
+            <button (click)="deletePayment(item.id)">Delete</button>
           </td>
+
           <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
             <ng-container *ngIf="item.comment !== null && item.comment !== ''">
               <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
@@ -310,6 +341,7 @@
         <th>Mapping ID</th>
         <th>Licensor</th>
         <th>Licensee</th>
+        <td>indiv licensee</td>
         <th>Licensee Affiliate</th>
         <th>Multiplier</th>
         <th>Qualifiers</th>
@@ -330,12 +362,13 @@
     </thead>
     <tbody>
       <ng-container *ngFor="let item of multiplePayments; let i = index">
-        <tr>
+        <tr *ngIf="!item.indiv_licensee || item.indiv_licensee.trim() === ''">
           <td>{{ item.id }}</td>
           <td>{{ item.snippet_id }}</td>
           <td>{{ item.mapping_id }}</td>
           <td>{{ item.licensor }}</td>
           <td>{{ item.licensee }}</td>
+          <td>{{ item.indiv_licensee }}</td>
           <td>{{ item.licensee_Affiliate }}</td>
           <td>{{ item.multiplier }}</td>
           <td>{{ item.qualifiers }}</td>
@@ -365,11 +398,20 @@
             </ng-template>
             <br>
             <button (click)="toggleEditingMode(item)">Edit</button>
-            <button (click)="toggleDetailsVisibility(item)">Show</button>
-            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+            <button (click)="toggleDetailsVisibility(item)">
+              {{ item.showDetails ? 'Hide' : 'Show' }}
+            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
           </td>
+
           <td>
             <button (click)="openFeedbackAfterUpdateMultiplePayments(item)">ADD to licensees</button>
+          </td>
+          <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
+            <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+              <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
+                alt="Question Mark Icon">
+              <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
+            </ng-container>
           </td>
         </tr>
       </ng-container>

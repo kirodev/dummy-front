@@ -4,7 +4,7 @@ import { ExamplePdfViewerComponent } from '../example-pdf-viewer/example-pdf-vie
 import { PaymentConnection } from '../payment-connection.service';
 import { FeedbackPopupComponent } from '../feedback-popup/feedback-popup.component';
 import { MatDialog } from '@angular/material/dialog'; // Import MatDialog for opening dialog
-
+import { LicenseTableComponent } from '../license-table-component/license-table-component.component';
 declare var Plotly: any;
 
 @Component({
@@ -26,8 +26,11 @@ export class PaymentTableComponent {
   uniquePayments: string[] = [];
   selectedPayment: string = '';
   filteredMultiplePayments: any[] = [];
+  uniqueLicenses: any[] = [];
 
-  constructor(private paymentConnection: PaymentConnection, private http: HttpClient, private dialog: MatDialog) { }
+
+
+  constructor(private paymentConnection: PaymentConnection, private http: HttpClient, private dialog: MatDialog ) { }
 
   ngOnInit(): void {
     this.licensorName = localStorage.getItem('licensorName') || 'Licensor Name';
@@ -37,6 +40,7 @@ export class PaymentTableComponent {
     this.fetchMultiplePaymentsData();
     this.fetchPaymentsData();
     this.fetchDistinctPayments(); 
+    this.populateUniqueMappingIds(); 
     this.loadPlotlyScript().then(() => {
       console.log('Plotly.js script loaded successfully');
       this.plotData();
@@ -215,9 +219,9 @@ export class PaymentTableComponent {
 
 
 
-  undoUpdatePayment(item: any): void {
+  undoUpdatePayment(item: any,comment: string): void {
     this.confirmAction('Are you sure you want to revert the payment to Unknown?', () => {
-      this.paymentConnection.undoUpdatePayment(item.id).subscribe(
+      this.paymentConnection.undoUpdatePayment(item.id, comment).subscribe(
         (response) => {
           this.filterPaymentsData();
         },
@@ -243,32 +247,38 @@ export class PaymentTableComponent {
       );
     }
   }
+
   fetchMultiplePaymentsData(): void {
     this.paymentConnection.getMultiplePayments().subscribe(
       (data: any[]) => {
-        
+        console.log('Data received from backend:', data);
+  
         // Filtered based on both licensor and known licensee conditions
         this.filteredMultiplePayments = data.filter(item => {
           const meetsLicensorCondition = item.licensor === this.licensorName;
-          const knownLicenseeString = item.licensee || '';
-          const meetsKnownLicenseeCondition = knownLicenseeString.includes(this.licenseeName); // Use includes method
-          return meetsLicensorCondition && meetsKnownLicenseeCondition;
+          const meetsLicenseeCondition = item.indiv_licensee === this.licenseeName;
+          return meetsLicensorCondition && meetsLicenseeCondition;
         });
+  
+        console.log('Filtered multiple licenses:', this.filteredMultiplePayments);
   
         // Filtered based on licensor only
         const confirmedTableRows = this.filteredMultiplePayments.map(item => item.id);
         this.multiplePayments = data.filter(item => !confirmedTableRows.includes(item.id) && item.licensor === this.licensorName);
-        const matchingRowsLicenseeOnly = data.filter(item => item.licensee === this.licenseeName); // Filter for licenseeName only
-
-        
+  
+        console.log('Multiple licenses:', this.multiplePayments);
+  
+        // Filter for licenseeName only
+        const matchingRowsLicenseeOnly = data.filter(item => item.indiv_licensee === this.licenseeName);
+        console.log('Matching rows for licensee only:', matchingRowsLicenseeOnly);
+  
         this.initializeUniquePayments();
-       },
+      },
       (error) => {
         console.error('Error fetching data for multiple licensees:', error);
       }
     );
   }
-
 
   initializeUniquePayments(): void {
     const uniquePayments = this.multiplePayments.reduce((acc: string[], curr: any) => {
@@ -281,65 +291,78 @@ export class PaymentTableComponent {
   }
 
 
-
-  updateMultiplePayment(item: any, comment: string): void {
-    // Concatenate this.licenseeName to the existing licensee value, separated by " | "
-    const updatedLicensee = item.licensee ? `${item.licensee} | ${this.licenseeName}` : this.licenseeName;
-
-    // Ensure no duplicate names exist
-    const uniqueLicensees = new Set(updatedLicensee.split(' | '));
-    const updatedLicenseeString = Array.from(uniqueLicensees).join(' | ');
-
-    // Update the licensee with the concatenated and unique names
-    item.licensee = updatedLicenseeString;
-
-    // Decrease the multiplier until it reaches 0
-    if (item.multiplier > 0) {
-      item.multiplier--;
-    }
-
-    // Check if the multiplier has reached 0, then hide the row
-    if (item.multiplier === 0) {
-      const index = this.multiplePayments.findIndex(payment => payment.id === item.id);
-      if (index !== -1) {
-        this.multiplePayments.splice(index, 1);
-      }
-    }
-
-    // Save the updated payment to the backend, including the comment in the request body
-    this.paymentConnection.updateMultiplePaymentLicensee(item.id, item, comment).subscribe(
-      (response) => {
-        console.log('Payment updated successfully:', response);
-        this.fetchMultiplePaymentsData();
-      },
-      (error) => {
-        console.error('Error updating payment:', error);
-      }
-    );
-  }
-
-
-  undoUpdateMultipleLicense(item: any, comment: string): void {
+  undoUpdateMP(item: any, comment: string): void {
     this.confirmAction('Are you sure you want to revert the modification?', () => {
-      this.paymentConnection.undoUpdateMultiplePayment(item.id, comment).subscribe(
-        (response) => {
-          console.log('Modification reverted successfully:', response);
-          // After successful revert, fetch updated data if needed
-          this.fetchMultiplePaymentsData();
-        },
-        (error) => {
-          console.error('Error reverting modification:', error);
-          window.alert('Error reverting modification');
-        }
-      );
+      const snippetId = item.snippet_id;
+  
+      // Find all rows with the same snippet_id
+      const rowsToUpdate = this.multiplePayments.filter(payment => payment.snippet_id === snippetId);
+  
+      if (rowsToUpdate.length > 0) {
+        // Track the number of rows processed
+        let rowsProcessed = 0;
+  
+        // Iterate through each row to update the licensee fields
+        rowsToUpdate.forEach((row) => {
+          // Remove the licenseeName from the licensee field
+          const licensees = row.licensee.split(' | ').filter((name: string) => name !== this.licenseeName);
+          row.licensee = licensees.join(' | ');
+  
+          // Update each row in the backend
+          this.paymentConnection.updateMultiplePaymentLicensee(row.id, row, comment).subscribe(
+            (response) => {
+              console.log('Row updated successfully:', response);
+              rowsProcessed++;
+  
+              // Check if all rows have been processed
+              if (rowsProcessed === rowsToUpdate.length) {
+                // Delete the new row
+                this.paymentConnection.deleteMultiplePayment(item.id).subscribe(
+                  (deleteResponse) => {
+                    console.log('New payment row deleted successfully:', deleteResponse);
+                    // Refresh the data after all updates and deletion
+                    this.fetchMultiplePaymentsData();
+                  },
+                  (deleteError) => {
+                    console.error('Error deleting new payment row:', deleteError);
+                  }
+                );
+              }
+            },
+            (error) => {
+              console.error('Error updating row:', error);
+            }
+          );
+        });
+      } else {
+        console.error('No rows found with the provided snippet_id.');
+      }
     });
   }
+  
+  
+  
+  
+  
 
+  
+  openFeedbackAfterUndoPayment(item: AnimationPlaybackEvent): void {
+    const dialogRef = this.dialog.open(FeedbackPopupComponent, {
+      data: { item: item } // Pass item or any other data you need
+    });
+  
+    dialogRef.afterClosed().subscribe(comment => {
+      console.log('The dialog was closed');
+      console.log('Feedback comment:', comment); // Handle feedback comment here if needed
+      if (comment) {
+        // If comment is not empty, proceed with undo action passing the comment
+        this.undoUpdatePayment(item, comment);
+      }
+    });
+  }
+  
 
-
-
-
-  openFeedbackAfterUndo(item: any): void {
+  openFeedbackAfterUndoMP(item: any): void {
     const dialogRef = this.dialog.open(FeedbackPopupComponent, {
       data: { item: item } // Pass item or any other data you need
     });
@@ -349,7 +372,7 @@ export class PaymentTableComponent {
       console.log('Feedback comment:', comment); // Handle feedback comment here if needed
       if (comment) {
         // If comment is not empty, proceed with undo action passing the comment
-        this.undoUpdateMultipleLicense(item, comment);
+        this.undoUpdateMP(item, comment);
       }
     });
   }
@@ -364,7 +387,7 @@ export class PaymentTableComponent {
       console.log('Feedback comment:', comment); // Handle feedback comment here if needed
       if (comment) {
         // If comment is not empty, proceed with update action passing the comment
-        this.updateMultiplePayment(item, comment); // Pass the comment here
+        this.updateMultiplePayments(item, comment); // Pass the comment here
       }
     });
   }
@@ -447,4 +470,217 @@ export class PaymentTableComponent {
     console.log('Submitting feedback to the database:', feedback);
     // Example: this.paymentConnection.submitFeedback(item.id, feedback).subscribe(...);
   }
+
+
+  uniqueMappingIds: string[] = [];
+
+populateUniqueMappingIds(): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    this.paymentConnection.getPayments().subscribe(
+      (data: any[]) => {
+        // Assuming the mapping IDs are stored in a property called mapping_id
+        this.uniqueMappingIds = data
+          .filter(item => item.mapping_id) // Filter out items with undefined or null mapping_id
+          .map(item => item.mapping_id)
+          .filter((value, index, self) => self.indexOf(value) === index);
+
+        console.log('Unique Mapping IDs:', this.uniqueMappingIds); // Log uniqueMappingIds
+
+        resolve(); // Resolve the promise once unique mapping IDs are populated
+      },
+      error => {
+        console.error('Error fetching mapping IDs:', error);
+        reject(error); // Reject the promise if there's an error fetching data
+      }
+    );
+  });
+}
+
+updateMultiplePayments(item: any, comment: string): void {
+  // Check if licenseeName already exists in the licensee string
+  const licenseeNames = item.licensee ? item.licensee.split(' | ') : [];
+  if (licenseeNames.includes(this.licenseeName)) {
+    alert(`${this.licenseeName} already exists in the licensee list.`);
+    return;
+  }
+
+  // Fetch all rows with the same snippet_id
+  const snippetId = item.snippet_id;
+  const itemsToUpdate = this.multiplePayments.filter(payment => payment.snippet_id === snippetId);
+
+  // Iterate through each item and update the licensee field
+  itemsToUpdate.forEach(itemToUpdate => {
+    const currentLicenseeNames = itemToUpdate.licensee ? itemToUpdate.licensee.split(' | ') : [];
+    // Concatenate this.licenseeName to the existing licensee value, separated by " | "
+    const updatedLicensee = itemToUpdate.licensee
+      ? `${itemToUpdate.licensee} | ${this.licenseeName}`
+      : this.licenseeName;
+
+    // Ensure no duplicate names exist
+    const uniqueLicensees = new Set(updatedLicensee.split(' | '));
+    const updatedLicenseeString = Array.from(uniqueLicensees).join(' | ');
+
+    // Update the licensee and modified fields
+    itemToUpdate.licensee = updatedLicenseeString;
+    itemToUpdate.modified = `${itemToUpdate.snippet_id}_${itemToUpdate.id}`;
+  });
+
+  // Save each updated item to the backend
+  itemsToUpdate.forEach(itemToUpdate => {
+    this.paymentConnection.updateMultiplePaymentLicensee(itemToUpdate.id, { ...itemToUpdate, licensee: itemToUpdate.licensee }, comment)
+      .subscribe(
+        (response) => {
+          console.log('Payment updated successfully:', response);
+          this.fetchMultiplePaymentsData();
+        },
+        (error) => {
+          console.error('Error updating payment:', error);
+        }
+      );
+  });
+
+  // Clone the original row without duplicating the licenseeName
+  const updatedLicenseeNames = item.licensee ? item.licensee.split(' | ') : [];
+  if (!updatedLicenseeNames.includes(this.licenseeName)) {
+    updatedLicenseeNames.push(this.licenseeName);
+  }
+  const newRowLicenseeString = updatedLicenseeNames.join(' | ');
+
+  const newRow = {
+    ...item,
+    id: undefined,
+    indiv_licensee: this.licenseeName,
+    licensee: newRowLicenseeString,
+    modified: `${item.snippet_id}_${item.id}`
+  };
+
+  // Save the new row to the backend
+  this.paymentConnection.createMultiplePayment(newRow).subscribe(
+    (response) => {
+      console.log('New payment row created successfully:', response);
+      this.fetchMultiplePaymentsData();
+    },
+    (error) => {
+      console.error('Error creating new payment row:', error);
+    }
+  );
+}
+
+
+maxCounter: number = 0; // Class-level variable to store the maximum counter value
+mappingIdCounter: Map<number, number> = new Map();
+
+AddMappingId(itemId: number, item: any, tableType: 'payments' | 'multiplePayments', useMPMappingId: boolean = false): void {
+  console.log('AddMappingId function called for table:', tableType);
+
+  const selectedMappingId = item.selectedMappingId;
+
+  if (!selectedMappingId) {
+    let licensee = '';
+    let licensor = '';
+
+    // Check if the table is multiplePayments and indiv_licensee exists
+    if (tableType === 'multiplePayments' && item.indiv_licensee) {
+      licensee = item.indiv_licensee;
+    } else if (item.licensee) { // Otherwise, use licensee
+      licensee = item.licensee;
+    }
+
+    // Check if licensor exists
+    if (item.licensor) {
+      licensor = item.licensor;
+    }
+
+    // Ensure both licensee and licensor are present
+    if (licensee && licensor) {
+      const licenseeFirstThreeLetters = licensee.substring(0, 3).toUpperCase();
+      const licensorFirstThreeLetters = licensor.substring(0, 3).toUpperCase();
+
+      // Increment the counter and generate the mapping ID
+      this.maxCounter += 1;
+      let generatedMappingId = `${licensorFirstThreeLetters}-${licenseeFirstThreeLetters}-${this.maxCounter}`;
+
+      // Ensure the generated mapping ID is unique
+      while (this.uniqueMappingIds.includes(generatedMappingId)) {
+        this.maxCounter += 1;
+        generatedMappingId = `${licensorFirstThreeLetters}-${licenseeFirstThreeLetters}-${this.maxCounter}`;
+      }
+
+      item.mapping_id = generatedMappingId;
+      this.uniqueMappingIds.push(generatedMappingId); // Add the generated ID to the list of unique IDs
+      this.updateMappingId(itemId, generatedMappingId, tableType, useMPMappingId);
+      this.mappingIdCounter.set(itemId, this.maxCounter);
+    } else {
+      console.error('No licensee or licensor found.');
+      window.alert('Licensee or Licensor information is missing.');
+    }
+  } else {
+    // If a mapping ID is already selected, update without generating a new one
+    this.updateMappingId(itemId, selectedMappingId, tableType, useMPMappingId);
+  }
+}
+updateMappingId(itemId: number, mappingId: string, tableType: 'payments' | 'multiplePayments', useMappingId: boolean): void {
+  let updateObservable;
+
+  if (tableType === 'multiplePayments') {
+    updateObservable = useMappingId ?
+      this.paymentConnection.updateMPMappingId(itemId, mappingId) :
+      this.paymentConnection.updateMPMappingId(itemId, mappingId); // Use updateMLMappingId for multipleLicenses
+  } else {
+    updateObservable = useMappingId ?
+      this.paymentConnection.updatePaymentMappingId(itemId, mappingId) :
+      this.paymentConnection.updatePaymentMappingId(itemId, mappingId); // Use updateLicenseMappingId for licenses
+  }
+
+  updateObservable.subscribe(
+    response => {
+      console.log('Mapping ID updated successfully:', response);
+      // Call the appropriate method to fetch updated data
+      if (tableType === 'multiplePayments') {
+        this.fetchMultiplePaymentsData();
+      } else {
+        this.fetchPaymentsData();
+      }
+    },
+    error => {
+      console.error('Error updating mapping ID:', error);
+      window.alert('Error updating Mapping ID. Please try again.');
+    }
+  );
+}
+
+
+filterMappingIds(item: any, tableType: 'payments' | 'multiplePayments'): string[] {
+  if (tableType === 'payments') {
+    // Logic for filtering mapping IDs for licenses
+    const licensorInitials = item.licensor.substring(0, 3).toUpperCase();
+    const licenseeInitials = item.licensee.substring(0, 3).toUpperCase();
+
+    return this.uniqueMappingIds.filter(mappingId => {
+      const parts = mappingId.split('-');
+      return (
+        parts.length === 3 &&
+        parts[0] === licensorInitials &&
+        parts[1] === licenseeInitials
+      );
+    });
+  } else if (tableType === 'multiplePayments') {
+    // Logic for filtering mapping IDs for multiple licenses
+    // Adjust the filtering logic based on the structure of your multiple licenses data
+    // Example:
+    const licenseeInitials = item.indiv_licensee.substring(0, 3).toUpperCase();
+    return this.uniqueMappingIds.filter(mappingId => {
+      const parts = mappingId.split('-');
+      return (
+        parts.length === 3 &&
+        parts[1] === licenseeInitials
+      );
+    });
+  } else {
+    return [];
+  }
+}
+
+
+
 }

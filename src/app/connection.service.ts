@@ -137,6 +137,15 @@ updateDetails(id: number, updatedDetails: string): Observable<any> {
     );
   }
 
+
+  createMultipleLicensee(newLicense: any): Observable<any> {
+    const headers = this.getHeaders(); // Get the headers including the JWT token
+    const url = `${this.baseUrlML}`; // Adjust the endpoint as necessary
+    return this.http.post(url, newLicense, { headers }).pipe(
+      catchError(this.handleError)
+    );
+
+  }
   updateMultipleLicensee(id: any, license: any, comment: string): Observable<any> {
     let modifiedValue = null;
     const licenseeRegex = /^([^|]+)(?:\s*\|\s*([^|]+))*$/;
@@ -166,22 +175,20 @@ undoUpdateMultipleLicensee(id: any, comment: string): Observable<any[]> {
     return this.http.put<any>(`${this.baseUrlML}/${id}/undo`, comment, { headers }); // Include the headers in the request
 }
 
-  updateMappingId(itemId: number, mappingId: string): Observable<any> {
+updateLicenseMappingId(itemId: number, mappingId: string): Observable<any> {
     const url = `${this.baseUrl}/${itemId}/mappingId`;
     const headers = this.getHeaders(); // Get the headers including the JWT token
     return this.http.put(url, mappingId, { headers }); // Include the headers in the request
   }
   
-
-
- fetchMappingIds(licensor: string, licensee: string): Observable<string[]> {
-    const url = `${this.baseUrl}/mappingIds`;
-    const params = new HttpParams()
-      .set('licensor', licensor)
-      .set('licensee', licensee);
+  updateMLMappingId(itemId: number, mappingId: string): Observable<any> {
+    const url = `${this.baseUrlML}/${itemId}/MLmappingId`;
     const headers = this.getHeaders(); // Get the headers including the JWT token
-    return this.http.get<string[]>(url, { params, headers }); // Include the headers in the request
-  }
+    return this.http.put(url, mappingId, { headers }).pipe(
+      catchError(this.handleError)
+    ); // Include the headers in the request
+}
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Unknown error occurred';
     if (error.error instanceof ErrorEvent) {
