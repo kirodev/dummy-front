@@ -1,5 +1,6 @@
 package com.platform.dummy.multipleLicenses;
 
+import com.platform.dummy.licenses.Licenses;
 import com.platform.dummy.multipleLicenses.MultipleLicenses;
 import com.platform.dummy.multipleLicenses.MultipleLicensesRepository;
 import com.platform.dummy.multiplePayments.MultiplePayments;
@@ -104,6 +105,15 @@ public class MultipleLicensesController {
                 // Update the license with the modified licensee
                 existingLicense.setLicensee(licensee);
 
+                // Increment the multiplier by 1 if it's not null
+                Integer multiplier = existingLicense.getMultiplier();
+                if (multiplier != null) {
+                    existingLicense.setMultiplier(multiplier + 1);
+                }
+
+                // Set the 'modified' property to null
+                existingLicense.setModified(null);
+
                 // Save the updated license entity to the database
                 MultipleLicenses updatedLicense = multiplelicensesRepository.save(existingLicense);
                 return new ResponseEntity<>(updatedLicense, HttpStatus.OK);
@@ -111,6 +121,7 @@ public class MultipleLicensesController {
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+
 
 
 
@@ -125,4 +136,25 @@ public class MultipleLicensesController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
+    @PutMapping("/{id}/MLmappingId")
+    public ResponseEntity<MultipleLicenses> updateMLMappingId(
+            @PathVariable("id") Long id,
+            @RequestBody String mappingId) {
+        // Assuming MultipleLicensesRepository is autowired
+        Optional<MultipleLicenses> optionalMultipleLicenses = multiplelicensesRepository.findById(id);
+        if (optionalMultipleLicenses.isPresent()) {
+            MultipleLicenses multipleLicenses = optionalMultipleLicenses.get();
+            multipleLicenses.setMapping_id(mappingId); // Set the mapping ID
+            // Save the updated entity
+            MultipleLicenses updatedMultipleLicenses = multiplelicensesRepository.save(multipleLicenses);
+            return new ResponseEntity<>(updatedMultipleLicenses, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+
+
 }

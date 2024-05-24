@@ -94,6 +94,12 @@ public class MultiplePaymentsController {
             // Update the payment with the modified licensee
             existingPayment.setLicensee(licensee);
 
+            // Increment the multiplier by 1 if it's not null
+            Integer multiplier = existingPayment.getMultiplier();
+            if (multiplier != null) {
+                existingPayment.setMultiplier(multiplier + 1);
+            }
+
             // Set modified to null to indicate the restoration of the original state
             existingPayment.setModified(null);
 
@@ -115,10 +121,6 @@ public class MultiplePaymentsController {
         return ResponseEntity.notFound().build();
     }
 
-
-
-
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMultiplePayment(@PathVariable Long id) {
         Optional<MultiplePayments> optionalMultiplePayments = multiplePaymentsRepository.findById(id);
@@ -129,4 +131,22 @@ public class MultiplePaymentsController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PutMapping("/{id}/MPmappingId")
+    public ResponseEntity<MultiplePayments> updateMPMappingId(
+            @PathVariable("id") Long id,
+            @RequestBody String mappingId) {
+        // Assuming MultipleLicensesRepository is autowired
+        Optional<MultiplePayments> optionalMultiplePayments = multiplePaymentsRepository.findById(id);
+        if (optionalMultiplePayments.isPresent()) {
+            MultiplePayments multiplePayments = optionalMultiplePayments.get();
+            multiplePayments.setMapping_id(mappingId); // Set the mapping ID
+            // Save the updated entity
+            MultiplePayments updatedMultiplePayments = multiplePaymentsRepository.save(multiplePayments);
+            return new ResponseEntity<>(updatedMultiplePayments, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
 }

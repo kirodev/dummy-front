@@ -1,6 +1,7 @@
 package com.platform.dummy.payments;
 
 
+import com.platform.dummy.licenses.Licenses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -72,6 +73,7 @@ public class PaymentsController {
     }
 
 
+
     @PutMapping("/{id}/undoP")
     public ResponseEntity<Payments> undoUpdatePayment(@PathVariable("id") Long id) {
         Optional<Payments> optionalPayment = paymentsRepository.findById(id);
@@ -107,6 +109,22 @@ public class PaymentsController {
             existingPayment.setDetails(updatedDetails); // Set the updated details
             Payments updatedPayment = paymentsRepository.save(existingPayment);
             return new ResponseEntity<>(updatedPayment, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PutMapping("/{id}/mappingId")
+
+    public ResponseEntity<Payments> updateMappingId(
+            @PathVariable("id") Long id,
+            @RequestBody String mappingId) {
+        Optional<Payments> optionalPayments = paymentsRepository.findById(id);
+        if (optionalPayments.isPresent()) {
+            Payments existingPayments = optionalPayments.get();
+            existingPayments.setMapping_id(mappingId);
+            Payments updatedPayments = paymentsRepository.save(existingPayments);
+            return new ResponseEntity<>(updatedPayments, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

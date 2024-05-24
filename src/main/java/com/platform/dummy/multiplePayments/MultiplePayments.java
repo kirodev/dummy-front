@@ -13,6 +13,8 @@ public class MultiplePayments {
         private String snippet_id;
         private String licensor;
         private String licensee;
+
+        private String indiv_licensee;
         private String licensee_Affiliate;
 
         private Integer multiplier;
@@ -41,12 +43,13 @@ public class MultiplePayments {
         public MultiplePayments() {
         }
 
-        public MultiplePayments(Long id, String mapping_id, String snippet_id, String licensor, String licensee, String licensee_Affiliate, Integer multiplier, String qualifiers, String license_sales, Integer year, String yearly_quarters, String period_start, String period_end, String information_type, Float payment_amount, String payment_amount_in_local_currency, String local_currency, String percentage_value, String payment_type, String details, String directory_path, String modified, String comment) {
+        public MultiplePayments(Long id, String mapping_id, String snippet_id, String licensor, String licensee, String indiv_licensee, String licensee_Affiliate, Integer multiplier, String qualifiers, String license_sales, Integer year, String yearly_quarters, String period_start, String period_end, String information_type, Float payment_amount, String payment_amount_in_local_currency, String local_currency, String percentage_value, String payment_type, String details, String directory_path, String modified, String comment) {
                 this.id = id;
                 this.mapping_id = mapping_id;
                 this.snippet_id = snippet_id;
                 this.licensor = licensor;
                 this.licensee = licensee;
+                this.indiv_licensee = indiv_licensee;
                 this.licensee_Affiliate = licensee_Affiliate;
                 this.multiplier = multiplier;
                 this.qualifiers = qualifiers;
@@ -105,6 +108,14 @@ public class MultiplePayments {
 
         public void setLicensee(String licensee) {
                 this.licensee = licensee;
+        }
+
+        public String getIndiv_licensee() {
+                return indiv_licensee;
+        }
+
+        public void setIndiv_licensee(String indiv_licensee) {
+                this.indiv_licensee = indiv_licensee;
         }
 
         public String getLicensee_Affiliate() {

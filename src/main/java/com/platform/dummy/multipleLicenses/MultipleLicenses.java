@@ -15,6 +15,9 @@ public class MultipleLicenses {
     private String snippet_id;
     private String licensor;
     private String licensee;
+
+    private String indiv_licensee;
+
     private String affiliate;
     private Integer multiplier;
     private String qualifiers;
@@ -25,8 +28,7 @@ public class MultipleLicenses {
     private String expiration_quarter;
     private String information_type;
     private String technologies;
-    private String payment_amount;
-    private String payment_type;
+    private String payment_structure;
     private String geographical_scope;
     private String details;
     private String directory_path;
@@ -38,12 +40,13 @@ public class MultipleLicenses {
 
     }
 
-    public MultipleLicenses(Long id, String mapping_id, String snippet_id, String licensor, String licensee, String affiliate, Integer multiplier, String qualifiers, String signed_date, String signed_quarter, String expiration_date, String expiration_quarter, String information_type, String technologies, String payment_amount, String payment_type, String geographical_scope, String details, String directory_path, String modified, String comment) {
+    public MultipleLicenses(Long id, String mapping_id, String snippet_id, String licensor, String licensee, String indiv_licensee, String affiliate, Integer multiplier, String qualifiers, String signed_date, String signed_quarter, String expiration_date, String expiration_quarter, String information_type, String technologies, String payment_structure, String geographical_scope, String details, String directory_path, String modified, String comment) {
         this.id = id;
         this.mapping_id = mapping_id;
         this.snippet_id = snippet_id;
         this.licensor = licensor;
         this.licensee = licensee;
+        this.indiv_licensee = indiv_licensee;
         this.affiliate = affiliate;
         this.multiplier = multiplier;
         this.qualifiers = qualifiers;
@@ -53,8 +56,7 @@ public class MultipleLicenses {
         this.expiration_quarter = expiration_quarter;
         this.information_type = information_type;
         this.technologies = technologies;
-        this.payment_amount = payment_amount;
-        this.payment_type = payment_type;
+        this.payment_structure = payment_structure;
         this.geographical_scope = geographical_scope;
         this.details = details;
         this.directory_path = directory_path;
@@ -100,6 +102,14 @@ public class MultipleLicenses {
 
     public void setLicensee(String licensee) {
         this.licensee = licensee;
+    }
+
+    public String getIndiv_licensee() {
+        return indiv_licensee;
+    }
+
+    public void setIndiv_licensee(String indiv_licensee) {
+        this.indiv_licensee = indiv_licensee;
     }
 
     public String getAffiliate() {
@@ -174,20 +184,12 @@ public class MultipleLicenses {
         this.technologies = technologies;
     }
 
-    public String getPayment_amount() {
-        return payment_amount;
+    public String getPayment_structure() {
+        return payment_structure;
     }
 
-    public void setPayment_amount(String payment_amount) {
-        this.payment_amount = payment_amount;
-    }
-
-    public String getPayment_type() {
-        return payment_type;
-    }
-
-    public void setPayment_type(String payment_type) {
-        this.payment_type = payment_type;
+    public void setPayment_structure(String payment_structure) {
+        this.payment_structure = payment_structure;
     }
 
     public String getGeographical_scope() {
@@ -228,32 +230,5 @@ public class MultipleLicenses {
 
     public void setComment(String comment) {
         this.comment = comment;
-    }
-
-    @Override
-    public String toString() {
-        return "MultipleLicenses{" +
-                "id=" + id +
-                ", mapping_id='" + mapping_id + '\'' +
-                ", snippet_id='" + snippet_id + '\'' +
-                ", licensor='" + licensor + '\'' +
-                ", licensee='" + licensee + '\'' +
-                ", affiliate='" + affiliate + '\'' +
-                ", multiplier=" + multiplier +
-                ", qualifiers='" + qualifiers + '\'' +
-                ", signed_date='" + signed_date + '\'' +
-                ", signed_quarter='" + signed_quarter + '\'' +
-                ", expiration_date='" + expiration_date + '\'' +
-                ", expiration_quarter='" + expiration_quarter + '\'' +
-                ", information_type='" + information_type + '\'' +
-                ", technologies='" + technologies + '\'' +
-                ", payment_amount='" + payment_amount + '\'' +
-                ", payment_type='" + payment_type + '\'' +
-                ", geographical_scope='" + geographical_scope + '\'' +
-                ", details='" + details + '\'' +
-                ", directory_path='" + directory_path + '\'' +
-                ", modified='" + modified + '\'' +
-                ", comment='" + comment + '\'' +
-                '}';
     }
 }

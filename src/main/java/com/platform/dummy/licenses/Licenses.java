@@ -11,10 +11,11 @@ public class Licenses {
 
 
     private Long id;
-    private Long license_id;
 
     private String licensor;
     private String licensee;
+    private String snippet_id;
+
     private String affiliate;
     private String indication;
     private String signed_date;
@@ -30,8 +31,7 @@ public class Licenses {
     private String _6G;
     private String wifi;
     private String technologies;
-    private Float payment_amount;
-    private String payment_type;
+
     private String geographical_scope;
     private String details;
     private String directory_path;
@@ -46,11 +46,11 @@ public class Licenses {
 
     }
 
-    public Licenses(Long id, Long license_id, String licensor, String licensee, String affiliate, String indication, String signed_date, String signed_year_quarter, String expiration_date, String expiration_year_quarter, String information_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi, String technologies, Float payment_amount, String payment_type, String geographical_scope, String details, String directory_path, String document_date, String comment, String modified, String mapping_id) {
+    public Licenses(Long id, String licensor, String licensee, String snippet_id, String affiliate, String indication, String signed_date, String signed_year_quarter, String expiration_date, String expiration_year_quarter, String information_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi, String technologies, String geographical_scope, String details, String directory_path, String document_date, String comment, String modified, String mapping_id) {
         this.id = id;
-        this.license_id = license_id;
         this.licensor = licensor;
         this.licensee = licensee;
+        this.snippet_id = snippet_id;
         this.affiliate = affiliate;
         this.indication = indication;
         this.signed_date = signed_date;
@@ -65,8 +65,6 @@ public class Licenses {
         this._6G = _6G;
         this.wifi = wifi;
         this.technologies = technologies;
-        this.payment_amount = payment_amount;
-        this.payment_type = payment_type;
         this.geographical_scope = geographical_scope;
         this.details = details;
         this.directory_path = directory_path;
@@ -84,14 +82,6 @@ public class Licenses {
         this.id = id;
     }
 
-    public Long getLicense_id() {
-        return license_id;
-    }
-
-    public void setLicense_id(Long license_id) {
-        this.license_id = license_id;
-    }
-
     public String getLicensor() {
         return licensor;
     }
@@ -106,6 +96,14 @@ public class Licenses {
 
     public void setLicensee(String licensee) {
         this.licensee = licensee;
+    }
+
+    public String getSnippet_id() {
+        return snippet_id;
+    }
+
+    public void setSnippet_id(String snippet_id) {
+        this.snippet_id = snippet_id;
     }
 
     public String getAffiliate() {
@@ -218,22 +216,6 @@ public class Licenses {
 
     public void setTechnologies(String technologies) {
         this.technologies = technologies;
-    }
-
-    public Float getPayment_amount() {
-        return payment_amount;
-    }
-
-    public void setPayment_amount(Float payment_amount) {
-        this.payment_amount = payment_amount;
-    }
-
-    public String getPayment_type() {
-        return payment_type;
-    }
-
-    public void setPayment_type(String payment_type) {
-        this.payment_type = payment_type;
     }
 
     public String getGeographical_scope() {

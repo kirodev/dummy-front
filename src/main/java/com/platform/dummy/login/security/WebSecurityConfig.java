@@ -58,12 +58,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.authorizeRequests()
 				.antMatchers("/signin", "/signup").permitAll()
 				.antMatchers("/licenses", "/payments", "/multiple-payments","/multiple-licenses").hasRole("ADMIN")
-				.antMatchers(HttpMethod.PUT, "/licenses/{id}/mappingId","/licenses/{id}/details","/payments/{id}/details","/payments/{id}/undo","/payments/{id}/undoP","/payments/{id}").hasRole("ADMIN")
+				.antMatchers(HttpMethod.PUT, "/licenses/{id}/mappingId","/licenses/{id}/details","/payments/{id}/details","/payments/{id}/undo","/multiple-payments/{id}/undoP","/payments/{id}","/multiple-licenses/{id}/MLmappingId","/licenses/{id}/mappingId","/multiple-payments/{id}/MPmappingId","/payments/{id}/mappingId").hasRole("ADMIN")
 				.anyRequest().authenticated();
 
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 	}
-
-
-
 }
