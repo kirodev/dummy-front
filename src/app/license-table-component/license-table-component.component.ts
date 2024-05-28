@@ -5,6 +5,7 @@ import { ExamplePdfViewerComponent } from '../example-pdf-viewer/example-pdf-vie
 import { FeedbackPopupComponent } from '../feedback-popup/feedback-popup.component';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, map } from 'rxjs';
+import { TimelineService } from '../timeline-service.service';
 declare var Plotly: any;
 
 
@@ -28,21 +29,24 @@ export class LicenseTableComponent implements OnInit {
   filteredMultipleLicenses: any[] = []; 
   selectedLicense: string = ''; 
   uniqueMappingIds: string[] = [];
+  filteredTimelineData: any[] = []; 
 
 
-  constructor(private connectionService: ConnectionService, private http: HttpClient,private dialog: MatDialog) {}
+  constructor(private connectionService: ConnectionService, private http: HttpClient,private dialog: MatDialog,private timelineConnection : TimelineService) {}
 
   ngOnInit(): void {
     this.licensorName = localStorage.getItem('licensorName') || 'Licensor Name';
     this.licenseeName = localStorage.getItem('licenseeName') || 'licenseeName';
     this.dynamicTitle = `${this.licensorName} vs ${this.licenseeName}`;
     this.fetchLicenseData();
+    this.fetchTimelineData();
     this.fetchMultipleLicensesData();
     this.multipleLicenses;
     this.fetchDistinctLicenses(); 
     this.populateUniqueMappingIds(); 
     this.loadPlotlyScript().then(() => {
       console.log('Plotly.js script loaded successfully');
+      this.fetchTimelineData();
       this.plotData();
     }).catch(error => {
       console.error('Error loading Plotly.js script:', error);
@@ -161,407 +165,185 @@ export class LicenseTableComponent implements OnInit {
       document.head.appendChild(scriptElement);
     });
   }
+  timelineData: any[] = [];
 
-  plotData(): void {
 
-    let {data, layout, config} = {
-      'data': [
-          {
-              'marker': {
-                  'color': 'white'
-              },
-              'name': '',
-              'showlegend': false,
-              'x': [
-                  '2017-01-01',
-                  '2017-02-02'
-              ],
-              'y': [
-                  3,
-                  3
-              ],
-              'type': 'scatter',
-              'uid': 'c249743a-db89-442f-aabb-fc6117be6660'
-          },
-          {
-              'marker': {
-                  'color': 'white'
-              },
-              'name': '',
-              'showlegend': false,
-              'x': [
-                  '2017-02-15',
-                  '2017-03-15'
-              ],
-              'y': [
-                  3,
-                  3
-              ],
-              'type': 'scatter',
-              'uid': 'cdd772d3-35ed-4080-aace-52abf5f5f73a'
-          },
-          {
-              'marker': {
-                  'color': 'white'
-              },
-              'name': '',
-              'showlegend': false,
-              'x': [
-                  '2017-01-17',
-                  '2017-02-17'
-              ],
-              'y': [
-                  2,
-                  2
-              ],
-              'type': 'scatter',
-              'uid': 'e6725fd1-c7b9-4cef-8779-b68dcbc0bbb9'
-          },
-          {
-              'marker': {
-                  'color': 'white'
-              },
-              'name': '',
-              'showlegend': false,
-              'x': [
-                  '2017-01-17',
-                  '2017-02-17'
-              ],
-              'y': [
-                  2,
-                  2
-              ],
-              'type': 'scatter',
-              'uid': 'fa5c840a-a2fe-4a09-928b-693034b034b1'
-          },
-          {
-              'marker': {
-                  'color': 'white'
-              },
-              'name': '',
-              'showlegend': false,
-              'x': [
-                  '2017-03-10',
-                  '2017-03-20'
-              ],
-              'y': [
-                  1,
-                  1
-              ],
-              'type': 'scatter',
-              'uid': '6591aa19-6fe0-47ea-afce-0bc882bd2cc5'
-          },
-          {
-              'marker': {
-                  'color': 'white'
-              },
-              'name': '',
-              'showlegend': false,
-              'x': [
-                  '2017-04-01',
-                  '2017-04-20'
-              ],
-              'y': [
-                  1,
-                  1
-              ],
-              'type': 'scatter',
-              'uid': 'e18ffc2b-72fb-4858-a0b6-7baae6a76870'
-          },
-          {
-              'marker': {
-                  'color': 'white'
-              },
-              'name': '',
-              'showlegend': false,
-              'x': [
-                  '2017-05-18',
-                  '2017-06-18'
-              ],
-              'y': [
-                  1,
-                  1
-              ],
-              'type': 'scatter',
-              'uid': 'ff9b45a3-de8d-44e7-b148-f4d3c95a33c1'
-          },
-          {
-              'marker': {
-                  'color': 'white'
-              },
-              'name': '',
-              'showlegend': false,
-              'x': [
-                  '2017-01-14',
-                  '2017-03-14'
-              ],
-              'y': [
-                  0,
-                  0
-              ],
-              'type': 'scatter',
-              'uid': '7f9edd3f-cb1d-4a5e-8083-270fb3a17a41'
-          },
-          {
-              'hoverinfo': 'none',
-              'marker': {
-                  'color': 'rgb(0, 255, 100)',
-                  'size': 1
-              },
-              'name': 'Existing license',
-              'showlegend': true,
-              'x': [
-                  '2017-01-14',
-                  '2017-01-14'
-              ],
-              'y': [
-                  0,
-                  0
-              ],
-              'type': 'scatter',
-              'uid': '2995afea-42d5-4f5c-a882-9a093a2ec189'
-          },
-          {
-              'hoverinfo': 'none',
-              'marker': {
-                  'color': 'rgb(255, 230, 41)',
-                  'size': 1
-              },
-              'name': 'Expired License',
-              'showlegend': true,
-              'x': [
-                  '2017-01-14',
-                  '2017-01-14'
-              ],
-              'y': [
-                  1,
-                  1
-              ],
-              'type': 'scatter',
-              'uid': 'ed7fac13-428a-4ecd-af0a-02984d8ab28a'
-          },
-          {
-              'hoverinfo': 'none',
-              'marker': {
-                  'color': 'rgb(220, 0, 0)',
-                  'size': 1
-              },
-              'name': 'Doesnt Exist',
-              'showlegend': true,
-              'x': [
-                  '2017-01-14',
-                  '2017-01-14'
-              ],
-              'y': [
-                  2,
-                  2
-              ],
-              'type': 'scatter',
-              'uid': '37f8896d-3f6a-47da-9fa5-ce98035c1658'
-          }
-      ],
-      'layout': {
-          'height': 600,
-          'hovermode': 'closest',
-          'shapes': [
-              {
-                  'fillcolor': 'rgb(0, 255, 100)',
-                  'line': {
-                      'width': 0
-                  },
-                  'opacity': 1,
-                  'type': 'rect',
-                  'x0': '2017-01-01',
-                  'x1': '2017-02-02',
-                  'xref': 'x',
-                  'y0': 2.8,
-                  'y1': 3.2,
-                  'yref': 'y'
-              },
-              {
-                  'fillcolor': 'rgb(255, 230, 41)',
-                  'line': {
-                      'width': 0
-                  },
-                  'opacity': 1,
-                  'type': 'rect',
-                  'x0': '2017-02-15',
-                  'x1': '2017-03-15',
-                  'xref': 'x',
-                  'y0': 2.8,
-                  'y1': 3.2,
-                  'yref': 'y'
-              },
-              {
-                  'fillcolor': 'rgb(220, 0, 0)',
-                  'line': {
-                      'width': 0
-                  },
-                  'opacity': 1,
-                  'type': 'rect',
-                  'x0': '2017-01-17',
-                  'x1': '2017-02-17',
-                  'xref': 'x',
-                  'y0': 1.8,
-                  'y1': 2.2,
-                  'yref': 'y'
-              },
-              {
-                  'fillcolor': 'rgb(0, 255, 100)',
-                  'line': {
-                      'width': 0
-                  },
-                  'opacity': 1,
-                  'type': 'rect',
-                  'x0': '2017-01-17',
-                  'x1': '2017-02-17',
-                  'xref': 'x',
-                  'y0': 1.8,
-                  'y1': 2.2,
-                  'yref': 'y'
-              },
-              {
-                  'fillcolor': 'rgb(220, 0, 0)',
-                  'line': {
-                      'width': 0
-                  },
-                  'opacity': 1,
-                  'type': 'rect',
-                  'x0': '2017-03-10',
-                  'x1': '2017-03-20',
-                  'xref': 'x',
-                  'y0': 0.8,
-                  'y1': 1.2,
-                  'yref': 'y'
-              },
-              {
-                  'fillcolor': 'rgb(220, 0, 0)',
-                  'line': {
-                      'width': 0
-                  },
-                  'opacity': 1,
-                  'type': 'rect',
-                  'x0': '2017-04-01',
-                  'x1': '2017-04-20',
-                  'xref': 'x',
-                  'y0': 0.8,
-                  'y1': 1.2,
-                  'yref': 'y'
-              },
-              {
-                  'fillcolor': 'rgb(220, 0, 0)',
-                  'line': {
-                      'width': 0
-                  },
-                  'opacity': 1,
-                  'type': 'rect',
-                  'x0': '2017-05-18',
-                  'x1': '2017-06-18',
-                  'xref': 'x',
-                  'y0': 0.8,
-                  'y1': 1.2,
-                  'yref': 'y'
-              },
-              {
-                  'fillcolor': 'rgb(0, 255, 100)',
-                  'line': {
-                      'width': 0
-                  },
-                  'opacity': 1,
-                  'type': 'rect',
-                  'x0': '2017-01-14',
-                  'x1': '2017-03-14',
-                  'xref': 'x',
-                  'y0': -0.2,
-                  'y1': 0.2,
-                  'yref': 'y'
-              }
-          ],
-          'showlegend': true,
-          'title': {
-              'text': 'Timeline (in progress)'
-          },
-          'width': 900,
-          'xaxis': {
-              'rangeselector': {
-                  'buttons': [
-                      {
-                          'count': 7,
-                          'label': '1w',
-                          'step': 'day',
-                          'stepmode': 'backward'
-                      },
-                      {
-                          'count': 1,
-                          'label': '1m',
-                          'step': 'month',
-                          'stepmode': 'backward'
-                      },
-                      {
-                          'count': 6,
-                          'label': '6m',
-                          'step': 'month',
-                          'stepmode': 'backward'
-                      },
-                      {
-                          'count': 1,
-                          'label': 'YTD',
-                          'step': 'year',
-                          'stepmode': 'todate'
-                      },
-                      {
-                          'count': 1,
-                          'label': '1y',
-                          'step': 'year',
-                          'stepmode': 'backward'
-                      },
-                      {
-                          'step': 'all'
-                      }
-                  ]
-              },
-              'showgrid': false,
-              'type': 'date',
-              'zeroline': false
-          },
-          'yaxis': {
-              'autorange': false,
-              'range': [
-                  -1,
-                  5
-              ],
-              'showgrid': false,
-              'ticktext': [
-                  '2G',
-                  '3G',
-                  '4G',
-                  '5G',
-                  '6G',
-                  'wifi',
-                  ''
-              ],
-              'tickvals': [
-                  0,
-                  1,
-                  2,
-                  3,
-                  4,
-                  5,
-                  6
-              ],
-              'zeroline': false
-          }
-      },
-      'config': {
-          'showLink': false,
-          'linkText': 'Export to plot.ly',
-          'plotlyServerURL': 'https://plot.ly'
-      }
+fetchTimelineData(): void {
+  this.timelineConnection.getTimelineData().subscribe(
+    (data: any[]) => {
+      console.log("Fetched Timeline Data:", data); // Print fetched data
+      this.timelineData = data;
+      this.filteredTimelineData = this.timelineData.filter(
+        item => item.licensor === this.licensorName && item.licensee === this.licenseeName
+      );
+      console.log("Filtered Timeline Data:", this.filteredTimelineData); // Print filtered data
+      this.plotData(); // <-- Plot the data after fetching
+    },
+    (error) => {
+      console.error('Error fetching data:', error);
+    }
+  );
+}
+
+
+plotData(): void {
+  const data = [];
+  const shapes = [];
+  
+  // Define colors for different license states
+  const colorCodes = {
+    existing: 'rgb(0, 255, 100)',
+    expired: 'rgb(255, 230, 41)',
+    doesntExist: 'rgb(220, 0, 0)',
+    background: 'rgb(0, 100, 100)',
   };
-  
-  Plotly.newPlot('myDiv', data, layout);
-  
+
+  // Iterate over the filteredTimelineData array
+  for (const item of this.filteredTimelineData) {
+    const licensor = item.licensor;
+    const licensee = item.licensee;
+    const start = item.signed_date;
+    const end = item.expiration_date;
+    const technologies = [
+      item._2g === 'Y',
+      item._3g === 'Y',
+      item._4g === 'Y',
+      item._5g === 'Y',
+      item._6g === 'Y',
+      item.wifi === 'Y',
+    ];
+
+    // Check if start or end date is missing
+    const missingDate = !start || !end;
+
+    // Add scatter traces for each technology
+    for (let i = 0; i < technologies.length; i++) {
+      if (technologies[i]) {
+        const trace = {
+          marker: {
+            color: 'white',
+          },
+          name: '',
+          showlegend: false,
+          x: [start, end],
+          y: [i, i],
+          type: 'scatter',
+          uid: `${licensor}-${licensee}-${i}`,
+        };
+        data.push(trace);
       }
+    }
+
+    // Add shapes for existing licenses
+    for (let i = 0; i < technologies.length; i++) {
+      if (technologies[i]) {
+        shapes.push({
+          fillcolor: colorCodes.existing,
+          line: {
+            width: 0,
+          },
+          opacity: 1,
+          type: 'rect',
+          x0: start,
+          x1: end,
+          xref: 'x',
+          y0: i - 0.2,
+          y1: i + 0.2,
+          yref: 'y',
+        });
+      }
+    }
+
+    // Add a marker if either start or end date is missing
+    if (missingDate) {
+      const markerTrace = {
+        x: [start || end], // Place the marker at the existing date
+        y: [0], // Assuming y-axis index 0
+        mode: 'markers',
+        marker: {
+          symbol: 'circle',
+          size: 10,
+          color: 'red', // Adjust color as needed
+        },
+        showlegend: false,
+      };
+      data.push(markerTrace);
+    }
+  }
+
+  const layout = {
+    height: 600,
+    hovermode: 'closest',
+    shapes,
+    showlegend: true,
+    title: {
+      text: 'Timeline',
+    },
+    width: 900,
+    xaxis: {
+      rangeselector: {
+        buttons: [
+          {
+            count: 7,
+            label: '1w',
+            step: 'day',
+            stepmode: 'backward',
+          },
+          {
+            count: 1,
+            label: '1m',
+            step: 'month',
+            stepmode: 'backward',
+          },
+          {
+            count: 6,
+            label: '6m',
+            step: 'month',
+            stepmode: 'backward',
+          },
+          {
+            count: 1,
+            label: 'YTD',
+            step: 'year',
+            stepmode: 'todate',
+          },
+          {
+            count: 1,
+            label: '1y',
+            step: 'year',
+            stepmode: 'backward',
+          },
+          {
+            step: 'all',
+          },
+        ],
+      },
+      showgrid: false,
+      type: 'date',
+      zeroline: false,
+    },
+    yaxis: {
+      autorange: false,
+      range: [-1, 6],
+      showgrid: false,
+      ticktext: ['2G', '3G', '4G', '5G', '6G', 'WIFI'],
+      tickvals: [0, 1, 2, 3, 4, 5],
+      zeroline: false,
+    },
+  };
+
+  const config = {
+    showLink: false,
+    linkText: 'Export to plot.ly',
+    plotlyServerURL: 'https://plot.ly',
+  };
+
+  Plotly.newPlot('myDiv', data, layout, config);
+}
+
+
+
+
 
   confirmAction(message: string, action: () => void): void {
     const confirmDialog = confirm(message);

@@ -607,7 +607,7 @@ AddMappingId(itemId: number, item: any, tableType: 'payments' | 'multiplePayment
       }
 
       item.mapping_id = generatedMappingId;
-      this.uniqueMappingIds.push(generatedMappingId); // Add the generated ID to the list of unique IDs
+      this.uniqueMappingIds.push(generatedMappingId); 
       this.updateMappingId(itemId, generatedMappingId, tableType, useMPMappingId);
       this.mappingIdCounter.set(itemId, this.maxCounter);
     } else {
