@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "https://dummy-front-ace8d7bf3875.herokuapp.com")
 class SpringBootTutorialApplication {
 
     private final LicenseRepository licenseRepository;
