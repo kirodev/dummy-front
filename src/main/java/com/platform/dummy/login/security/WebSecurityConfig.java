@@ -59,6 +59,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers("/signin", "/signup").permitAll()
 				.antMatchers("/licenses", "/payments", "/multiple-payments","/multiple-licenses").hasRole("ADMIN")
 				.antMatchers(HttpMethod.PUT,
+						"/payments/{id}","/licenses/{id}",
 						"/licenses/{id}/mappingId",
 						"/licenses/{id}/details",
 						"/payments/{id}/details",
@@ -66,7 +67,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 						"/multiple-payments/{id}/details",
 						"/payments/{id}/undo",
 						"/multiple-payments/{id}/undoP",
-						"/payments/{id}",
 						"/multiple-licenses/{id}/MLmappingId",
 						"/licenses/{id}/mappingId",
 						"/multiple-payments/{id}/MPmappingId",
