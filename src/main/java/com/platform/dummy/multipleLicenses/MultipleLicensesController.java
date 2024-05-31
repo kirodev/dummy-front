@@ -154,6 +154,20 @@ public class MultipleLicensesController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    @PutMapping("/{id}/details") // Adjust the mapping to match the correct URL
+    public ResponseEntity<MultipleLicenses> updateDetails(
+            @PathVariable("id") Long id,
+            @RequestParam("details") String updatedDetails) {
+        Optional<MultipleLicenses> optionalMultipleLicenses = multiplelicensesRepository.findById(id);
+        if (optionalMultipleLicenses.isPresent()) {
+            MultipleLicenses multiplelicenses = optionalMultipleLicenses.get();
+            multiplelicenses.setDetails(updatedDetails); // Set the updated details
+            MultipleLicenses updatedLicense = multiplelicensesRepository.save(multiplelicenses);
+            return new ResponseEntity<>(updatedLicense, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 
 
 

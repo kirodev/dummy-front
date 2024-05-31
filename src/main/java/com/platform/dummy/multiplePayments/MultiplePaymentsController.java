@@ -148,5 +148,21 @@ public class MultiplePaymentsController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    @PutMapping("/{id}/details") // Adjust the mapping to match the correct URL
+    public ResponseEntity<MultiplePayments> updateDetails(
+            @PathVariable("id") Long id,
+            @RequestParam("details") String updatedDetails) {
+        Optional<MultiplePayments> optionalMultiplePayments = multiplePaymentsRepository.findById(id);
+        if (optionalMultiplePayments.isPresent()) {
+            MultiplePayments multiplepayments = optionalMultiplePayments.get();
+            multiplepayments.setDetails(updatedDetails); // Set the updated details
+            MultiplePayments updatedPayments = multiplePaymentsRepository.save(multiplepayments);
+            return new ResponseEntity<>(updatedPayments, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+
 
 }
