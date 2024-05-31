@@ -107,7 +107,8 @@
             </ng-container>
             <button (click)="AddMappingId(item.id, item, 'payments')">Mapping</button>
             <button *ngIf="item.modified" (click)="openFeedbackAfterUndoPayment(item)">Undo Modification</button>
-            <button (click)="deletePayment(item.id)">Delete</button>
+            <button (click)="deletePayment(item.id)">Delete Row</button>
+
           </td>
 
 
@@ -291,7 +292,7 @@
             <ng-template #editingMode>
               <span *ngIf="item.editing">
                 <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-                <button (click)="saveDetails(item)">Save</button>
+                <button (click)="saveMPDetails(item)">Save</button>
                 <button (click)="cancelEditing(item)">Cancel</button>
               </span>
             </ng-template>
@@ -392,7 +393,7 @@
             <ng-template #editingMode>
               <span *ngIf="item.editing">
                 <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-                <button (click)="saveDetails(item)">Save</button>
+                <button (click)="saveMPDetails(item)">Save</button>
                 <button (click)="cancelEditing(item)">Cancel</button>
               </span>
             </ng-template>

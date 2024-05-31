@@ -49,6 +49,12 @@ export class PaymentConnection {
     return this.http.put(url, {}, { params, headers }); // Send an empty request body since details are sent as a parameter
   }
   
+  updateMPDetails(id: number, updatedDetails: string): Observable<any> {
+    const headers = this.getHeaders(); // Get the headers including the JWT token
+    const url = `${this.baseUrlMP}/${id}/details`;
+    const params = new HttpParams().set('details', updatedDetails); // Send updatedDetails as a request parameter
+    return this.http.put(url, {}, { params, headers }); // Send an empty request body since details are sent as a parameter
+  }
 
   updateLicenseeName(id: any, license: any): Observable<any> {
     const modifiedValue = license.licensee === 'Unknown' ? id : null; 

@@ -445,6 +445,22 @@ export class PaymentTableComponent {
       }
     );
   }
+
+  saveMPDetails(item: any): void {
+    this.paymentConnection.updateMPDetails(item.id, item.updatedDetails).subscribe(
+      (response) =>  {
+        console.log('Details updated successfully:', response);
+        window.alert('Details updated successfully');
+        item.editing = false; 
+        this.fetchMultiplePaymentsData();
+      },
+      (error) => {
+        console.error('Error updating details:', error);
+      }
+    );
+  }
+
+
   showCommentTooltip(item: any): void {
     item.showComment = true;
   }

@@ -98,7 +98,12 @@ updateDetails(id: number, updatedDetails: string): Observable<any> {
   return this.http.put(url, {}, { params, headers }); // Send an empty request body since details are sent as a parameter
 }
 
-
+updateMLDetails(id: number, updatedDetails: string): Observable<any> {
+  const headers = this.getHeaders(); // Get the headers including the JWT token
+  const url = `${this.baseUrlML}/${id}/details`;
+  const params = new HttpParams().set('details', updatedDetails); // Send updatedDetails as a request parameter
+  return this.http.put(url, {}, { params, headers }); // Send an empty request body since details are sent as a parameter
+}
   getLicenseAmountData(): Observable<number[]> {
     return this.http.get<any[]>(`${this.baseUrl}/data`).pipe(map((response: any[]) => {
 

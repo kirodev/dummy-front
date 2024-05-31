@@ -257,7 +257,7 @@
           <ng-template #editingMode>
             <span *ngIf="item.editing"> <!-- Only show if item.editing is true -->
               <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-              <button (click)="saveDetails(item)">Save</button>
+              <button (click)="saveMLDetails(item)">Save</button>
               <button (click)="cancelEditing(item)">Cancel</button>
             </span>
           </ng-template>
@@ -350,7 +350,7 @@
           <ng-template #editingMode>
             <span *ngIf="item.editing"> <!-- Only show if item.editing is true -->
               <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-              <button (click)="saveDetails(item)">Save</button>
+              <button (click)="saveMLDetails(item)">Save</button>
               <button (click)="cancelEditing(item)">Cancel</button>
             </span>
           </ng-template>
