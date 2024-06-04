@@ -73,6 +73,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 						"/payments/{id}/mappingId",
 						"/timeline"
 				).hasRole("ADMIN")
+
+				.antMatchers(HttpMethod.GET,
+						"/mappingId"
+				).hasRole("ADMIN")
 				.anyRequest().authenticated();
 
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);

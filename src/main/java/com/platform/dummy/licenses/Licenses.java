@@ -22,6 +22,7 @@ public class Licenses {
     private String signed_year_quarter;
     private String expiration_date;
     private String expiration_year_quarter;
+    private String payment_structure;
 
     private String information_type;
     private String _2G;
@@ -46,7 +47,7 @@ public class Licenses {
 
     }
 
-    public Licenses(Long id, String licensor, String licensee, String snippet_id, String affiliate, String indication, String signed_date, String signed_year_quarter, String expiration_date, String expiration_year_quarter, String information_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi, String technologies, String geographical_scope, String details, String directory_path, String document_date, String comment, String modified, String mapping_id) {
+    public Licenses(Long id, String licensor, String licensee, String snippet_id, String affiliate, String indication, String signed_date, String signed_year_quarter, String expiration_date, String expiration_year_quarter, String payment_structure, String information_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi, String technologies, String geographical_scope, String details, String directory_path, String document_date, String comment, String modified, String mapping_id) {
         this.id = id;
         this.licensor = licensor;
         this.licensee = licensee;
@@ -57,6 +58,7 @@ public class Licenses {
         this.signed_year_quarter = signed_year_quarter;
         this.expiration_date = expiration_date;
         this.expiration_year_quarter = expiration_year_quarter;
+        this.payment_structure = payment_structure;
         this.information_type = information_type;
         this._2G = _2G;
         this._3G = _3G;
@@ -152,6 +154,14 @@ public class Licenses {
 
     public void setExpiration_year_quarter(String expiration_year_quarter) {
         this.expiration_year_quarter = expiration_year_quarter;
+    }
+
+    public String getPayment_structure() {
+        return payment_structure;
+    }
+
+    public void setPayment_structure(String payment_structure) {
+        this.payment_structure = payment_structure;
     }
 
     public String getInformation_type() {

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/multiple-licenses")
@@ -169,6 +170,16 @@ public class MultipleLicensesController {
         }
     }
 
-
-
+    @GetMapping("/mappingId")
+    public ResponseEntity<List<String>> getAllMappingIds() {
+        List<MultipleLicenses> allLicenses = multiplelicensesRepository.findAll();
+        if (!allLicenses.isEmpty()) {
+            List<String> mappingIds = allLicenses.stream()
+                    .map(MultipleLicenses::getMapping_id)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(mappingIds);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 }
