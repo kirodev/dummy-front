@@ -77,6 +77,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers(HttpMethod.GET,
 						"/mappingId"
 				).hasRole("ADMIN")
+				.antMatchers(HttpMethod.DELETE,
+						"/mappingId"
+				).hasRole("ADMIN")
 				.anyRequest().authenticated();
 
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);

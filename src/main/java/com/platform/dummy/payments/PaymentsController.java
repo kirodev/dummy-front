@@ -2,11 +2,15 @@ package com.platform.dummy.payments;
 
 
 import com.platform.dummy.licenses.Licenses;
+import com.platform.dummy.multiplePayments.MultiplePayments;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,7 +18,8 @@ import java.util.Optional;
 @RequestMapping("/payments")
 
 public class PaymentsController {
-
+    @PersistenceContext
+    private EntityManager entityManager;
     private final PaymentsRepository paymentsRepository;
 
     @Autowired
@@ -130,5 +135,18 @@ public class PaymentsController {
         }
     }
 
+    @DeleteMapping("/{id}/mapping_id")
+    @Transactional
+    public ResponseEntity<Void> deleteMappingId(@PathVariable Long id) {
+        Payments payments = entityManager.find(Payments.class, id);
+        if (payments != null) {
+            payments.setMapping_id(null); // Set mapping_id to null
+            entityManager.merge(payments);
+            return ResponseEntity.noContent().build();
+        } else {
+            // Handle the case where the license with the given id is not found
+            return ResponseEntity.notFound().build();
+        }
+    }
 
 }

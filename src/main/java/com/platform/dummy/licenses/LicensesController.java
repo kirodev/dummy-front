@@ -7,6 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +18,8 @@ import java.util.Optional;
 
 
 public class LicensesController {
-
+    @PersistenceContext
+    private EntityManager entityManager;
     @Autowired
     private LicenseRepository licenseRepository;
 
@@ -130,7 +134,19 @@ public class LicensesController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-
+    @DeleteMapping("/{id}/mapping_id")
+    @Transactional
+    public ResponseEntity<Void> deleteMappingId(@PathVariable Long id) {
+        Licenses licenses = entityManager.find(Licenses.class, id);
+        if (licenses != null) {
+            licenses.setMapping_id(null); // Set mapping_id to null
+            entityManager.merge(licenses);
+            return ResponseEntity.noContent().build();
+        } else {
+            // Handle the case where the license with the given id is not found
+            return ResponseEntity.notFound().build();
+        }
+    }
     @PutMapping("/{id}/details") // Adjust the mapping to match the correct URL
     public ResponseEntity<Licenses> updateDetails(
             @PathVariable("id") Long id,
@@ -145,5 +161,6 @@ public class LicensesController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
 
 }

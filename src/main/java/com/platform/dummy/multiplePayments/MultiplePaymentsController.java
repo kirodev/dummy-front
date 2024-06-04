@@ -9,6 +9,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.json.JSONObject;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +19,8 @@ import java.util.Optional;
 @RequestMapping("/multiple-payments")
 
 public class MultiplePaymentsController {
-
+    @PersistenceContext
+    private EntityManager entityManager;
     private final MultiplePaymentsRepository multiplePaymentsRepository;
 
     @Autowired
@@ -163,6 +167,18 @@ public class MultiplePaymentsController {
         }
     }
 
-
+    @DeleteMapping("/{id}/mapping_id")
+    @Transactional
+    public ResponseEntity<Void> deleteMappingId(@PathVariable Long id) {
+        MultiplePayments multiplePayments = entityManager.find(MultiplePayments.class, id);
+        if (multiplePayments != null) {
+            multiplePayments.setMapping_id(null); // Set mapping_id to null
+            entityManager.merge(multiplePayments);
+            return ResponseEntity.noContent().build();
+        } else {
+            // Handle the case where the license with the given id is not found
+            return ResponseEntity.notFound().build();
+        }
+    }
 
 }
