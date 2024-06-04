@@ -294,12 +294,12 @@ plotData(): void {
 
   const layout = {
     height: 600,
+    autosize: true,
     hovermode: 'closest',
     showlegend: true,
     title: {
       text: 'Timeline',
     },
-    width: 900,
     xaxis: {
       rangeselector: {
         buttons: [
