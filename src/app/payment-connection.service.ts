@@ -2,9 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { TokenStorageService } from './_services/token-storage.service';
-import { environment } from 'env/environment.prod';
-// import { environment } from 'env/environment';
-
+import { environment } from 'env/environment';
 @Injectable({
   providedIn: 'root'
 })
