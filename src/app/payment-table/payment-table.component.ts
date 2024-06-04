@@ -5,6 +5,9 @@ import { PaymentConnection } from '../payment-connection.service';
 import { FeedbackPopupComponent } from '../feedback-popup/feedback-popup.component';
 import { MatDialog } from '@angular/material/dialog'; // Import MatDialog for opening dialog
 import { LicenseTableComponent } from '../license-table-component/license-table-component.component';
+import { ConnectionService } from '../connection.service';
+import { Observable, throwError, mapTo } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 declare var Plotly: any;
 
 @Component({
@@ -27,10 +30,13 @@ export class PaymentTableComponent {
   selectedPayment: string = '';
   filteredMultiplePayments: any[] = [];
   uniqueLicenses: any[] = [];
+  licensesMappingIds: string[] = [];
+  filteredMappingIds: string[] = [];
 
 
 
-  constructor(private paymentConnection: PaymentConnection, private http: HttpClient, private dialog: MatDialog ) { }
+  constructor(private paymentConnection: PaymentConnection,  private licenseTableComponent: LicenseTableComponent
+,    private http: HttpClient, private dialog: MatDialog , private connectionservice : ConnectionService) { }
 
   ngOnInit(): void {
     this.licensorName = localStorage.getItem('licensorName') || 'Licensor Name';
@@ -41,6 +47,8 @@ export class PaymentTableComponent {
     this.fetchPaymentsData();
     this.fetchDistinctPayments(); 
     this.populateUniqueMappingIds(); 
+    this.retrieveFilteredMappingIds();
+
     this.loadPlotlyScript().then(() => {
       console.log('Plotly.js script loaded successfully');
       this.plotData();
@@ -52,6 +60,7 @@ export class PaymentTableComponent {
   toggleDetails(item: any): void {
     item.showDetails = !item.showDetails;
   }
+
 
   fetchPaymentsData(): void {
     this.paymentConnection.getPayments().subscribe(
@@ -113,7 +122,17 @@ export class PaymentTableComponent {
       }
     );
   }
-
+  deleteMultiplePayment(id: number): void {
+    this.paymentConnection.deleteMultiplePayment(id).subscribe(
+      () => {
+        console.log('Payment deleted successfully');
+        // Optionally, you can reload data or perform other actions after deleting a payment
+      },
+      (error) => {
+        console.error('Error deleting payment:', error);
+      }
+    );
+  }
   filterPaymentsData(): void {
     this.paymentConnection.getPayments().subscribe(
       (data: any[]) => {
@@ -260,7 +279,7 @@ export class PaymentTableComponent {
           return meetsLicensorCondition && meetsLicenseeCondition;
         });
   
-        console.log('Filtered multiple licenses:', this.filteredMultiplePayments);
+        console.log('Filtered multiple Pa:', this.filteredMultiplePayments);
   
         // Filtered based on licensor only
         const confirmedTableRows = this.filteredMultiplePayments.map(item => item.id);
@@ -488,29 +507,6 @@ export class PaymentTableComponent {
   }
 
 
-  uniqueMappingIds: string[] = [];
-
-populateUniqueMappingIds(): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    this.paymentConnection.getPayments().subscribe(
-      (data: any[]) => {
-        // Assuming the mapping IDs are stored in a property called mapping_id
-        this.uniqueMappingIds = data
-          .filter(item => item.mapping_id) // Filter out items with undefined or null mapping_id
-          .map(item => item.mapping_id)
-          .filter((value, index, self) => self.indexOf(value) === index);
-
-        console.log('Unique Mapping IDs:', this.uniqueMappingIds); // Log uniqueMappingIds
-
-        resolve(); // Resolve the promise once unique mapping IDs are populated
-      },
-      error => {
-        console.error('Error fetching mapping IDs:', error);
-        reject(error); // Reject the promise if there's an error fetching data
-      }
-    );
-  });
-}
 
 updateMultiplePayments(item: any, comment: string): void {
   // Check if licenseeName already exists in the licensee string
@@ -585,6 +581,9 @@ updateMultiplePayments(item: any, comment: string): void {
 
 maxCounter: number = 0; // Class-level variable to store the maximum counter value
 mappingIdCounter: Map<number, number> = new Map();
+
+uniqueMappingIds: string[] = [];
+
 
 AddMappingId(itemId: number, item: any, tableType: 'payments' | 'multiplePayments', useMPMappingId: boolean = false): void {
   console.log('AddMappingId function called for table:', tableType);
@@ -666,16 +665,59 @@ updateMappingId(itemId: number, mappingId: string, tableType: 'payments' | 'mult
 }
 
 
+fetchLicensesMappingIds(): void {
+  this.connectionservice.getLicensesMappingIds().subscribe(
+    (data: string[]) => {
+      this.licensesMappingIds = data;
+      console.log("mapping ids : ",data )
+    },
+    error => {
+      console.error('Error fetching mapping IDs:', error);
+    }
+  );
+}
+
+
+retrieveFilteredMappingIds(): void {
+  this.connectionservice.getData().subscribe(
+    (data: any[]) => {
+      // Extract unique mapping IDs from the data array
+      const uniqueMappingIds = [...new Set(data.map(item => item.mapping_id))];
+      this.uniqueMappingIds = uniqueMappingIds;
+    },
+    (error: any) => {
+      console.error('Error fetching mapping IDs:', error);
+    }
+  );
+}
+
+populateUniqueMappingIds(): Observable<any[]> {
+  return this.connectionservice.getData().pipe(
+    tap((data: any[]) => {
+      const uniqueMappingIds = [...new Set(data.map(item => item.mapping_id))]
+        .filter(mappingId => !!mappingId)
+        .filter((value, index, self) => self.indexOf(value) === index);
+
+      console.log('Unique Mapping IDs:', uniqueMappingIds);
+    }),
+    catchError((error: any) => {
+      console.error('Error fetching mapping IDs:', error);
+      return throwError(error);
+    }),
+    mapTo([]) // Map the emitted value to an empty array, as we're returning Observable<any[]>
+  );
+}
+
 filterMappingIds(item: any, tableType: 'payments' | 'multiplePayments'): string[] {
   if (tableType === 'payments') {
     // Logic for filtering mapping IDs for licenses
-    const licensorInitials = item.licensor.substring(0, 3).toUpperCase();
-    const licenseeInitials = item.licensee.substring(0, 3).toUpperCase();
+    const licensorInitials = item.licensor?.substring(0, 3).toUpperCase();
+    const licenseeInitials = item.licensee?.substring(0, 3).toUpperCase();
 
     return this.uniqueMappingIds.filter(mappingId => {
-      const parts = mappingId.split('-');
+      const parts = mappingId?.split('-'); // Add null check here
       return (
-        parts.length === 3 &&
+        parts?.length === 3 &&
         parts[0] === licensorInitials &&
         parts[1] === licenseeInitials
       );
@@ -684,11 +726,11 @@ filterMappingIds(item: any, tableType: 'payments' | 'multiplePayments'): string[
     // Logic for filtering mapping IDs for multiple licenses
     // Adjust the filtering logic based on the structure of your multiple licenses data
     // Example:
-    const licenseeInitials = item.indiv_licensee.substring(0, 3).toUpperCase();
+    const licenseeInitials = item.indiv_licensee?.substring(0, 3).toUpperCase();
     return this.uniqueMappingIds.filter(mappingId => {
-      const parts = mappingId.split('-');
+      const parts = mappingId?.split('-'); // Add null check here
       return (
-        parts.length === 3 &&
+        parts?.length === 3 &&
         parts[1] === licenseeInitials
       );
     });
@@ -697,6 +739,33 @@ filterMappingIds(item: any, tableType: 'payments' | 'multiplePayments'): string[
   }
 }
 
+deleteMappingId(id: number): void {
+  this.paymentConnection.deleteMappingId(id).subscribe(
+    () => {
+      console.log('Mapping ID deleted successfully');
+
+      this.fetchPaymentsData();
+    },
+    error => {
+      console.error('Error deleting mapping ID:', error);
+      // Handle error appropriately, e.g., show an error message to the user
+    }
+  );
+}
+deleteMPMappingId(id: number): void {
+  this.paymentConnection.deleteMPMappingId(id).subscribe(
+    () => {
+      console.log('Mapping ID deleted successfully');
+      
+      // Fetch data after successful deletion
+      this.fetchMultiplePaymentsData();
+    },
+    error => {
+      console.error('Error deleting mapping ID:', error);
+      // Handle error appropriately, e.g., show an error message to the user
+    }
+  );
+}
 
 
 }

@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { TokenStorageService } from './_services/token-storage.service';
-import { environment } from 'env/environment';
+import { environment } from 'env/environment.prod';
+// import { environment } from 'env/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -82,6 +83,11 @@ undoUpdateLicensee(id: any, comment: string): Observable<any[]> {
 deleteLicense(id: any): Observable<any> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
     return this.http.delete<any>(`${this.baseUrl}/${id}`, { headers });
+}
+
+deleteMultipleLicenses(id: any): Observable<any> {
+  const headers = this.getHeaders(); // Get the headers including the JWT token
+  return this.http.delete<any>(`${this.baseUrlML}/${id}`, { headers });
 }
 
 updateLicenseeName(id: any, license: any): Observable<any> {
@@ -179,6 +185,30 @@ undoUpdateMultipleLicensee(id: any, comment: string): Observable<any[]> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
     return this.http.put<any>(`${this.baseUrlML}/${id}/undo`, comment, { headers }); // Include the headers in the request
 }
+
+
+
+getLicensesMappingIds(): Observable<string[]> {
+  const url = `${this.baseUrlML}/mappingId`;
+  const headers = this.getHeaders(); // Get the headers including the JWT token
+  return this.http.get<string[]>(url, { headers }); // Include the headers in the request
+}
+
+
+
+deleteMappingId(id: number): Observable<void> {
+  const headers = this.getHeaders(); // Get the headers including the JWT token
+
+  return this.http.delete<void>(`${this.baseUrl}/${id}/mapping_id`, { headers });
+}
+
+
+deleteMPMappingId(id: number): Observable<void> {
+  const headers = this.getHeaders(); // Get the headers including the JWT token
+
+  return this.http.delete<void>(`${this.baseUrlML}/${id}/mapping_id`, { headers });
+}
+
 
 updateLicenseMappingId(itemId: number, mappingId: string): Observable<any> {
     const url = `${this.baseUrl}/${itemId}/mappingId`;

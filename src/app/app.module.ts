@@ -75,7 +75,8 @@ import { RegisterComponent } from './register/register.component';
     
   
   ],
-  providers: [ DataSharingService ],
+  providers: [ DataSharingService ,    LicenseTableComponent 
+],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

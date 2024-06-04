@@ -5,10 +5,11 @@
 <div class="table-container">
   <div id="center-button-container">
     <button id="center-button" routerLink="/payment" >Payments</button>
+    
   </div>
   
 
-<div id='myDiv'></div>
+  <div id='myDiv'></div>
 <h1>{{ dynamicTitle }} :</h1>
 <table class="license-table">
   <thead>
@@ -31,7 +32,8 @@
       <th>5G</th>
       <th>6G</th>
       <th>WiFi</th>
-      <th>Other technologies</th>
+      <th>technologies</th>
+      <th>Payment structure</th>
       <th>Geographical scope</th>
       <th>Directory Path</th>
       <th>Document date</th>
@@ -59,6 +61,7 @@
         <td>{{ item._6G }}</td>
         <td>{{ item.wiFi }}</td>
         <td>{{ item.other_technologies }}</td>
+        <td>{{ item.payment_structure }}</td>
         <td>{{ item.geographical_scope }}</td>
         <td>{{ item.directory_path }}</td>
         <td>{{ item.document_date}}</td>
@@ -78,7 +81,7 @@
           <button (click)="toggleDetailsVisibility(item)">
             {{ item.showDetails ? 'Hide' : 'Show' }}
           </button>
-                    <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+                    <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
         </td>
         <td>
           <ng-container *ngIf="uniqueLicenses.length > 0">
@@ -91,8 +94,10 @@
           </ng-container>
           
           <button (click)="AddMappingId(item.id, item, 'licenses')">Mapping</button>
-          <button *ngIf="item.modified" (click)="openFeedbackAfterUndolicense(item)">Undo Modification</button>
-          <button (click)="deleteLicenseeFromDatabase(item.id)">Delete</button>
+          <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
+
+          <button *ngIf="item.modified" (click)="openFeedbackAfterUndolicense(item)">Undo</button>
+          <button (click)="deleteLicense(item.id)">Delete Record</button>
         </td>
         <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
           <ng-container *ngIf="item.comment !== null && item.comment !== ''">
@@ -134,8 +139,10 @@
       <th>5G</th>
       <th>6G</th>
       <th>WiFi</th>
+      <th>technologies</th>
+      <th>Payment structure</th>
       <th>Geographical scope</th>
-      <th> directory path</th>
+      <th>directory path</th>
       <th>Document date</th>
 
     </tr>
@@ -164,6 +171,7 @@
         <td>{{ item._6G }}</td>
         <td>{{ item.wiFi }}</td>
         <td>{{ item.other_technologies }}</td>
+        <td>{{ item.payment_structure }}</td>
         <td>{{ item.geographical_scope }}</td>
         <td>{{  item.directory_path }}</td>
         <td>{{ item.document_date}}</td>
@@ -183,10 +191,13 @@
           <button (click)="toggleEditingMode(item)">Edit</button>
           <button (click)="toggleDetailsVisibility(item)">
             {{ item.showDetails ? 'Hide' : 'Show' }}
-          </button>          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+          </button>          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
         </td>
         <td>
-        <button (click)="openFeedbackAfterUpdate(item)">Add to Licensees</button>
+        <button (click)="openFeedbackAfterUpdate(item)">Add</button>
+        <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
+        <button (click)="deleteLicense(item.id)">Delete</button>
+
         </td>
         <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
           <ng-container *ngIf="item.comment !== null && item.comment !== ''">
@@ -225,6 +236,7 @@
       <td>expiration year quarter</td>
       <td>information type</td>
       <td>technologies</td>
+      <th>Payment structure</th>
       <td>geographical scope</td>
       <td>details</td>
       <td>document name</td>
@@ -247,6 +259,7 @@
         <td>{{item.expiration_quarter}}</td>
         <td>{{item.information_type}}</td>
         <td>{{item.technologies}}</td>
+        <td>{{ item.payment_structure }}</td>
         <td>{{item.geographical_scope}}</td>
         <!-- <td>{{item.details}}</td> -->
         <td>{{item.directory_path}}</td>
@@ -265,7 +278,7 @@
           <button (click)="toggleEditingMode(item)">Edit</button>
           <button (click)="toggleDetailsVisibility(item)">
             {{ item.showDetails ? 'Hide' : 'Show' }}
-          </button>          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+          </button>          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
         </td>
         <td>
           <ng-container *ngIf="uniqueLicenses.length > 0">
@@ -279,7 +292,11 @@
           
 
           <button (click)="AddMappingId(item.id, item, 'multipleLicenses')">Mapping</button>
-          <button *ngIf="item.modified" (click)="openFeedbackAfterUndoML(item)">Undo Modification</button>
+          <button (click)="deleteMPMappingId(item.id)">Delete Mapping ID</button>
+
+          <button *ngIf="item.modified" (click)="openFeedbackAfterUndoML(item)">Undo</button>
+          <button (click)="deleteMultipleLicenses(item.id)">Delete Record</button>
+
         </td>
         <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
           <ng-container *ngIf="item.comment !== null && item.comment !== ''">
@@ -323,7 +340,6 @@
   <tbody>
     <ng-container *ngFor="let item of multipleLicenses; let i = index">
       <tr *ngIf="!item.indiv_licensee || item.indiv_licensee.trim() === ''">
-
         <td>{{ item.id }}</td>
         <td>{{ item.snippet_id }}</td>
         <td>{{ item.mapping_id }}</td>
@@ -339,6 +355,7 @@
         <td>{{item.expiration_quarter}}</td>
         <td>{{item.information_type}}</td>
         <td>{{item.technologies}}</td>
+        <td>{{ item.payment_structure }}</td>
         <td>{{item.geographical_scope}}</td>
         <!-- <td>{{item.details}}</td> -->
         <td>{{item.directory_path}}</td>
@@ -358,11 +375,14 @@
           <button (click)="toggleEditingMode(item)">Edit</button>
           <button (click)="toggleDetailsVisibility(item)">
             {{ item.showDetails ? 'Hide' : 'Show' }}
-          </button>          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+          </button>          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
         </td>
         <td>
 
-          <button (click)="openFeedbackAfterUpdateMultipleLicenses(item)">ADD to licensees</button>
+          <button (click)="openFeedbackAfterUpdateMultipleLicenses(item)">Add</button>
+          <button (click)="deleteMPMappingId(item.id)">Delete Mapping ID</button>
+          <button (click)="deleteMultipleLicenses(item.id)">Delete Record</button>
+
 
         </td>
         <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
@@ -380,7 +400,9 @@
 
 <div class="popup-overlay" *ngIf="showPopup">
   <div class="popup-content">
-    <button (click)="closePopup()">Close</button>
     <app-example-pdf-viewer [pdfSrc]="selectedPDF"></app-example-pdf-viewer>
+    <div class="button-container">
+      <button (click)="closePopup()">Close</button>
+    </div>
   </div>
 </div>

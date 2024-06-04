@@ -100,14 +100,19 @@
             <ng-container *ngIf="uniquePayments.length > 0">
               <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
                 <option value="" selected>Select Mapping ID to add :</option>
+                <!-- Iterate over the filteredMappingIds array -->
                 <ng-container *ngFor="let mappingId of filterMappingIds(item, 'payments')">
                   <option [value]="mappingId">{{ mappingId }}</option>
                 </ng-container>
               </select>
             </ng-container>
+            
+            
             <button (click)="AddMappingId(item.id, item, 'payments')">Mapping</button>
-            <button *ngIf="item.modified" (click)="openFeedbackAfterUndoPayment(item)">Undo Modification</button>
-            <button (click)="deletePayment(item.id)">Delete Row</button>
+            <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
+
+            <button *ngIf="item.modified" (click)="openFeedbackAfterUndoPayment(item)">Undo</button>
+            <button (click)="deletePayment(item.id)">Delete Record</button>
 
           </td>
 
@@ -211,10 +216,15 @@
             <button (click)="toggleEditingMode(item)">Edit</button>
             <button (click)="toggleDetailsVisibility(item)">
               {{ item.showDetails ? 'Hide' : 'Show' }}
-            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+            </button>          
+              <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
           </td>
           <td>
-            <button (click)="openFeedbackAfterUpdate(item)">Add to Licensees</button>
+            <button (click)="openFeedbackAfterUpdate(item)">Add</button>
+            <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
+
+            <button (click)="deletePayment(item.id)">Delete Record</button>
+
           </td>
           <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
             <ng-container *ngIf="item.comment !== null && item.comment !== ''">
@@ -300,21 +310,25 @@
             <button (click)="toggleEditingMode(item)">Edit</button>
             <button (click)="toggleDetailsVisibility(item)">
               {{ item.showDetails ? 'Hide' : 'Show' }}
-            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
           </td>
           <td>
             <ng-container *ngIf="uniquePayments.length > 0">
               <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
                 <option value="" selected>Select Mapping ID to add :</option>
+                <!-- Iterate over the filteredMappingIds array -->
                 <ng-container *ngFor="let mappingId of filterMappingIds(item, 'multiplePayments')">
                   <option [value]="mappingId">{{ mappingId }}</option>
                 </ng-container>
               </select>
             </ng-container>
             
+            
             <button (click)="AddMappingId(item.id, item, 'multiplePayments')">Mapping</button>
-            <button *ngIf="item.modified" (click)="openFeedbackAfterUndoMP(item)">Undo Modification</button>
-            <button (click)="deletePayment(item.id)">Delete</button>
+            <button (click)="deleteMPMappingId(item.id)">Delete Mapping ID</button>
+
+            <button *ngIf="item.modified" (click)="openFeedbackAfterUndoMP(item)">Undo</button>
+            <button (click)="deleteMultiplePayment(item.id)">Delete Record</button>
           </td>
 
           <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
@@ -401,11 +415,15 @@
             <button (click)="toggleEditingMode(item)">Edit</button>
             <button (click)="toggleDetailsVisibility(item)">
               {{ item.showDetails ? 'Hide' : 'Show' }}
-            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
           </td>
 
           <td>
-            <button (click)="openFeedbackAfterUpdateMultiplePayments(item)">ADD to licensees</button>
+            <button (click)="openFeedbackAfterUpdateMultiplePayments(item)">Add</button>
+            <button (click)="deleteMPMappingId(item.id)">Delete Mapping ID</button>
+
+            <button (click)="deleteMultiplePayment(item.id)">Delete Record</button>
+
           </td>
           <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
             <ng-container *ngIf="item.comment !== null && item.comment !== ''">
@@ -423,8 +441,11 @@
 
 
 <div class="popup-overlay" *ngIf="showPopup">
-  <div class="popup-content">
+  <div class="button-container">
     <button (click)="closePopup()">Close</button>
+  </div>
+  <div class="popup-content">
     <app-example-pdf-viewer [pdfSrc]="selectedPDF"></app-example-pdf-viewer>
+
   </div>
 </div>

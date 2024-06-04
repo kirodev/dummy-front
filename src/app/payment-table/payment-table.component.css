@@ -5,7 +5,7 @@
   .table-container {
     margin: 0 auto; /* Center the container horizontally */
     max-width: calc(100% - 200px); /* Set maximum width with 100px space on each side */
-    padding: 0 50px; /* Add 50px padding on each side */
+    padding: 0 100px; /* Add 50px padding on each side */
     
 }
 
@@ -14,7 +14,19 @@
     border-collapse: collapse;
     margin-bottom: 20px;
   }
-  
+  button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
   .terms-table,
 .knownMP-table,
 .unknownMP-table,
@@ -175,27 +187,8 @@ td {
 .icon.hidden {
   display: none;
 }/* Define styles for the tables */
-  /* Styles for the popup overlay */
-  .popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
-    z-index: 1000; /* Ensure it's above other content */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
   
-  .popup-content {
-    width:1000px;
-    height: 800px;
-    background-color: white; /* White background for content */
-    padding: 20px;
-    overflow: hidden; /* Prevent scrolling if content exceeds dimensions */
-  }
+
   #center-button-container {
     display: flex;
     justify-content: center;
@@ -209,3 +202,54 @@ td {
     padding: 10px; /* Padding for inner spacing */
     text-align: center; /* Center text inside the button */
   }
+  .popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure the popup is above other content */
+  }
+  
+  .popup-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+  }
+  
+  .popup-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 50%;
+    height: 75%;
+    align-items: center;
+  }
+  
+  .close-button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    
+  }
+  
+  .close-button:hover {
+    background-color: #0056b3;
+  }
+  .button-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}

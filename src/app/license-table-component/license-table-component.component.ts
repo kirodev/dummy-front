@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { ExamplePdfViewerComponent } from '../example-pdf-viewer/example-pdf-viewer.component';
 import { FeedbackPopupComponent } from '../feedback-popup/feedback-popup.component';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, map } from 'rxjs';
+import { Observable, forkJoin, map, of } from 'rxjs';
 import { TimelineService } from '../timeline-service.service';
 declare var Plotly: any;
 
@@ -41,7 +41,6 @@ export class LicenseTableComponent implements OnInit {
     this.fetchLicenseData();
     this.fetchTimelineData();
     this.fetchMultipleLicensesData();
-    this.multipleLicenses;
     this.fetchDistinctLicenses(); 
     this.populateUniqueMappingIds(); 
     this.loadPlotlyScript().then(() => {
@@ -73,7 +72,7 @@ export class LicenseTableComponent implements OnInit {
     );
   }
 
-  deleteLicenseeFromDatabase(id: any): void {
+  deleteLicense(id: any): void {
     this.connectionService.deleteLicense(id).subscribe(
       () => {
         console.log('Licensee deleted successfully');
@@ -84,6 +83,20 @@ export class LicenseTableComponent implements OnInit {
       }
     );
   }
+
+
+  deleteMultipleLicenses(id: any): void {
+    this.connectionService.deleteLicense(id).subscribe(
+      () => {
+        console.log('Licensee deleted successfully');
+        window.alert('Licensee deleted successfully');
+      },
+      (error) => {
+        console.error('Error deleting licensee:', error);
+      }
+    );
+  }
+
 
 
   showPDFViewer: boolean = false;
@@ -227,7 +240,7 @@ plotData(): void {
           line: {
             color: staticColors[date_type_index % staticColors.length], // Use static color for each date_type
           },
-          name: `${date_type}_${id}_${start}-${end}`, // Use date_type and index as the name
+          name: `${date_type}_${id}`, // Use date_type and index as the name
           showlegend: true,
           type: 'scatter',
         };
@@ -664,17 +677,33 @@ openFeedbackAfterUpdate(item: any): void {
   });
 }
 
-
-
 populateUniqueMappingIds(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    this.connectionService.getData().subscribe(
-      (data: any[]) => {
-        // Assuming the mapping IDs are stored in a property called mapping_id
-        this.uniqueMappingIds = data
+    // Fetch mapping IDs from "licenses" table
+    const licensesMappingIds$ = this.connectionService.getData().pipe(
+      map((data: any[]) => {
+        return data
           .filter(item => item.mapping_id) // Filter out items with undefined or null mapping_id
-          .map(item => item.mapping_id)
-          .filter((value, index, self) => self.indexOf(value) === index);
+          .map(item => item.mapping_id);
+      })
+    );
+
+    // Fetch mapping IDs from "multipleLicenses" table
+    const multipleLicensesMappingIds$ = this.connectionService.getMultipleLicenses().pipe(
+      map((data: any[]) => {
+        return data
+          .filter(item => item.mapping_id) // Filter out items with undefined or null mapping_id
+          .map(item => item.mapping_id);
+      })
+    );
+
+    // Combine mapping IDs from both tables
+    forkJoin([licensesMappingIds$, multipleLicensesMappingIds$]).subscribe(
+      ([licensesMappingIds, multipleLicensesMappingIds]) => {
+        // Merge and filter unique mapping IDs from both tables
+        this.uniqueMappingIds = [
+          ...new Set([...licensesMappingIds, ...multipleLicensesMappingIds])
+        ].filter((value, index, self) => self.indexOf(value) === index);
 
         console.log('Unique Mapping IDs:', this.uniqueMappingIds); // Log uniqueMappingIds
 
@@ -687,6 +716,7 @@ populateUniqueMappingIds(): Promise<void> {
     );
   });
 }
+
 
 
 
@@ -773,7 +803,6 @@ updateMappingId(itemId: number, mappingId: string, tableType: 'licenses' | 'mult
   );
 }
 
-
 filterMappingIds(item: any, tableType: 'licenses' | 'multipleLicenses'): string[] {
   if (tableType === 'licenses') {
     // Logic for filtering mapping IDs for licenses
@@ -790,8 +819,6 @@ filterMappingIds(item: any, tableType: 'licenses' | 'multipleLicenses'): string[
     });
   } else if (tableType === 'multipleLicenses') {
     // Logic for filtering mapping IDs for multiple licenses
-    // Adjust the filtering logic based on the structure of your multiple licenses data
-    // Example:
     const licenseeInitials = item.indiv_licensee.substring(0, 3).toUpperCase();
     return this.uniqueMappingIds.filter(mappingId => {
       const parts = mappingId.split('-');
@@ -805,6 +832,33 @@ filterMappingIds(item: any, tableType: 'licenses' | 'multipleLicenses'): string[
   }
 }
 
+
+deleteMappingId(id: number): void {
+  this.connectionService.deleteMappingId(id).subscribe(
+    () => {
+      console.log('Mapping ID deleted successfully');
+      this.fetchLicenseData();
+    },
+    error => {
+      console.error('Error deleting mapping ID:', error);
+      // Handle error appropriately, e.g., show an error message to the user
+    }
+  );
+}
+deleteMPMappingId(id: number): void {
+  this.connectionService.deleteMPMappingId(id).subscribe(
+    () => {
+      console.log('Mapping ID deleted successfully');
+      
+      // Fetch data after successful deletion
+      this.fetchMultipleLicensesData();
+    },
+    error => {
+      console.error('Error deleting mapping ID:', error);
+      // Handle error appropriately, e.g., show an error message to the user
+    }
+  );
+}
 
 
 }

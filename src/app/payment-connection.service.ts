@@ -2,7 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, throwError } from 'rxjs';
 import { TokenStorageService } from './_services/token-storage.service';
-import { environment } from 'env/environment';
+import { environment } from 'env/environment.prod';
+// import { environment } from 'env/environment';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -100,7 +102,19 @@ export class PaymentConnection {
   }
 
 
-
+  deleteMappingId(id: number): Observable<void> {
+    const headers = this.getHeaders(); // Get the headers including the JWT token
+  
+    return this.http.delete<void>(`${this.baseUrl}/${id}/mapping_id`, { headers });
+  }
+  
+  
+  deleteMPMappingId(id: number): Observable<void> {
+    const headers = this.getHeaders(); // Get the headers including the JWT token
+  
+    return this.http.delete<void>(`${this.baseUrlMP}/${id}/mapping_id`, { headers });
+  }
+  
   undoUpdatePayment(id: any, comment: string): Observable<any[]> {
   const headers = this.getHeaders(); // Get the headers including the JWT token
   return this.http.put<any>(`${this.baseUrl}/${id}/undoP`,  { comment }, { headers }); // Include the headers in the request
