@@ -32,15 +32,17 @@
       <th>5G</th>
       <th>6G</th>
       <th>WiFi</th>
-      <th>technologies</th>
+      <th>Technologies</th>
       <th>Payment structure</th>
       <th>Geographical scope</th>
-      <th>Directory Path</th>
+      <th>Directory path</th>
+      <th>Document name</th>
       <th>Document date</th>
     </tr>
   </thead>
   <tbody>
     <ng-container *ngFor="let item of filteredDataDefined">
+      
       <tr>
         <td>{{ item.id }}</td>
         <td>{{ item.snippet_id }}</td>
@@ -64,6 +66,7 @@
         <td>{{ item.payment_structure }}</td>
         <td>{{ item.geographical_scope }}</td>
         <td>{{ item.directory_path }}</td>
+        <td>{{ item.document_name}}</td>
         <td>{{ item.document_date}}</td>
         <td>
           <div *ngIf="!item.editing && item.showDetails; else editingMode">
@@ -142,7 +145,7 @@
       <th>technologies</th>
       <th>Payment structure</th>
       <th>Geographical scope</th>
-      <th>directory path</th>
+      <th>Directory path</th>
       <th>Document date</th>
 
     </tr>
@@ -239,7 +242,7 @@
       <th>Payment structure</th>
       <td>geographical scope</td>
       <td>details</td>
-      <td>document name</td>
+      <th>Directory path</th>
     </tr>
   </thead>
   <tbody>
@@ -334,7 +337,7 @@
       <td>technologies</td>
       <td>geographical scope</td>
       <td>details</td>
-      <td>document name</td>
+      <th>Directory path</th>
     </tr>
   </thead>
   <tbody>
@@ -359,6 +362,7 @@
         <td>{{item.geographical_scope}}</td>
         <!-- <td>{{item.details}}</td> -->
         <td>{{item.directory_path}}</td>
+        
         <td>
           <!-- Editable field -->
           <div *ngIf="!item.editing && item.showDetails; else editingMode">
