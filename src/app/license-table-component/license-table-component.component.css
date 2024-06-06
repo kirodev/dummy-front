@@ -154,18 +154,18 @@ h1 {
 /* Center the icon */
 /* Center the content vertically and horizontally */
 .tooltip {
-position: absolute;
-background-color: rgba(0, 0, 0, 0.8);
-color: white;
-border-radius: 10px; /* Adjust the value to change the roundness */
-padding: 5px;
-z-index: 1;
-display: none;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 10px; /* Adjust the value to change the roundness */
+  padding: 5px;
+  z-index: 1;
+  display: none;
+  left: auto;
+  right: 100%;
+  transform: translateX(-10px); /* Adjust the value to add space between tooltip and target */
 }
 
-.tooltip.active {
-display: block;
-}
 
 /* Adjust the size of the table cells to fit the icon size */
 td {
