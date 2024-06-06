@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 @SpringBootApplication
 @RestController
 @CrossOrigin(origins = "https://dummy-front-ace8d7bf3875.herokuapp.com")
-//@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "http://localhost:4200")
 
 class SpringBootTutorialApplication {
 

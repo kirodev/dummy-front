@@ -36,6 +36,8 @@ public class Licenses {
     private String geographical_scope;
     private String details;
     private String directory_path;
+    private String document_name;
+
     private String document_date;
     private String comment;
     private String modified;
@@ -47,7 +49,7 @@ public class Licenses {
 
     }
 
-    public Licenses(Long id, String licensor, String licensee, String snippet_id, String affiliate, String indication, String signed_date, String signed_year_quarter, String expiration_date, String expiration_year_quarter, String payment_structure, String information_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi, String technologies, String geographical_scope, String details, String directory_path, String document_date, String comment, String modified, String mapping_id) {
+    public Licenses(Long id, String licensor, String licensee, String snippet_id, String affiliate, String indication, String signed_date, String signed_year_quarter, String expiration_date, String expiration_year_quarter, String payment_structure, String information_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi, String technologies, String geographical_scope, String details, String directory_path, String document_name, String document_date, String comment, String modified, String mapping_id) {
         this.id = id;
         this.licensor = licensor;
         this.licensee = licensee;
@@ -70,11 +72,13 @@ public class Licenses {
         this.geographical_scope = geographical_scope;
         this.details = details;
         this.directory_path = directory_path;
+        this.document_name = document_name;
         this.document_date = document_date;
         this.comment = comment;
         this.modified = modified;
         this.mapping_id = mapping_id;
     }
+
 
     public Long getId() {
         return id;
@@ -250,6 +254,14 @@ public class Licenses {
 
     public void setDirectory_path(String directory_path) {
         this.directory_path = directory_path;
+    }
+
+    public String getDocument_name() {
+        return document_name;
+    }
+
+    public void setDocument_name(String document_name) {
+        this.document_name = document_name;
     }
 
     public String getDocument_date() {
