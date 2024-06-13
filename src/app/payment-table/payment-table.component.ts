@@ -194,39 +194,55 @@ export class PaymentTableComponent {
     });
   }
   plotData(): void {
-    var x = [];
-    var y = [];
+    // Make a copy of filteredDataDefined to avoid mutating the original array
+    const dataCopy = [...this.filteredDataDefined];
 
-    // Assuming filteredDataDefined is an array of objects with properties like 'year' and 'payment_amount'
-    for (let item of this.filteredDataDefined) {
-      x.push(item.year); // Push the year value
-      y.push(item.payment_amount); // Push the payment amount
-    }
+    // Sort dataCopy by payment_amount in ascending order
+    dataCopy.sort((a, b) => a.payment_amount - b.payment_amount);
 
-    // Sort the x array
-    x.sort();
+    const years = dataCopy.map(item => item.year);
+    const paymentAmounts = dataCopy.map(item => item.payment_amount);
 
-    var trace = {
-      x: x,
-      y: y,
-      type: "histogram",
-    };
+    const data = [{
+      x: years,
+      y: paymentAmounts,
+      type: 'bar',
+      marker: {
+        color: this.generateRandomColors(years.length) // Generate random color for each bar
+      }
+    }];
 
-    var data = [trace];
-
-    var layout = {
-      barmode: "stack",
-      xaxis: {
-        type: 'category' // Treat x-axis values as categories
-      },
+    const layout = {
+      height: 600,
+      autosize: true,
+      title: 'Payment Amounts Over Years',
+      xaxis: { title: 'Year' },
       yaxis: {
-        title: 'Payment Amount' // Add y-axis title
+        title: 'Payment Amount (in thousands)',
+        tickformat: ',d', // Use comma as thousands separator
+        type: 'linear', // Ensure linear scale for y-axis
+        rangemode: 'tozero', // Start Y-axis from zero
+        range: [0, Math.ceil(Math.max(...paymentAmounts) / 10000) * 10000] // Dynamic Y-axis range
       }
     };
 
     Plotly.newPlot('myDiv', data, layout);
   }
 
+  generateRandomColors(count: number): string[] {
+    const colors = [];
+    const letters = '0123456789ABCDEF';
+
+    for (let i = 0; i < count; i++) {
+      let color = '#';
+      for (let j = 0; j < 6; j++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      colors.push(color);
+    }
+
+    return colors;
+  }
 
   confirmAction(message: string, action: () => void): void {
     const confirmDialog = confirm(message);

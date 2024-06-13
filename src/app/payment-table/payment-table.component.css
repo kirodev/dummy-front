@@ -202,6 +202,8 @@ td {
     padding: 10px; /* Padding for inner spacing */
     text-align: center; /* Center text inside the button */
   }
+
+
   .popup-overlay {
     position: fixed;
     top: 0;
@@ -219,7 +221,7 @@ td {
     display: flex;
     flex-direction: column;
     align-items: center;
-
+  
   }
   
   .popup-content {
@@ -252,4 +254,4 @@ td {
     display: flex;
     justify-content: center;
     width: 100%;
-}
+  }
