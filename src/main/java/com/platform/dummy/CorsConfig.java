@@ -16,6 +16,8 @@ public class CorsConfig implements WebMvcConfigurer {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true); // Allow credentials
         config.addAllowedOrigin("http://localhost:4200");
+        config.addAllowedOrigin("https://dummy-front-ace8d7bf3875.herokuapp.com"
+        );
         config.addAllowedHeader("*"); // Allow requests with any headers
         config.addAllowedMethod("*"); // Allow requests with any HTTP methods
         source.registerCorsConfiguration("/**", config);
