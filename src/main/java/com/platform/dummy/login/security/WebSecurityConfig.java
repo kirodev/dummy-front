@@ -72,10 +72,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 						"/multiple-payments/{id}/MPmappingId",
 						"/payments/{id}/mappingId",
 						"/timeline"
+
 				).hasRole("ADMIN")
 
 				.antMatchers(HttpMethod.GET,
-						"/mappingId"
+						"/mappingId",
+						"/quarterly-revenues",
+						"/annual-revenues"
 				).hasRole("ADMIN")
 				.antMatchers(HttpMethod.DELETE,
 						"/mappingId"
