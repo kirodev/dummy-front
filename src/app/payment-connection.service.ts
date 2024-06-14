@@ -13,6 +13,9 @@ export class PaymentConnection {
   private   url = environment.baseUrl;
   private baseUrl = this.url +'payments';
   private baseUrlMP =  this.url +'multiple-payments';
+  private baseUrlqRev = this.url +'quarterly-revenues';
+  private baseUrlaRev = this.url +'annual-revenues';
+
   
   private getHeaders(): HttpHeaders {
     const token = this.tokenStorageService.getToken(); // Get the JWT token from your token storage service
@@ -183,5 +186,18 @@ updateMultiplePaymentLicensee(id: any, payment: any, comment: string): Observabl
       catchError(this.handleError)
     ); // Include the headers in the request
 }
+getQuarterlyRevenues(): Observable<any[]> {
+  const headers = this.getHeaders(); // Get the headers including the JWT token
+  return this.http.get<any[]>(`${this.baseUrlqRev}`, { headers }).pipe(
+    catchError(this.handleError)
+  );
+}
 
+
+getAnnualRevenues(): Observable<any[]> {
+  const headers = this.getHeaders(); // Get the headers including the JWT token
+  return this.http.get<any[]>(`${this.baseUrlaRev}`, { headers }).pipe(
+    catchError(this.handleError)
+  );
+}
 }

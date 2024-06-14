@@ -18,8 +18,8 @@ declare var Plotly: any;
 export class PaymentTableComponent {
   @ViewChild(ExamplePdfViewerComponent, { static: false }) pdfViewer!: ExamplePdfViewerComponent;
   @Input() pdfSrc: string = '';
-
   paymentData: any[] = [];
+  annualRevenues: any[] = [];
   filteredDataDefined: any[] = [];
   filteredDataUnknown: any[] = [];
   dynamicTitle: string = '';
@@ -48,7 +48,7 @@ export class PaymentTableComponent {
     this.fetchDistinctPayments(); 
     this.populateUniqueMappingIds(); 
     this.retrieveFilteredMappingIds();
-
+    this.fetchAnnualRevenues();
     this.loadPlotlyScript().then(() => {
       console.log('Plotly.js script loaded successfully');
       this.plotData();
@@ -193,56 +193,132 @@ export class PaymentTableComponent {
       document.head.appendChild(scriptElement);
     });
   }
-  plotData(): void {
-    // Make a copy of filteredDataDefined to avoid mutating the original array
-    const dataCopy = [...this.filteredDataDefined];
 
-    // Sort dataCopy by payment_amount in ascending order
-    dataCopy.sort((a, b) => a.payment_amount - b.payment_amount);
+  
 
-    const years = dataCopy.map(item => item.year);
-    const paymentAmounts = dataCopy.map(item => item.payment_amount);
 
-    const data = [{
+
+fetchAnnualRevenues(): void {
+  this.paymentConnection.getAnnualRevenues().subscribe(
+      (data: any[]) => {
+          // Filter annualRevenues based on this.licensorName
+          this.annualRevenues = data.filter(item => item.licensor === this.licensorName);
+          console.log("annualRevenues >>", this.annualRevenues); // Log the filtered data
+          this.plotData(); // Call the method to filter and plot data
+      },
+      (error) => {
+          console.error('Error fetching annual revenues:', error); // Log any errors
+      }
+  );
+}
+
+plotData(): void {
+  // Make a copy of filteredDataDefined to avoid mutating the original array
+  const dataCopy = [...this.filteredDataDefined];
+
+  // Create a map to store all payment amounts and types for each year
+  const yearPaymentsMap = new Map<number, { payment_amount: number, type: string }[]>();
+
+  // Iterate through dataCopy to populate yearPaymentsMap with filtered data
+  dataCopy.forEach(item => {
+      const existingRecords = yearPaymentsMap.get(item.year) || [];
+
+      // Check if there is already a record with the same payment amount for this year
+      const existingRecord = existingRecords.find(record => record.payment_amount === item.payment_amount);
+
+      if (!existingRecord) {
+          // If no existing record for this payment amount, add the record
+          existingRecords.push({ payment_amount: item.payment_amount, type: item.payment_type });
+      } else if (item.payment_type === "Total revenue recognition") {
+          // If existing record found and current item is "Total revenue recognition", replace the record
+          existingRecords.splice(existingRecords.indexOf(existingRecord), 1, { payment_amount: item.payment_amount, type: item.payment_type });
+      }
+
+      yearPaymentsMap.set(item.year, existingRecords);
+  });
+
+  // Add total_revenue from annualRevenues to yearPaymentsMap
+  if (this.annualRevenues) {
+      this.annualRevenues.forEach(revenue => {
+          // Check if there is already a record with the same payment amount for this year
+          const existingRecords = yearPaymentsMap.get(revenue.year) || [];
+          const existingRecord = existingRecords.find(record => record.payment_amount === revenue.totalRevenue);
+
+          if (!existingRecord) {
+              // If no existing record for this totalRevenue, add the record
+              existingRecords.push({ payment_amount: revenue.totalRevenue, type: "Total Revenues" });
+          }
+
+          yearPaymentsMap.set(revenue.year, existingRecords);
+      });
+  }
+
+  // Extract years, paymentAmounts, and textLabels from yearPaymentsMap
+  const years: number[] = [];
+  const paymentAmounts: number[] = [];
+  const textLabels: string[] = [];
+  const colors: string[] = []; // Array to store colors
+
+  yearPaymentsMap.forEach((records, year) => {
+      records.forEach(record => {
+          years.push(year);
+          paymentAmounts.push(record.payment_amount);
+          textLabels.push(`Year: ${year}, Payment: ${record.payment_amount}, Type: ${record.type}`);
+
+          // Determine color based on the record type
+          if (record.type === "Total Revenues") {
+              // Set gray color with opacity for "Total revenue recognition"
+              colors.push('rgba(169, 169, 169, 0.1)');
+          } else {
+              // Use random color for other types
+              colors.push(this.generateRandomColor());
+          }
+      });
+  });
+
+  // Prepare data for Plotly with custom colors and opacity
+  const data = [{
       x: years,
       y: paymentAmounts,
       type: 'bar',
       marker: {
-        color: this.generateRandomColors(years.length) // Generate random color for each bar
-      }
-    }];
+          color: colors, // Set colors array for each bar
+      },
+      text: textLabels,
+      hoverinfo: 'text'
+  }];
 
-    const layout = {
+  // Layout for the plot
+  const layout = {
       height: 600,
       autosize: true,
       title: 'Payment Amounts Over Years',
       xaxis: { title: 'Year' },
       yaxis: {
-        title: 'Payment Amount (in thousands)',
-        tickformat: ',d', // Use comma as thousands separator
-        type: 'linear', // Ensure linear scale for y-axis
-        rangemode: 'tozero', // Start Y-axis from zero
-        range: [0, Math.ceil(Math.max(...paymentAmounts) / 10000) * 10000] // Dynamic Y-axis range
+          title: 'Payment Amount (in thousands)',
+          tickformat: ',d', // Use comma as thousands separator
+          type: 'linear', // Ensure linear scale for y-axis
+          rangemode: 'tozero', // Start Y-axis from zero
+          range: [0, Math.ceil(Math.max(...paymentAmounts) / 10000) * 10000] // Dynamic Y-axis range
       }
-    };
+  };
 
-    Plotly.newPlot('myDiv', data, layout);
+  // Plot the graph using Plotly
+  Plotly.newPlot('myDiv', data, layout);
+}
+
+generateRandomColor(): string {
+  // Function to generate random color
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
   }
+  return color;
+}
 
-  generateRandomColors(count: number): string[] {
-    const colors = [];
-    const letters = '0123456789ABCDEF';
 
-    for (let i = 0; i < count; i++) {
-      let color = '#';
-      for (let j = 0; j < 6; j++) {
-        color += letters[Math.floor(Math.random() * 16)];
-      }
-      colors.push(color);
-    }
 
-    return colors;
-  }
 
   confirmAction(message: string, action: () => void): void {
     const confirmDialog = confirm(message);
