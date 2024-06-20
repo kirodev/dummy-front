@@ -240,7 +240,6 @@ plotData(): void {
   // Add total_revenue from annualRevenues to yearPaymentsMap
   if (this.annualRevenues) {
       this.annualRevenues.forEach(revenue => {
-          // Check if there is already a record with the same payment amount for this year
           const existingRecords = yearPaymentsMap.get(revenue.year) || [];
           const existingRecord = existingRecords.find(record => record.payment_amount === revenue.totalRevenue);
 
@@ -253,40 +252,25 @@ plotData(): void {
       });
   }
 
-  // Extract years, paymentAmounts, and textLabels from yearPaymentsMap
-  const years: number[] = [];
-  const paymentAmounts: number[] = [];
-  const textLabels: string[] = [];
-  const colors: string[] = []; // Array to store colors
+  // Create arrays to store data for Plotly
+  const traces: any[] = [];
 
+  // Extract years, paymentAmounts, and textLabels from yearPaymentsMap
   yearPaymentsMap.forEach((records, year) => {
       records.forEach(record => {
-          years.push(year);
-          paymentAmounts.push(record.payment_amount);
-          textLabels.push(`Year: ${year}, Payment: ${record.payment_amount}, Type: ${record.type}`);
-
-          // Determine color based on the record type
-          if (record.type === "Total Revenues") {
-              // Set gray color with opacity for "Total revenue recognition"
-              colors.push('rgba(169, 169, 169, 0.1)');
-          } else {
-              // Use random color for other types
-              colors.push(this.generateRandomColor());
-          }
+          traces.push({
+              x: [year],
+              y: [record.payment_amount],
+              type: 'bar',
+              name: `${record.type}`,
+              marker: {
+                  color: record.type === "Total Revenues" ? 'rgba(169, 169, 169, 0.7)' : this.generateRandomColor()
+              },
+              text: `Year: ${year}, Payment: ${record.payment_amount}, Type: ${record.type}`,
+              hoverinfo: 'text'
+          });
       });
   });
-
-  // Prepare data for Plotly with custom colors and opacity
-  const data = [{
-      x: years,
-      y: paymentAmounts,
-      type: 'bar',
-      marker: {
-          color: colors, // Set colors array for each bar
-      },
-      text: textLabels,
-      hoverinfo: 'text'
-  }];
 
   // Layout for the plot
   const layout = {
@@ -299,12 +283,13 @@ plotData(): void {
           tickformat: ',d', // Use comma as thousands separator
           type: 'linear', // Ensure linear scale for y-axis
           rangemode: 'tozero', // Start Y-axis from zero
-          range: [0, Math.ceil(Math.max(...paymentAmounts) / 10000) * 10000] // Dynamic Y-axis range
-      }
+          range: [0, Math.ceil(Math.max(...traces.map(trace => trace.y[0])) / 10000) * 10000] // Dynamic Y-axis range
+      },
+      barmode: 'overlay' // Ensure bars are overlaid rather than stacked
   };
 
   // Plot the graph using Plotly
-  Plotly.newPlot('myDiv', data, layout);
+  Plotly.newPlot('myDiv', traces, layout);
 }
 
 generateRandomColor(): string {
@@ -316,6 +301,8 @@ generateRandomColor(): string {
   }
   return color;
 }
+
+
 
 
 
