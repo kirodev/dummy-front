@@ -17,28 +17,28 @@ public class AnnualRevenues {
     private Integer year;
 
     @Column(name = "total_revenue")
-    private Integer totalRevenue;
+    private Long totalRevenue;
 
     @Column(name = "licensing_revenue")
-    private Integer licensingRevenue;
+    private Long licensingRevenue;
 
     @Column(name = "recurring_revenue")
-    private Integer recurringRevenue;
+    private Long recurringRevenue;
 
     @Column(name = "fixed_fee")
-    private Integer fixedFee;
+    private Long fixedFee;
 
     @Column(name = "per_unit")
-    private Integer perUnit;
+    private Long perUnit;
 
     @Column(name = "past_sales")
-    private Integer pastSales;
+    private Long pastSales;
 
 
     public AnnualRevenues() {
 
     }
-    public AnnualRevenues(Integer id, String licensor, Integer year, Integer totalRevenue, Integer licensingRevenue, Integer recurringRevenue, Integer fixedFee, Integer perUnit, Integer pastSales) {
+    public AnnualRevenues(Integer id, String licensor, Integer year, Long totalRevenue, Long licensingRevenue, Long recurringRevenue, Long fixedFee, Long perUnit, Long pastSales) {
         this.id = id;
         this.licensor = licensor;
         this.year = year;
@@ -75,51 +75,51 @@ public class AnnualRevenues {
         this.year = year;
     }
 
-    public Integer getTotalRevenue() {
+    public Long getTotalRevenue() {
         return totalRevenue;
     }
 
-    public void setTotalRevenue(Integer totalRevenue) {
+    public void setTotalRevenue(Long totalRevenue) {
         this.totalRevenue = totalRevenue;
     }
 
-    public Integer getLicensingRevenue() {
+    public Long getLicensingRevenue() {
         return licensingRevenue;
     }
 
-    public void setLicensingRevenue(Integer licensingRevenue) {
+    public void setLicensingRevenue(Long licensingRevenue) {
         this.licensingRevenue = licensingRevenue;
     }
 
-    public Integer getRecurringRevenue() {
+    public Long getRecurringRevenue() {
         return recurringRevenue;
     }
 
-    public void setRecurringRevenue(Integer recurringRevenue) {
+    public void setRecurringRevenue(Long recurringRevenue) {
         this.recurringRevenue = recurringRevenue;
     }
 
-    public Integer getFixedFee() {
+    public Long getFixedFee() {
         return fixedFee;
     }
 
-    public void setFixedFee(Integer fixedFee) {
+    public void setFixedFee(Long fixedFee) {
         this.fixedFee = fixedFee;
     }
 
-    public Integer getPerUnit() {
+    public Long getPerUnit() {
         return perUnit;
     }
 
-    public void setPerUnit(Integer perUnit) {
+    public void setPerUnit(Long perUnit) {
         this.perUnit = perUnit;
     }
 
-    public Integer getPastSales() {
+    public Long getPastSales() {
         return pastSales;
     }
 
-    public void setPastSales(Integer pastSales) {
+    public void setPastSales(Long pastSales) {
         this.pastSales = pastSales;
     }
 

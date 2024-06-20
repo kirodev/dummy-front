@@ -71,7 +71,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 						"/licenses/{id}/mappingId",
 						"/multiple-payments/{id}/MPmappingId",
 						"/payments/{id}/mappingId",
-						"/timeline"
+						"/timeline",
+						"/annual-revenues"
 
 				).hasRole("ADMIN")
 
