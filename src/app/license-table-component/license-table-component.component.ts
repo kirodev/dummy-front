@@ -212,25 +212,35 @@ fetchTimelineData(): void {
   );
 }
 plotData(): void {
-  const data = [];
+  const data: any[] = [];
   const date_types: string[] = [];
-  const staticColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+  const staticColors: string[] = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
 
   // Iterate over the filteredTimelineData array
   for (const item of this.filteredTimelineData) {
     const id = item.id;
     const start = item.signed_date;
     const end = item.expiration_date;
-    const date_type = item.date_type || 'Unknown'; // Default to 'Unknown' if date_type is null or undefined
+    const date_type: string = item.date_type || 'Unknown'; // Default to 'Unknown' if date_type is null or undefined
 
     if (!date_types.includes(date_type)) {
       date_types.push(date_type);
     }
 
-    const date_type_index = date_types.indexOf(date_type);
+    const date_type_index: number = date_types.indexOf(date_type);
+
+    // Check the technologies values
+    const technologies: boolean[] = [
+      item._2G === 'Y',
+      item._3G === 'Y',
+      item._4G === 'Y',
+      item._5G === 'Y',
+      item._6G === 'Y',
+      item.wifi === 'Y',
+    ];
 
     // Check if the item is for the "Total" category
-    const isTotal = Object.keys(item).slice(9).every(key => item[key] === null || item[key] === '');
+    const isTotal: boolean = technologies.some(tech => tech) || Object.keys(item).slice(9).every(key => item[key] === null || item[key] === '');
 
     if (isTotal) {
       if (start && end) {
@@ -240,59 +250,52 @@ plotData(): void {
           line: {
             color: staticColors[date_type_index % staticColors.length], // Use static color for each date_type
           },
-          name: `${date_type}_${id}`, // Use date_type and index as the name
+          name: `${date_type}_${id}_Total`, // Use date_type and index as the name
           showlegend: true,
           type: 'scatter',
         };
         data.push(totalTrace);
       }
-    } else {
-      // Other traces for individual technologies
-      const technologies = [
-        item._2g === 'Y',
-        item._3g === 'Y',
-        item._4g === 'Y',
-        item._5g === 'Y',
-        item._6g === 'Y',
-        item.wifi === 'Y',
-      ];
 
-      for (let i = 0; i < technologies.length; i++) {
-        if (technologies[i]) {
-          const knownTrace = {
-            marker: {
-              color: staticColors[date_type_index % staticColors.length], // Use static color for each date_type
-            },
-            name: `${date_type}_${id}`, // Use date_type and index as the name
-            showlegend: true,
-            x: [start, end],
-            y: [i, i], // Set y to [i, i] for individual technologies
-            type: 'scatter',
-          };
-          data.push(knownTrace);
-        }
+      // If start or end date is missing, add a marker
+      if (!start || !end) {
+        const markerTrace = {
+          x: [start || end], // Place the marker at the existing date
+          y: [6], // Assuming y-axis index 6 for "Total" category
+          mode: 'markers',
+          name: `${date_type}_${id}`, // Use date_type and index as the name
+          marker: {
+            symbol: 'circle',
+            size: 10,
+            color: staticColors[date_type_index % staticColors.length], // Use static color for each date_type
+          },
+          showlegend: true,
+        };
+        data.push(markerTrace);
       }
     }
 
-    // Add a marker if either start or end date is missing
-    if (!start || !end) {
-      const markerTrace = {
-        x: [start || end], // Place the marker at the existing date
-        y: [6], // Assuming y-axis index 6 for "Total" category
-        mode: 'markers',
-        name: `${date_type}_${id}`, // Use date_type and index as the name
-        marker: {
-          symbol: 'circle',
-          size: 10,
-          color: staticColors[date_type_index % staticColors.length], // Use static color for each date_type
-        },
-        showlegend: true,
-      };
-      data.push(markerTrace);
+    // Traces for individual technologies
+    console.log(`ID: ${id}, Technologies:`, technologies);
+
+    for (let i = 0; i < technologies.length; i++) {
+      if (technologies[i]) {
+        const knownTrace = {
+          marker: {
+            color: staticColors[date_type_index % staticColors.length], // Use static color for each date_type
+          },
+          name: `${date_type}_${id}_${i}`, // Use date_type and index as the name
+          showlegend: true,
+          x: [start, end],
+          y: [i, i], // Set y to [i, i] for individual technologies
+          type: 'scatter',
+        };
+        data.push(knownTrace);
+      }
     }
   }
 
-  const layout = {
+  const layout: any = {
     height: 600,
     autosize: true,
     hovermode: 'closest',
@@ -352,7 +355,7 @@ plotData(): void {
     },
   };
 
-  const config = {
+  const config: any = {
     showLink: false,
     linkText: 'Export to plot.ly',
     plotlyServerURL: 'https://plot.ly',
@@ -360,6 +363,7 @@ plotData(): void {
 
   Plotly.newPlot('myDiv', data, layout, config);
 }
+
 
 
 

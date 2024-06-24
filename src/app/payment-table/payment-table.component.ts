@@ -211,40 +211,33 @@ fetchAnnualRevenues(): void {
       }
   );
 }
-
 plotData(): void {
-  // Make a copy of filteredDataDefined to avoid mutating the original array
   const dataCopy = [...this.filteredDataDefined];
 
-  // Create a map to store all payment amounts and types for each year
   const yearPaymentsMap = new Map<number, { payment_amount: number, type: string }[]>();
 
-  // Iterate through dataCopy to populate yearPaymentsMap with filtered data
   dataCopy.forEach(item => {
-      const existingRecords = yearPaymentsMap.get(item.year) || [];
+      if (item.payment_type != null) { // Only process items with a non-null payment_type
+          const existingRecords = yearPaymentsMap.get(item.year) || [];
 
-      // Check if there is already a record with the same payment amount for this year
-      const existingRecord = existingRecords.find(record => record.payment_amount === item.payment_amount);
+          const existingRecord = existingRecords.find(record => record.payment_amount === item.payment_amount);
 
-      if (!existingRecord) {
-          // If no existing record for this payment amount, add the record
-          existingRecords.push({ payment_amount: item.payment_amount, type: item.payment_type });
-      } else if (item.payment_type === "Total revenue recognition") {
-          // If existing record found and current item is "Total revenue recognition", replace the record
-          existingRecords.splice(existingRecords.indexOf(existingRecord), 1, { payment_amount: item.payment_amount, type: item.payment_type });
+          if (!existingRecord) {
+              existingRecords.push({ payment_amount: item.payment_amount, type: item.payment_type });
+          } else if (item.payment_type === "Total revenue recognition") {
+              existingRecords.splice(existingRecords.indexOf(existingRecord), 1, { payment_amount: item.payment_amount, type: item.payment_type });
+          }
+
+          yearPaymentsMap.set(item.year, existingRecords);
       }
-
-      yearPaymentsMap.set(item.year, existingRecords);
   });
 
-  // Add total_revenue from annualRevenues to yearPaymentsMap
   if (this.annualRevenues) {
       this.annualRevenues.forEach(revenue => {
           const existingRecords = yearPaymentsMap.get(revenue.year) || [];
           const existingRecord = existingRecords.find(record => record.payment_amount === revenue.totalRevenue);
 
           if (!existingRecord) {
-              // If no existing record for this totalRevenue, add the record
               existingRecords.push({ payment_amount: revenue.totalRevenue, type: "Total Revenues" });
           }
 
@@ -252,27 +245,36 @@ plotData(): void {
       });
   }
 
-  // Create arrays to store data for Plotly
-  const traces: any[] = [];
+  let totalRevenuesTraces: any[] = [];
+  let otherTraces: any[] = [];
 
-  // Extract years, paymentAmounts, and textLabels from yearPaymentsMap
   yearPaymentsMap.forEach((records, year) => {
       records.forEach(record => {
-          traces.push({
+          const type = record.type || "Unknown";
+          const trace = {
               x: [year],
               y: [record.payment_amount],
               type: 'bar',
-              name: `${record.type}`,
+              name: type,
               marker: {
-                  color: record.type === "Total Revenues" ? 'rgba(169, 169, 169, 0.7)' : this.generateRandomColor()
+                  color: type === "Total Revenues" ? 'rgba(169, 169, 169, 0.7)' : this.generateRandomColor()
               },
-              text: `Year: ${year}, Payment: ${record.payment_amount}, Type: ${record.type}`,
-              hoverinfo: 'text'
-          });
+              text: `Year: ${year}, Payment: ${record.payment_amount}, Type: ${type}`,
+              hoverinfo: 'text',
+              showlegend: type !== "Total Revenues" // Don't show Total Revenues in the legend
+          };
+          if (type === "Total Revenues") {
+              totalRevenuesTraces.push(trace);
+          } else {
+              otherTraces.push(trace);
+          }
       });
   });
 
-  // Layout for the plot
+  // Combine the traces and sort by payment amount in descending order
+  let traces = [...totalRevenuesTraces, ...otherTraces];
+  traces.sort((a, b) => b.y[0] - a.y[0]);
+
   const layout = {
       height: 600,
       autosize: true,
@@ -280,20 +282,18 @@ plotData(): void {
       xaxis: { title: 'Year' },
       yaxis: {
           title: 'Payment Amount (in thousands)',
-          tickformat: ',d', // Use comma as thousands separator
-          type: 'linear', // Ensure linear scale for y-axis
-          rangemode: 'tozero', // Start Y-axis from zero
-          range: [0, Math.ceil(Math.max(...traces.map(trace => trace.y[0])) / 10000) * 10000] // Dynamic Y-axis range
+          tickformat: ',d',
+          type: 'linear',
+          rangemode: 'tozero',
+          range: [0, Math.ceil(Math.max(...traces.map(trace => trace.y[0])) / 10000) * 10000]
       },
-      barmode: 'overlay' // Ensure bars are overlaid rather than stacked
+      barmode: 'overlay', // Keep barmode as 'overlay'
   };
 
-  // Plot the graph using Plotly
   Plotly.newPlot('myDiv', traces, layout);
 }
 
 generateRandomColor(): string {
-  // Function to generate random color
   const letters = '0123456789ABCDEF';
   let color = '#';
   for (let i = 0; i < 6; i++) {
@@ -301,6 +301,8 @@ generateRandomColor(): string {
   }
   return color;
 }
+
+
 
 
 
