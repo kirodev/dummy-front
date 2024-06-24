@@ -19,11 +19,11 @@ public class Timeline {
         private String signed_date;
         private String expiration_date;
         private String date_type;
-        private String _2g;
-        private String _3g;
-        private String _4g;
-        private String _5g;
-        private String _6g;
+        private String _2G;
+        private String _3G;
+        private String _4G;
+        private String _5G;
+        private String _6G;
         private String wifi;
 
 
@@ -33,7 +33,7 @@ public class Timeline {
 
         }
 
-    public Timeline(Long id, Long snippet_idl, Long snippet_idp, String pair, String licensor, String licensee, String signed_date, String expiration_date, String date_type, String _2g, String _3g, String _4g, String _5g, String _6g, String wifi) {
+    public Timeline(Long id, Long snippet_idl, Long snippet_idp, String pair, String licensor, String licensee, String signed_date, String expiration_date, String date_type, String _2G, String _3G, String _4G, String _5G, String _6G, String wifi) {
         this.id = id;
         this.snippet_idl = snippet_idl;
         this.snippet_idp = snippet_idp;
@@ -43,11 +43,11 @@ public class Timeline {
         this.signed_date = signed_date;
         this.expiration_date = expiration_date;
         this.date_type = date_type;
-        this._2g = _2g;
-        this._3g = _3g;
-        this._4g = _4g;
-        this._5g = _5g;
-        this._6g = _6g;
+        this._2G = _2G;
+        this._3G = _3G;
+        this._4G = _4G;
+        this._5G = _5G;
+        this._6G = _6G;
         this.wifi = wifi;
     }
 
@@ -123,44 +123,44 @@ public class Timeline {
         this.date_type = date_type;
     }
 
-    public String get_2g() {
-        return _2g;
+    public String get_2G() {
+        return _2G;
     }
 
-    public void set_2g(String _2g) {
-        this._2g = _2g;
+    public void set_2G(String _2G) {
+        this._2G = _2G;
     }
 
-    public String get_3g() {
-        return _3g;
+    public String get_3G() {
+        return _3G;
     }
 
-    public void set_3g(String _3g) {
-        this._3g = _3g;
+    public void set_3G(String _3G) {
+        this._3G = _3G;
     }
 
-    public String get_4g() {
-        return _4g;
+    public String get_4G() {
+        return _4G;
     }
 
-    public void set_4g(String _4g) {
-        this._4g = _4g;
+    public void set_4G(String _4G) {
+        this._4G = _4G;
     }
 
-    public String get_5g() {
-        return _5g;
+    public String get_5G() {
+        return _5G;
     }
 
-    public void set_5g(String _5g) {
-        this._5g = _5g;
+    public void set_5g(String _5G) {
+        this._5G = _5G;
     }
 
-    public String get_6g() {
-        return _6g;
+    public String get_6G() {
+        return _6G;
     }
 
-    public void set_6g(String _6g) {
-        this._6g = _6g;
+    public void set_6G(String _6G) {
+        this._6G = _6G;
     }
 
     public String getWifi() {

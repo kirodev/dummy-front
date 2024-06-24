@@ -9,21 +9,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
 @RestController
-@CrossOrigin(origins = "https://dummy-front-ace8d7bf3875.herokuapp.com")
-//@CrossOrigin(origins = "http://localhost:4200")
+//@CrossOrigin(origins = "https://dummy-front-ace8d7bf3875.herokuapp.com")
+@CrossOrigin(origins = "http://localhost:4200")
 
-class SpringBootTutorialApplication {
+class DummyApplication {
 
     private final LicenseRepository licenseRepository;
     private final MultipleLicensesRepository multipleLicenseesRepository;
 
-    public SpringBootTutorialApplication(LicenseRepository licenseRepository, MultipleLicensesRepository multipleLicenseesRepository) {
+    public DummyApplication(LicenseRepository licenseRepository, MultipleLicensesRepository multipleLicenseesRepository) {
         this.licenseRepository = licenseRepository;
         this.multipleLicenseesRepository = multipleLicenseesRepository;
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(SpringBootTutorialApplication.class, args);
+        SpringApplication.run(DummyApplication.class, args);
     }
 
 
