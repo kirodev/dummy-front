@@ -58,41 +58,58 @@ export class SalesComponent implements OnInit {
       console.error('No sales data available');
       return;
     }
-
+  
     const myDiv = document.getElementById('myDiv');
     if (!myDiv) {
       console.error('Target div for Plotly graph not found');
       return;
     }
-    const dataCopy = [...this.salesList]; // Replace 'this.salesList' with your actual sales data array
-    
+  
     // Create a map to store sales data by company, year, and quarter
-    const companyYearQuarterSalesMap = new Map<string, Map<string, number>>();
+    const salesMap = new Map<string, { total: number, count: number, sources: { source: string, sales: number }[] }>();
   
     // Populate the map with data
-    dataCopy.forEach(item => {
+    this.salesList.forEach(item => {
       if (item.company && item.years && item.quarters && item.sales) {
-        let yearQuarterSalesMap = companyYearQuarterSalesMap.get(item.company);
-        if (!yearQuarterSalesMap) {
-          yearQuarterSalesMap = new Map<string, number>();
-          companyYearQuarterSalesMap.set(item.company, yearQuarterSalesMap);
+        const key = `${item.company}|${item.years}|${item.quarters}`;
+        let data = salesMap.get(key);
+        if (!data) {
+          data = { total: 0, count: 0, sources: [] };
+          salesMap.set(key, data);
         }
-        const key = `${item.years}-${item.quarters}`;
-        const salesData = yearQuarterSalesMap.get(key) || 0;
-        yearQuarterSalesMap.set(key, salesData + item.sales);
+        data.total += item.sales;
+        data.count += 1;
+        data.sources.push({ source: item.sources, sales: item.sales });
       }
     });
   
     // Generate traces for each company
     const traces: Partial<Plotly.PlotData>[] = [];
-    companyYearQuarterSalesMap.forEach((yearQuarterSalesMap, company) => {
+    const companies = new Set(this.salesList.map(item => item.company));
+  
+    companies.forEach(company => {
       let xValues: string[] = [];
       let yValues: number[] = [];
-      yearQuarterSalesMap.forEach((sales, yearQuarter) => {
-        const [year, quarter] = yearQuarter.split('-');
+      let hoverTexts: string[] = [];
+  
+      // Sort the keys to ensure chronological order
+      const companyData = Array.from(salesMap.entries())
+        .filter(([key]) => key.startsWith(`${company}|`))
+        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+  
+      companyData.forEach(([key, data]) => {
+        const [, year, quarter] = key.split('|');
+        const avgSales = data.total / data.count;
         xValues.push(`${year} ${quarter}`);
-        yValues.push(sales);
+        yValues.push(avgSales);
+  
+        let hoverText = `Company: ${company}<br>Year: ${year}<br>Quarter: ${quarter}<br>Average Sales: ${avgSales.toFixed(2)}<br><br>Sources:`;
+        data.sources.forEach(source => {
+          hoverText += `<br>${source.source}: ${source.sales}`;
+        });
+        hoverTexts.push(hoverText);
       });
+  
       traces.push({
         x: xValues,
         y: yValues,
@@ -103,7 +120,7 @@ export class SalesComponent implements OnInit {
         marker: {
           color: this.generateRandomColor()
         },
-        text: yValues.map((sales, index) => `Company: ${company}, Year: ${xValues[index].split(' ')[0]}, Quarter: ${xValues[index].split(' ')[1]}, Sales Amount: ${sales}`),
+        text: hoverTexts,
         hoverinfo: 'text',
       });
     });
@@ -112,22 +129,27 @@ export class SalesComponent implements OnInit {
     const layout: Partial<Plotly.Layout> = {
       height: 600,
       autosize: true,
-      title: 'Sales Amount Over Quarters',
+      title: 'Average Sales Amount Over Quarters by Company',
       xaxis: { title: 'Year and Quarter' },
       yaxis: {
-        title: 'Sales Amount',
+        title: 'Average Sales Amount',
         tickformat: ',d',
         type: 'linear',
         rangemode: 'tozero',
         range: [0, Math.ceil(Math.max(...traces.flatMap(trace => trace.y as number[])))],
       },
       legend: {
-        traceorder: 'reversed', // Reverse the order of legend items for better interactivity
+        traceorder: 'reversed',
       },
+      hovermode: 'closest',
     };
   
     // Plot with Plotly
-    Plotly.newPlot('myDiv', traces, layout);
+    Plotly.newPlot('myDiv', traces, layout).then(() => {
+      console.log('Graph plotted successfully');
+    }).catch((error: any) => {
+      console.error('Error plotting graph:', error);
+    });
   }
   
   generateRandomColor(): string {
