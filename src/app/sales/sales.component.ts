@@ -9,38 +9,37 @@ declare var Plotly: any;
 export class SalesComponent implements OnInit {
 
   salesList: any[] = [];
+  private plotlyLoaded = false;
+  private dataLoaded = false;
 
   constructor(private salesService: SalesService) { }
 
   ngOnInit(): void {
     this.loadSales();
+    this.loadPlotlyScript();
+  }
 
-    this.loadPlotlyScript().then(() => {
+  loadPlotlyScript(): void {
+    const scriptElement = document.createElement('script');
+    scriptElement.src = 'https://cdn.plot.ly/plotly-2.25.2.min.js';
+    scriptElement.type = 'text/javascript';
+    scriptElement.onload = () => {
       console.log('Plotly.js script loaded successfully');
-      this.plotData();
-    }).catch(error => {
-      console.error('Error loading Plotly.js script:', error);
-    });
+      this.plotlyLoaded = true;
+      this.tryPlotData();
+    };
+    scriptElement.onerror = (event: Event | string) => {
+      console.error('Error loading Plotly.js script:', event);
+    };
+    document.head.appendChild(scriptElement);
   }
 
-  loadPlotlyScript(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      const scriptElement = document.createElement('script');
-      scriptElement.src = 'https://cdn.plot.ly/plotly-2.25.2.min.js';
-      scriptElement.type = 'text/javascript';
-      scriptElement.onload = () => {
-        resolve();
-      };
-      scriptElement.onerror = (event: Event | string) => {
-        reject(event);
-      };
-      document.head.appendChild(scriptElement);
-    });
-  }
   loadSales(): void {
     this.salesService.getAllSales().subscribe(
       data => {
         this.salesList = data;
+        this.dataLoaded = true;
+        this.tryPlotData();
       },
       error => {
         console.error('Error fetching sales data: ', error);
@@ -48,9 +47,23 @@ export class SalesComponent implements OnInit {
     );
   }
 
+  tryPlotData(): void {
+    if (this.plotlyLoaded && this.dataLoaded) {
+      this.plotData();
+    }
+  }
 
   plotData(): void {
-    // Assuming 'salesList' is the array containing sales information
+    if (!this.salesList || this.salesList.length === 0) {
+      console.error('No sales data available');
+      return;
+    }
+
+    const myDiv = document.getElementById('myDiv');
+    if (!myDiv) {
+      console.error('Target div for Plotly graph not found');
+      return;
+    }
     const dataCopy = [...this.salesList]; // Replace 'this.salesList' with your actual sales data array
     
     // Create a map to store sales data by company, year, and quarter
