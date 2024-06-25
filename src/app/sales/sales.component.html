@@ -1,0 +1,29 @@
+<div id='myDiv'></div>
+
+<div class="table-container">
+    <table class="terms-table">
+        <thead>
+            <tr>
+                <th>Company</th>
+                <th>Source</th>
+                <th>Link</th>
+                <th>Year</th>
+                <th>Quarter</th>
+                <th>Sales</th>
+                <th>Others</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let item of salesList">
+                <td>{{ item.company }}</td>
+                <td>{{ item.sources }}</td>
+                <td><a href="{{ item.link }}" target="_blank">{{ item.link }}</a></td>
+                <td>{{ item.years }}</td>
+                <td>{{ item.quarters }}</td>
+                <td>{{ item.sales }}</td>
+                <td>{{ item.others }}</td>
+
+            </tr>
+        </tbody>
+    </table>
+</div>

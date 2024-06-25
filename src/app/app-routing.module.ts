@@ -20,12 +20,12 @@ import { LicenseTableComponent } from './license-table-component/license-table-c
 import { PaymentTableComponent } from './payment-table/payment-table.component';
 import { SechomeComponent } from './sechome/sechome.component';
 import { LoginComponent } from './login/login.component';
-
 import { ProfileComponent } from './profile/profile.component';
 import { BoardUserComponent } from './board-user/board-user.component';
 import { BoardModeratorComponent } from './board-moderator/board-moderator.component';
 import { BoardAdminComponent } from './board-admin/board-admin.component';
 import { RegisterComponent } from './register/register.component';
+import { SalesComponent } from './sales/sales.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent },
@@ -56,14 +56,13 @@ const routes: Routes = [
   { path: 'license', component: LicenseTableComponent },
   { path: 'payment', component: PaymentTableComponent },
   { path: 'sechome', component: SechomeComponent },
-
-
   { path: 'register', component: RegisterComponent },
   { path: 'login', component: LoginComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'user', component: BoardUserComponent },
   { path: 'mod', component: BoardModeratorComponent },
   { path: 'admin', component: BoardAdminComponent },
+  { path: 'sales', component: SalesComponent },
 
 
   { path: '', redirectTo: '/register', pathMatch: 'full' }, 

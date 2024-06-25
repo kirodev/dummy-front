@@ -32,6 +32,7 @@ import { SechomeComponent } from './sechome/sechome.component';
 import { FeedbackPopupComponent } from './feedback-popup/feedback-popup.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
+import { SalesComponent } from './sales/sales.component';
 
 
 
@@ -59,7 +60,8 @@ import { RegisterComponent } from './register/register.component';
     SechomeComponent,
     FeedbackPopupComponent,
     LoginComponent,
-    RegisterComponent
+    RegisterComponent,
+    SalesComponent
   ],
   
   imports: [
