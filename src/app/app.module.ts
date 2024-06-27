@@ -33,6 +33,7 @@ import { FeedbackPopupComponent } from './feedback-popup/feedback-popup.componen
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { SalesComponent } from './sales/sales.component';
+import { RevenuesComponent } from './revenues/revenues.component';
 
 
 
@@ -61,7 +62,8 @@ import { SalesComponent } from './sales/sales.component';
     FeedbackPopupComponent,
     LoginComponent,
     RegisterComponent,
-    SalesComponent
+    SalesComponent,
+    RevenuesComponent
   ],
   
   imports: [

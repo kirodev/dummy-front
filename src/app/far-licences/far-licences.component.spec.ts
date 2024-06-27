@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FarlicensesComponent } from './far-licences.component';
+import { FarLicencesComponent} from './far-licences.component';
 
 describe('FarlicensesComponent', () => {
   let component: FarlicensesComponent;

@@ -153,9 +153,9 @@ for (const multipleLicense of this.multipleLicenses) {
   
     // Navigate based on cell color and clickable cases
     if (cellColor === 'green') {
-      this.router.navigate(['/payment']);
-    } else {
       this.router.navigate(['/license']);
+    } else {
+      this.router.navigate(['/payment']);
     }
   
     // Save unselected cells to local storage

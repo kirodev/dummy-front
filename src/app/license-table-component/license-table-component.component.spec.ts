@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LicenseTableComponentComponent } from './license-table-component.component';
+import { LicenseTableComponent } from './license-table-component.component';
 
 describe('LicenseTableComponentComponent', () => {
-  let component: LicenseTableComponentComponent;
-  let fixture: ComponentFixture<LicenseTableComponentComponent>;
+  let component: LicenseTableComponent;
+  let fixture: ComponentFixture<LicenseTableComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [LicenseTableComponentComponent]
+      declarations: [LicenseTableComponent]
     });
-    fixture = TestBed.createComponent(LicenseTableComponentComponent);
+    fixture = TestBed.createComponent(LicenseTableComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

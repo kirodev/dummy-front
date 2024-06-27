@@ -26,6 +26,7 @@ import { BoardModeratorComponent } from './board-moderator/board-moderator.compo
 import { BoardAdminComponent } from './board-admin/board-admin.component';
 import { RegisterComponent } from './register/register.component';
 import { SalesComponent } from './sales/sales.component';
+import { RevenuesComponent } from './revenues/revenues.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent },
@@ -63,6 +64,7 @@ const routes: Routes = [
   { path: 'mod', component: BoardModeratorComponent },
   { path: 'admin', component: BoardAdminComponent },
   { path: 'sales', component: SalesComponent },
+  { path: 'revenues', component: RevenuesComponent },
 
 
   { path: '', redirectTo: '/register', pathMatch: 'full' }, 
