@@ -129,7 +129,7 @@ export class SalesComponent implements OnInit {
     const layout: Partial<Plotly.Layout> = {
       height: 600,
       autosize: true,
-      title: 'Average Sales Amount Over Quarters by Company',
+      title: 'Volume Of Smartphone Sales Over Quarters by Company',
       xaxis: { title: 'Year and Quarter' },
       yaxis: {
         title: 'Average Sales Amount',

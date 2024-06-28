@@ -80,71 +80,102 @@ export class RevenuesComponent implements OnInit {
   }
   plotData(): void {
     const companyYearRevenueMap = new Map<string, Map<number, number>>();
-    const companyColors: Map<string, string> = new Map(); // Map to store company colors
-  
+    const companyColors: Map<string, string> = new Map();
+
+    // Function to generate a distinct color in HSL format ensuring colors are far apart
+    function generateDistinctColors(count: number): string[] {
+        const colors = [];
+        const hueStep = 360 / count; // Divide the color wheel into equal parts
+        for (let i = 0; i < count; i++) {
+            const hue = i * hueStep;
+            const color = `hsl(${hue}, 70%, 50%)`; // Fixed saturation and lightness
+            colors.push(color);
+        }
+        return colors;
+    }
+
+    // Generate distinct colors for each company
+    const companies = Array.from(new Set(this.annualRevenues.map(item => item.licensor)));
+    const colors = generateDistinctColors(companies.length);
+    companies.forEach((company, index) => {
+        companyColors.set(company, colors[index]);
+    });
+
     // Group data by company and then by year
     this.annualRevenues.forEach(item => {
-      const year = item.year;
-      const company = item.licensor;
-      const licensing_revenue = item.licensingRevenue;
-  
-      if (!companyYearRevenueMap.has(company)) {
-        companyYearRevenueMap.set(company, new Map());
-      }
-      companyYearRevenueMap.get(company)!.set(year, licensing_revenue);
-  
-      // Assign a color to the company if it doesn't have one
-      if (!companyColors.has(company)) {
-        const color = this.generateRandomColor();
-        companyColors.set(company, color);
-      }
+        const year = item.year;
+        const company = item.licensor;
+        const licensing_revenue = item.licensingRevenue;
+
+        if (!companyYearRevenueMap.has(company)) {
+            companyYearRevenueMap.set(company, new Map());
+        }
+        companyYearRevenueMap.get(company)!.set(year, licensing_revenue);
     });
-  
+
     const traces: Partial<Plotly.PlotData>[] = [];
-  
-    // Create a trace for each company
+
+    // Get unique years
+    const uniqueYears = Array.from(new Set(this.annualRevenues.map(item => item.year)));
+
+    // Calculate total revenue for each company
+    const companyTotalRevenues = new Map<string, number>();
     companyYearRevenueMap.forEach((yearRevenueMap, company) => {
-      const years: number[] = [];
-      const revenues: number[] = [];
-  
-      yearRevenueMap.forEach((revenue, year) => {
-        years.push(year);
-        revenues.push(revenue);
-      });
-  
-      const trace: Partial<Plotly.PlotData> = {
-        x: years,
-        y: revenues,
-        type: 'bar',
-        name: company,
-        marker: { color: companyColors.get(company) ?? '#000000' }, // Use default color if undefined
-        hovertemplate:  years.map((year, i) => `Year: ${year}, Licensing Revenue: ${revenues[i]}`), // Custom hover text
-        hoverinfo: 'text', // Only show hover text
-      };
-      traces.push(trace);
+        let totalRevenue = 0;
+        yearRevenueMap.forEach(revenue => {
+            totalRevenue += revenue;
+        });
+        companyTotalRevenues.set(company, totalRevenue);
     });
-  
-    const uniqueYears = new Set(this.annualRevenues.map(item => item.year));
-    const chartHeight = 100 + uniqueYears.size * 80;  // Adjust base height and multiplier as needed
-  
+
+    // Sort companies by total revenue (high to low)
+    const sortedCompanies = Array.from(companyTotalRevenues.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(entry => entry[0]);
+
+    // Create a trace for each company in sorted order
+    sortedCompanies.forEach(company => {
+        const yearRevenueMap = companyYearRevenueMap.get(company)!;
+        const years: number[] = [];
+        const revenues: number[] = [];
+
+        yearRevenueMap.forEach((revenue, year) => {
+            years.push(year);
+            revenues.push(revenue);
+        });
+
+        const trace: Partial<Plotly.PlotData> = {
+            x: years,
+            y: revenues,
+            type: 'bar',
+            name: company,
+            marker: { color: companyColors.get(company) ?? '#000000' }, // Use default color if undefined
+            hovertemplate: years.map((year, i) => `Year: ${year}, Licensing Revenue: ${revenues[i]}`), // Custom hover text
+            hoverinfo: 'text', // Only show hover text
+        };
+        traces.push(trace);
+    });
+
+    const chartHeight = 100 + uniqueYears.length * 80;  // Adjust base height and multiplier as needed
+
     const layout = {
-      height: chartHeight,
-      autosize: true,
-      title: 'Licensing Revenues by Year',
-      xaxis: { title: 'Year' },
-      yaxis: {
-        title: 'Licensing Revenue (in thousands)',
-        tickformat: ',d',
-        type: 'linear',
-        rangemode: 'tozero',
-        automargin: true, // Ensure margins are adjusted automatically
-      },
-      barmode: 'stack', // Display bars stacked
+        height: chartHeight,
+        autosize: true,
+        title: 'Licensing Revenues by Year',
+        xaxis: { title: 'Year' },
+        yaxis: {
+            title: 'Licensing Revenue (in thousands)',
+            tickformat: ',d',
+            type: 'linear',
+            rangemode: 'tozero',
+            automargin: true, // Ensure margins are adjusted automatically
+        },
+        barmode: 'stack', // Display bars stacked
     };
-  
+
     Plotly.newPlot('myDiv', traces, layout);
-  }
-  
+}
+
   
 
   generateRandomColor(): string {

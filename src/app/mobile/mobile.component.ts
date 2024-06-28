@@ -14,10 +14,9 @@ export class MobileComponent {
   licensors: string[] = [];
   tableData: string[][] = [];
   fetchedData: any[] = [];
-  paymentsData: any[] = []; // Array to store payments data
+  paymentsData: any[] = [];
   multiplePayments: any[] = [];
   multipleLicenses: any[] = []; 
-
 
   constructor(
     private router: Router,
@@ -99,37 +98,53 @@ export class MobileComponent {
       }
     }
 
-// Include multiple payments data in the table
-for (const multiplePayment of this.multiplePayments) {
-  const licensorIndex = this.licensors.indexOf(multiplePayment.licensor);
-  if (licensorIndex !== -1 && multiplePayment.licensee) {
-    const licensees: string[] = multiplePayment.licensee.split('|').map((licensee: string) => licensee.trim());
-    for (const licensee of licensees) {
-      const licenseeIndex = this.licensees.indexOf(licensee);
-      if (licenseeIndex !== -1) {
-        // Set the corresponding cell in the table to green
-        this.tableData[licensorIndex][licenseeIndex] = 'green';
+    // Include multiple payments data in the table
+    for (const multiplePayment of this.multiplePayments) {
+      const licensorIndex = this.licensors.indexOf(multiplePayment.licensor);
+      if (licensorIndex !== -1 && multiplePayment.licensee) {
+        const licensees: string[] = multiplePayment.licensee.split('|').map((licensee: string) => licensee.trim());
+        for (const licensee of licensees) {
+          const licenseeIndex = this.licensees.indexOf(licensee);
+          if (licenseeIndex !== -1) {
+            // Set the corresponding cell in the table to green
+            this.tableData[licensorIndex][licenseeIndex] = 'green';
+          }
+        }
       }
     }
-  }
-}
 
-
-for (const multipleLicense of this.multipleLicenses) {
-  const licensorIndex = this.licensors.indexOf(multipleLicense.licensor);
-  if (licensorIndex !== -1 && multipleLicense.licensee) {
-    const licensees: string[] = multipleLicense.licensee.split('|').map((licensee: string) => licensee.trim());
-    for (const licensee of licensees) {
-      const licenseeIndex = this.licensees.indexOf(licensee);
-      if (licenseeIndex !== -1) {
-        // Set the corresponding cell in the table to green
-        this.tableData[licensorIndex][licenseeIndex] = 'green';
+    for (const multipleLicense of this.multipleLicenses) {
+      const licensorIndex = this.licensors.indexOf(multipleLicense.licensor);
+      if (licensorIndex !== -1 && multipleLicense.licensee) {
+        const licensees: string[] = multipleLicense.licensee.split('|').map((licensee: string) => licensee.trim());
+        for (const licensee of licensees) {
+          const licenseeIndex = this.licensees.indexOf(licensee);
+          if (licenseeIndex !== -1) {
+            // Set the corresponding cell in the table to green
+            this.tableData[licensorIndex][licenseeIndex] = 'green';
+          }
+        }
       }
     }
-  }
-}
 
-}
+    // Order licensees based on the number of green cells (descending order)
+    this.licensees.sort((a, b) => {
+      const countA = this.tableData.reduce((acc, row, rowIndex) => {
+        if (this.tableData[rowIndex][this.licensees.indexOf(a)] === 'green') {
+          return acc + 1;
+        }
+        return acc;
+      }, 0);
+      const countB = this.tableData.reduce((acc, row, rowIndex) => {
+        if (this.tableData[rowIndex][this.licensees.indexOf(b)] === 'green') {
+          return acc + 1;
+        }
+        return acc;
+      }, 0);
+      return countB - countA; // Sort in descending order of green cells count
+    });
+  }
+
   dataContainsLicensorAndLicensee(licensor: string, licensee: string): boolean {
     // Check if the combination of licensor and licensee exists in the data array
     return this.fetchedData.some(item => item.licensor === licensor && item.licensee === licensee);
