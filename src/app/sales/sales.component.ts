@@ -188,7 +188,7 @@ export class SalesComponent implements OnInit {
     }, 100);
   }
 
-  handlePointClick(data: any): void {
+handlePointClick(data: any): void {
     const point = data.points[0];
     const customData = point.customdata;
 
@@ -232,6 +232,7 @@ export class SalesComponent implements OnInit {
 
     this.showPopup(infoText);
 }
+
 
 
   showPopup(infoText: string): void {
