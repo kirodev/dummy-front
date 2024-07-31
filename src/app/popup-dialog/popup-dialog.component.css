@@ -1,0 +1,28 @@
+@import '~@angular/material/prebuilt-themes/indigo-pink.css'; /* Import your desired theme */
+.dialog-container {
+    width: 500px;
+    background-color: #0000000f; /* Background color */
+    padding: 16px; /* Padding inside the pop-up */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Drop shadow for depth */
+  }
+  
+  .dialog-title {
+    font-size: 20px; /* Title font size */
+    margin-bottom: 10px; /* Spacing below the title */
+    color: #000000; /* Title text color */
+  }
+  
+  .dialog-amount {
+    font-size: 24px; /* Amount font size */
+    color: #1d8a48; /* Amount text color */
+    margin-bottom: 20px; /* Spacing below the amount */
+  }
+  
+  /* Close button */
+  .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+  }
+  

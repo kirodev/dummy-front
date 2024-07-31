@@ -1,0 +1,19 @@
+<div>
+    <input type="text" [(ngModel)]="searchQuery" (input)="searchFiles()" placeholder="Search by name..." />
+    <ul>
+      <li *ngFor="let file of filteredPdfFiles">
+        <span>{{ file.name }}</span>
+        <button (click)="openPDFViewer(file)">View</button>
+      </li>
+    </ul>
+  </div>
+  
+  <div class="popup-overlay" *ngIf="showPopup">
+    <div class="popup-content">
+      <app-example-pdf-viewer *ngIf="showPDFViewer" [pdfSrc]="pdfSrc"></app-example-pdf-viewer>
+      <div class="button-container">
+        <button (click)="closePopup()">Close</button>
+      </div>
+    </div>
+  </div>
+  

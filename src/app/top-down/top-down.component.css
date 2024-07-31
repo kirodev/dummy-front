@@ -1,0 +1,52 @@
+@font-face {
+  font-family: 'ROG Fonts';
+  src: url('src/assets/7032-fontps.ttf') format('truetype');
+}
+.top-down-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .top-down-table th,
+  .top-down-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .top-down-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  
+  .top-down-table td {
+    background-color: #fff;
+  }
+  .icon {
+    font-size: 20px;
+    margin-right: 5px;
+  }
+
+
+.close {
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.custom-tab-label {
+    color: #d39f9f; /* Change this color to your desired inactive tab label text color */
+  }
+
+  h2 {
+    color: #E57A45;
+    font-family: 'ROG Fonts', sans-serif; 
+        font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    margin-left:100px; /* Reset margin for h1 */
+    margin-top: 50px;  
+  }

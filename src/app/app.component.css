@@ -1,0 +1,100 @@
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-radius: 8px;
+    position: relative;
+    z-index: 1;
+    background-color: #fff;
+}
+
+.logo img {
+    width: 197px;
+    height: 70px;
+}
+
+.navbar-nav {
+    display: flex;
+    gap: 20px;
+    list-style: none; /* Remove default list style */
+
+}
+
+.navbar-nav a {
+    color: #ff8c00;
+    font-family: Constantia;
+    font-size: 18px;
+    transition: color 0.3s;
+    text-decoration: none;
+}
+
+.navbar-nav a.grey-link {
+    color: grey;
+}
+
+.navbar-nav a:hover {
+    color: #005DAC;
+}
+
+/* Dropdown */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background: linear-gradient(to bottom, #E57A45, #E57A45);
+    width: 160px;
+    top: 100%;
+    left: 0;
+    z-index: 2;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-content a {
+    color: #fff;
+    padding: 8px 4px;
+    display: block;
+    text-decoration: none;
+    transition: background-color 0.3s;
+    font-size: 14px;
+    border-bottom: 1px solid #fff;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.navbar-nav {
+    display: flex;
+    align-items: center; /* Vertically center items */
+  }
+.grey-link {
+    color: grey;
+}
+#profile-img {
+    width: 40px; /* Adjust the size as needed */
+    height: 40px; /* Adjust the size as needed */
+    border-radius: 50%; /* Make it a circle */
+    object-fit: cover; /* Ensure the image covers the entire circle */
+  }
+
+  .navbar-nav img {
+    width: 30px; /* Adjust size as needed */
+    height: 30px; /* Adjust size as needed */
+    border-radius: 50%; /* Make it a circle */
+    margin-right: 10px; /* Add space between image and username */
+  }
+  .logo {
+    margin-right: auto; /* Push logo to the left */
+  }
+
+  .profile-info {
+    display: flex;
+    align-items: center; /* Vertically center items */
+  }
+  

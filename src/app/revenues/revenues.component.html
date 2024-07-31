@@ -1,0 +1,33 @@
+  <div id="myDiv"></div>
+
+  <table class="terms-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Licensor</th>
+        <th>Year</th>
+        <th>Total Revenue</th>
+        <th>Licensing Revenue</th>
+        <th>Recurring Revenue</th>
+        <th>Fixed Fee</th>
+        <th>Per Unit</th>
+        <th>Past Sales</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let item of annualRevenues">
+        <tr>
+          <td>{{ item.id }}</td>
+          <td>{{ item.licensor }}</td>
+          <td>{{ item.year }}</td>
+          <td>{{ item.totalRevenue }}</td>
+          <td>{{ item.licensingRevenue }}</td>
+          <td>{{ item.recurringRevenue }}</td>
+          <td>{{ item.fixedFee }}</td>
+          <td>{{ item.perUnit }}</td>
+          <td>{{ item.pastSales }}</td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
+  

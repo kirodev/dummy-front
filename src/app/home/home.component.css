@@ -1,0 +1,104 @@
+.square-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 70vh;
+  padding-right: 200px;
+  padding-left: 200px;
+}
+
+.h2-container {
+  text-align: left;
+  margin-bottom: -70px; /* Adjust the margin to reduce the distance */
+  padding-left: 100px; /* Adjust the margin to reduce the distance */
+  text-align: left;
+}
+
+.square {
+  width: 350px; /* Increase the width */
+  height: 350px; /* Increase the height */
+  background-color: white;
+  border: 2px solid #E57A45;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: transform 0.3s ease-in-out;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+h1 {
+  color: #E57A45;
+  font-family: Constantia;
+  font-size: 28px; /* Adjust the font size */
+  font-style: normal;
+  font-weight: 700;
+  text-align: left;
+}
+
+.square p {
+  font-family: Constantia;
+  font-size: 14px; /* Adjust the font size */
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  padding: 10px;
+  text-align: left;
+}
+
+.square:hover {
+  transform: scale(1.05);
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+h2 {
+  font-family: Constantia;
+  font-size: 20px; /* Adjust the font size */
+  font-style: normal;
+  line-height: normal;
+  margin: 0;
+  margin-left:100px; /* Reset margin for h1 */
+  margin-top: 168px;
+}
+
+body {
+  position: relative; 
+  background-image: url('src/assets/MAIN-background.png');
+  background-repeat: repeat; 
+  background-color: #ffffff; 
+  z-index: 0; 
+}
+/* Create an overlay with opacity */
+body::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.9); /* Adjust the opacity here */
+  z-index: -1; /* Place the overlay below the content */
+}
+
+.grey-square {
+  background-color: white;
+  border-color: #DBDBDB;
+}
+
+
+.grey-text {
+  color: #DBDBDB;
+}
+body {
+  background-image: url('src/assets/MAIN-background.png');
+  background-size: 800PX 1000PX; /* Reset background size */
+  background-repeat: repeat; /* Repeat both horizontally and vertically */
+  background-attachment: fixed;
+  /* Add additional styles as needed */
+}

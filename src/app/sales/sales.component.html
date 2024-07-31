@@ -1,0 +1,10 @@
+<!-- Popup Overlay -->
+<div *ngIf="isPopupVisible" class="popup-overlay">
+  <div class="popup-content">
+    <button class="popup-close" (click)="hidePopup()">×</button>
+    <div [innerHTML]="popupText"></div>
+  </div>
+</div>
+
+<!-- Your Plotly Graph Container -->
+<div id="myDiv"></div>

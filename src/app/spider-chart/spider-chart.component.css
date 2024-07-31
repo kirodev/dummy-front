@@ -1,0 +1,75 @@
+.spider-chart-container {
+  text-align: center;
+  margin: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;}
+
+#spiderChartCanvas {
+  max-width: 300px; /* Adjust the max width as needed */
+  width: 100%; /* Make the canvas take up the available width */
+  height: auto; /* Maintain aspect ratio */
+}
+/* Apply these styles to selected cells container */
+.selected-cells-container {
+  height: 80%;
+  overflow: auto;
+}
+
+/* Apply these styles to the selected cells list */
+.selected-cells-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+/* Style your list items as needed */
+.selected-cells-list li {
+  margin: 5px 0;
+}
+
+/* Style your remove button as needed */
+.selected-cells-list li button {
+  background-color: #ff0000;
+  color: #ffffff;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+/* Apply these styles to BLU Products, Inc.e cells */
+.BLU Products, Inc.e-cell {
+  background-color: #34db37; /* Set the background color to BLU Products, Inc.e */
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+/* Apply styles to red cells */
+.red-cell {
+  color: red;
+  /* Add any other styling as needed */
+}
+
+/* Define a custom font face */
+@font-face {
+  font-family: 'CONSTAN';
+  src: url('src/assets/CONSTAN.TTF') format('truetype'),
+       url('src/assets/CONSTANB.TTF') format('woff');
+}
+.checkbox-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* Adjust the gap between checkboxes */
+}
+
+.checkbox-list label {
+  display: flex;
+  align-items: center;
+  margin-right: 20px; /* Adjust the spacing between checkboxes */
+}
+
+.checkbox-list input[type="checkbox"] {
+  margin-right: 5px; /* Adjust the spacing between the checkbox and label text */
+}
+
+/* Add styling for the labels or checkboxes as needed */

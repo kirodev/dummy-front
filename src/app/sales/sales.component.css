@@ -1,0 +1,109 @@
+/* Table container styles */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+  }
+
+  /* Table styles */
+  .terms-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+  }
+
+  /* Header styles */
+  .terms-table thead {
+    background-color: #f8f9fa;
+  }
+
+  .terms-table th {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: bold;
+    color: #495057;
+  }
+
+  /* Body styles */
+  .terms-table td {
+    padding: 12px;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  /* Alternating row colors */
+  .terms-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+  }
+
+  /* Hover effect */
+  .terms-table tbody tr:hover {
+    background-color: #e9ecef;
+  }
+
+  /* Link styles */
+  .terms-table a {
+    color: #007bff;
+    text-decoration: none;
+  }
+
+  .terms-table a:hover {
+    text-decoration: underline;
+  }
+
+  /* Responsive design */
+  @media screen and (max-width: 600px) {
+    .terms-table {
+      font-size: 14px;
+    }
+
+    .terms-table th,
+    .terms-table td {
+      padding: 8px;
+    }
+  }
+  .custom-tooltip {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+    z-index: 1000;
+    display: block; /* Temporarily set to always visible */
+  }
+/* Popup Overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Black background with 50% opacity */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure the overlay is above other elements */
+}
+
+.popup-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.popup-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: none;
+  font-size: 20px;
+  cursor: pointer;
+}

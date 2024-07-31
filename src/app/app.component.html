@@ -1,0 +1,75 @@
+<div id="app">
+  <nav class="navbar navbar-expand navbar-dark bg-dark">
+    
+  </nav>
+
+  <div class="container">
+    <router-outlet></router-outlet>
+  </div>
+</div>
+<nav>
+  <div class="navbar">
+    <div class="logo">
+      <img src="assets/LOGO+Slogan 1.svg" alt="FRANDLY Logo">
+    </div>
+
+   <!--  <div class="nav-links">
+      <a routerLink="/sechome">Home</a>
+
+      Use a container div for the dropdown menu -->
+      <!-- <div class="dropdown">
+        <a routerLink="/far-licenses" class="dropdown-btn">FRAND Licenses</a>
+        <div class="dropdown-content">
+          <!-- Vertical dropdown items
+          <a routerLink="/mobile">Mobile</a>
+          <a routerLink="/automotive">Connected Vehicles</a>
+          <a routerLink="/iot">IoT</a>
+          <a routerLink="/audiovisual">Audio Visual</a>
+        </div>
+      </div>
+
+      <a routerLink="/ip-portfolios" class="grey-link">IP Portfolios</a>
+      <a routerLink="/roi" class="grey-link">Return On Investment</a>
+
+    </div> -->
+    <a href="#" class="navbar-brand"></a>
+    <ul class="navbar-nav mr-auto" routerLinkActive="active">
+
+      <li class="nav-item" *ngIf="showAdminBoard">
+        <a href="/sechome" class="nav-link" routerLink="sechome">Home</a>
+      </li>
+      <li class="nav-item" *ngIf="showModeratorBoard">
+        <a href="/mod" class="nav-link" routerLink="mod">Moderator Board</a>
+      </li>
+      <li class="nav-item">
+        <a href="/user" class="nav-link" *ngIf="isLoggedIn" routerLink="user">Tools</a>
+      </li>
+    </ul>
+
+    <ul class="navbar-nav ml-auto" *ngIf="!isLoggedIn">
+      <li class="nav-item">
+        <a href="/register" class="nav-link" routerLink="register">Sign Up</a>
+      </li>
+      <li class="nav-item">
+        <a href="/login" class="nav-link" routerLink="login">Login</a>
+      </li>
+    </ul>
+
+    <ul class="navbar-nav ml-auto" *ngIf="isLoggedIn">
+      <li class="nav-item">
+        <div class="profile-info"> <!-- Wrap profile image and username in a div -->
+          <img id="profile-img" src="//ssl.gstatic.com/accounts/ui/avatar_2x.png" class="profile-img-card" />
+          <a href="/profile" class="nav-link" routerLink="profile">{{ username }}</a>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a href class="nav-link" (click)="logout()">LogOut</a>
+      </li>
+    </ul>
+  </div>
+  
+</nav>
+
+
+  <router-outlet></router-outlet>
+

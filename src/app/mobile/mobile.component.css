@@ -1,0 +1,255 @@
+/* mobile.component.css */
+@font-face {
+  font-family: 'ROG Fonts';
+  src: url('src/assets/7032-fontps.ttf') format('truetype');
+}
+
+/* Apply some basic styling to the container */
+/* Apply some basic styling to the container */
+table {
+  width: 100%; /* Adjust the width of the table container */
+  max-width: 100%; /* Ensure it doesn't exceed the width of the screen */
+  border-collapse: collapse; /* Collapse the borders between cells */
+  margin-right: 100px;
+}
+
+/* Apply some basic styling to the table container */
+.container {
+  display: flex;
+  justify-content: flex-start; /* Align items to the start of the container horizontally */
+  align-items: flex-start; /* Align items to the start of the container vertically */
+  flex-wrap: wrap; /* Allow items to wrap to the next line if needed */
+}
+
+.table-container {
+  width: 100%; /* Adjust the width of the table container */
+  max-width: 100%; /* Ensure it doesn't exceed the width of the screen */
+
+
+}
+
+.legend {
+  width: 30%; /* Adjust the width of the legend container */
+  margin-left: 20px; /* Add margin to separate the legend from the table */
+}
+
+
+button {
+  background-color: #007BFF; /* Button background color */
+  color: #fff; /* Button text color */
+  border: none;
+  border-radius: 5px;
+  padding: 10px 10px;
+  margin: 5px;
+  cursor: pointer;
+}
+.button-container {
+  position: absolute; /* Add this to set an absolute position for the button container */
+  top: 20px; /* Adjust the top position as needed to position the buttons */
+  left: 20px; /* Adjust the left position as needed to position the buttons */
+}
+
+button:hover {
+  background-color: #0056b3; /* Button background color on hover */
+}
+
+.lighter-green-cell {
+  background-color: lightgreen;
+  /* Add any other styles you want for the lighter green cells */
+}
+
+
+/* Style vertical headers */
+.vertical-header {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 17.5px; /* Apply font size */
+  font-family: 'CONSTAN'; /* Apply font family */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 3px;
+  text-align: center; /* Center the content horizontally */
+  background-color: #ffffff;
+  top: 0;
+  z-index: 1;
+}
+
+/* Style table cells */
+
+
+/* Apply different background color to even rows */
+
+td {
+  /* Set a fixed width for the cells */
+  width: 1px; /* Start with 5px width */
+  height: 1px;
+  border: 1px solid #ccc;
+  padding: 3px;
+  font-size: 12px; /* Apply font size */
+  font-family: 'CONSTAN'; /* Apply font family */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+td.row-name {
+  width: 150px; /* Adjust the width as needed */
+  min-width: 150px; /* Ensure a minimum width */
+  border: 1px solid #ccc;
+  padding: 3px;
+  font-size: 12px;
+  font-family: 'CONSTAN';
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: sticky; /* Make the cell sticky */
+  left: 0; /* Stick to the left side */
+  z-index: 2; /* Ensure it's above other cells */
+  background-color: white; /* Match the background color of the table */
+}
+
+
+
+
+/* Define custom CSS classes for cell colors */
+.green-cell {
+  background-color: #3FB64A;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.white-cell {
+  background-color: #D9D9D9;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.green-cell:hover,
+.white-cell:hover {
+  background-color: rgb(59, 231, 82);
+}
+
+.white-cell:hover {
+  background-color: rgb(255, 112, 112);
+}
+.orange-cell {
+  background-color: orange;
+  /* Add any other styles you want for orange cells */
+}
+h1 {
+  color: #8EBBDA;
+  font-size: 17.5px;
+  font-family:  'ROG Fonts';
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-left: 20px;
+  padding-top: 46px;
+}
+
+@font-face {
+  font-family: 'CONSTAN';
+  src: url('src/assets/CONSTAN.TTF') format('truetype'),
+       url('src/assets/CONSTANB.TTF') format('woff');
+}
+
+h2 {
+  color: #808080;
+  font-size: 17.5px; /* Apply font size */
+  font-family:  'ROG Fonts'; /* Apply font family */
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-left: 20px;
+}
+
+.selected-cells-container {
+  background-color: #f0f0f0; /* Set the background color */
+  padding: 10px; /* Add some padding */
+  border: 1px solid #ccc; /* Add a border */
+  margin-top: 10px; /* Add margin to separate it from the table */
+}
+
+.selected-cells-container h3 {
+  font-size: 18px;
+  font-family: 'CONSTAN'; /* Apply font family */
+  /* Customize the heading size */
+}
+
+.selected-cells-container ul {
+  list-style-type: square; /* Change the list style */
+}
+
+.selected-cells-container li {
+  margin: 5px 0; /* Add margin to each list item */
+}
+
+/* Add Styles for Legend */
+.legend {
+  display: flex;
+  flex-direction: column; /* Display items vertically */
+  align-items: flex-start; /* Align items to the start of the column */
+  margin-top: 20px;
+  margin-left: 50px; /* Adjust the top margin as needed */
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px; /* Adjust the margin between legend items as needed */
+}
+
+.legend-color {
+  width: 20px; /* Adjust the width of the color box as needed */
+  height: 20px; /* Adjust the height of the color box as needed */
+  margin-right: 5px; /* Adjust the margin between color box and text as needed */
+}
+
+/* Define Colors for Legend */
+.legend-color.green {
+  background-color: #3FB64A; /* Change to your desired color for "Available" */
+}
+
+.legend-color.white {
+  background-color: #D9D9D9; /* Change to your desired color for "Not Available" */
+}
+
+/* Style for Legend Text */
+.legend-text {
+  font-size: 14px;
+  color: #333; /* Change text color as needed */
+}
+
+
+/* Exclude the first row from the vertical headers style */
+th.vertical-header:not(:first-child) {
+  height: 100px;
+  top: 0; /* Position at the top of the table */
+  writing-mode: vertical-rl; /* Vertical writing mode */
+  transform: rotate(180deg); /* Rotate the headers */
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 3px;
+  z-index: 1;
+}
+
+th.vertical-header:not(:first-child)::before {
+  width: 20px; /* Adjust width if needed */
+  height: 20px; /* Adjust height if needed */
+}
+td.vertical-header:not(:first-child) {
+  height: 100px;
+  top: 0; /* Position at the top of the table */
+  writing-mode: vertical-rl; /* Vertical writing mode */
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 3px;
+  z-index: 1;
+}
+
+td.vertical-header:not(:first-child)::before {
+  width: 20px; /* Adjust width if needed */
+  height: 20px; /* Adjust height if needed */
+}

@@ -1,0 +1,62 @@
+<h1>Mobile Advanced Matrix for {{dynamicTitle}}</h1>Licensorrowlicensees
+<h2>Compare the focal license :</h2>
+<button routerLink="/adv-mobile" class="mam-button" (mouseover)="hoverMam()" (mouseout)="unhoverMam()">
+</button>
+<button routerLink="/spider-chart-result" class="spider-button" (mouseover)="hoverSpiderChart()"
+  (mouseout)="unhoverSpiderChart()">
+</button>
+<button routerLink="/iot" class="calculation-button" (mouseover)="hoverCalculation()" (mouseout)="unhoverCalculation()">
+</button>
+<button routerLink="/iot" class="report-button" (mouseover)="hoverReport()" (mouseout)="unhoverReport()">
+</button>
+<button routerLink="/spider-chart" class="spider-button" (mouseover)="hoverSpiderChart()"
+  (mouseout)="unhoverSpiderChart()">
+</button>
+<div class="container">
+  <div class="table-container">
+    <div id="cellContainer">
+
+      <table class="table">
+        <tbody>
+          <tr>
+            <th></th>
+            <th *ngFor="let licensee of licensees" class="vertical-header">{{
+              licensee }}</th>
+          </tr>
+          <tr *ngFor="let licensor of licensors; let rowIndex = index">
+            <td>{{ licensor }}</td>
+            <td *ngFor="let cell of tableData[rowIndex]; let colIndex = index" [ngClass]="{
+    'green-cell': cell === 'green',
+    'white-cell': cell === 'white',
+    'orange-cell': cell === 'orange',
+    'selected-cell': isSelectedCell(rowIndex, colIndex),
+    'blue-cell': isSelectedCell(rowIndex, colIndex),
+    'red-cell': (licensors[rowIndex] === licensorName && licensees[colIndex] === licenseeName) || (licensors[rowIndex] === dynamicTitle)
+  }" (click)="cellClick(rowIndex, colIndex)" [title]="getCellDescription(rowIndex, colIndex)"
+              [attr.id]="'cell-' + rowIndex + '-' + colIndex">
+              <!-- Add cell content here -->
+            </td>
+
+        </tbody>
+
+      </table>
+
+    </div>
+  </div>
+
+  <div *ngIf="selectedCells.length > 0" class="selected-cells-container">
+    <h1>Selected Cells:</h1>
+    <ul class="selected-cells-list">
+      <li *ngFor="let cell of selectedCells" class="selected-cell">
+        <div class="list-item">
+          <button (click)="removeSelectedCell(getRowIndex(cell.rowName), getColIndex(cell.colName))">X</button>
+          <span>{{ cell.rowName }} - {{ cell.colName }}</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <button class="custom-button" (click)="resetSelectedCells()">Reset All</button>
+
+
+</div>

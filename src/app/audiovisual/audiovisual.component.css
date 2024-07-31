@@ -1,0 +1,25 @@
+@font-face {
+    font-family: 'ROG Fonts';
+    src: url('src/assets/7032-fontps.ttf') format('truetype');
+  }
+  h2 {
+    font-family: Constantia;
+    font-size: 20px; /* Adjust the font size */
+    font-style: normal;
+    line-height: normal;
+    margin: 0;
+    margin-left:500px; /* Reset margin for h1 */
+    margin-top: 168px;
+  }
+  
+  
+  h1 {
+    color: #E57A45;
+    font-family: 'ROG Fonts', sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    margin-left:100px; /* Reset margin for h1 */
+    margin-top: 168px;  
+  }
