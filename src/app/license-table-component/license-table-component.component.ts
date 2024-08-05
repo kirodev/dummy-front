@@ -538,7 +538,6 @@ fetchMultipleLicensesData(): void {
   }
 
 
-
   updateMultipleLicenses(item: any, comment: string): void {
     // Check if licenseeName already exists in the licensee string
     const licenseeNames = item.licensee ? item.licensee.split(' | ') : [];
@@ -551,7 +550,15 @@ fetchMultipleLicensesData(): void {
     const snippetId = item.snippet_id;
     const itemsToUpdate = this.multipleLicenses.filter(license => license.snippet_id === snippetId);
 
-    // Iterate through each item and update the licensee field
+    if (itemsToUpdate.length === 0) {
+      console.error('No rows found with the provided snippet_id.');
+      return;
+    }
+
+    // Identify the row with the highest ID
+    const latestRow = itemsToUpdate.reduce((prev, current) => (prev.id > current.id) ? prev : current);
+
+    // Update the licensee field for all rows
     itemsToUpdate.forEach(itemToUpdate => {
       const currentLicenseeNames = itemToUpdate.licensee ? itemToUpdate.licensee.split(' | ') : [];
       // Concatenate this.licenseeName to the existing licensee value, separated by " | "
@@ -566,15 +573,12 @@ fetchMultipleLicensesData(): void {
       // Update the licensee and modified fields
       itemToUpdate.licensee = updatedLicenseeString;
       itemToUpdate.modified = `${itemToUpdate.snippet_id}_${itemToUpdate.id}`;
-    });
 
-    // Save each updated item to the backend
-    itemsToUpdate.forEach(itemToUpdate => {
-      this.connectionService.updateMultipleLicensee(itemToUpdate.id, { ...itemToUpdate, licensee: itemToUpdate.licensee }, comment)
+      // Save each updated item to the backend without the comment
+      this.connectionService.updateMultipleLicensee(itemToUpdate.id, { ...itemToUpdate, licensee: itemToUpdate.licensee })
         .subscribe(
           (response) => {
             console.log('License updated successfully:', response);
-            this.fetchMultipleLicensesData();
           },
           (error) => {
             console.error('Error updating license:', error);
@@ -594,7 +598,8 @@ fetchMultipleLicensesData(): void {
       id: undefined,
       indiv_licensee: this.licenseeName,
       licensee: newRowLicenseeString,
-      modified: `${item.snippet_id}_${item.id}`
+      modified: `${item.snippet_id}_${item.id}`,
+      comment: comment  // Add the comment to the new row
     };
 
     // Save the new row to the backend
@@ -608,7 +613,6 @@ fetchMultipleLicensesData(): void {
       }
     );
   }
-
 
 
 
@@ -937,39 +941,8 @@ toggleGroupExpansion(group: GroupedLicense): void {
 
 
 
-getGroupDates(group: GroupedLicense): { signed: string | null, expiration: string | null } {
-  let signedDates = group.licenses.map((l: License) => l.signed_date).filter(Boolean);
-  let expirationDates = group.licenses.map((l: License) => l.expiration_date).filter(Boolean);
 
-  const formatDate = (dates: string[]): string | null => {
-    let fullDate = dates.find(d => d.match(/^\d{4}-\d{2}-\d{2}$/));
-    if (fullDate) return fullDate;
 
-    let yearOnly = dates.find(d => d.match(/^\d{4}$/));
-    return yearOnly || null;
-  };
-
-  let signed = formatDate(signedDates);
-  let expiration = formatDate(expirationDates);
-
-  // Check if all years are the same
-  const checkYearConsistency = (dates: string[]): boolean => {
-    const years = dates.map(d => d.split('-')[0]);
-    return years.every(y => y === years[0]);
-  };
-
-  if (!checkYearConsistency(signedDates)) {
-    console.warn(`Inconsistent signed years for Mapping ID: ${group.mapping_id}`);
-    alert(`Warning: Inconsistent signed years for Mapping ID: ${group.mapping_id}`);
-  }
-
-  if (!checkYearConsistency(expirationDates)) {
-    console.warn(`Inconsistent expiration years for Mapping ID: ${group.mapping_id}`);
-    alert(`Warning: Inconsistent expiration years for Mapping ID: ${group.mapping_id}`);
-  }
-
-  return { signed, expiration };
-}
 
 getUniqueValues(licenses: any[], key: string): string[] {
   const values = licenses.map(license => license[key]).filter(Boolean);
@@ -993,39 +966,82 @@ groupMLData(data: any[]): void {
     isExpanded: false  // Initially collapsed
   }));
 }
-getMlGroupDates(group: GroupedMlLicense): { signed: string | null, expiration: string | null } {
-  let signedDates = group.Mlicenses.map((ml: MLicense) => ml.signed_date).filter(Boolean);
-  let expirationDates = group.Mlicenses.map((ml: MLicense) => ml.expiration_date).filter(Boolean);
 
-  const formatDate = (dates: string[]): string | null => {
-    let fullDate = dates.find(d => d.match(/^\d{4}-\d{2}-\d{2}$/));
-    if (fullDate) return fullDate;
 
-    let yearOnly = dates.find(d => d.match(/^\d{4}$/));
-    return yearOnly || null;
-  };
+private shownAlerts = new Set<string>();
 
-  let signed = formatDate(signedDates);
-  let expiration = formatDate(expirationDates);
-
-  // Check if all years are the same
-  const checkYearConsistency = (dates: string[]): boolean => {
+  // Helper function to check year consistency
+  private checkYearConsistency(dates: string[]): boolean {
+    if (dates.length === 0) return true;
     const years = dates.map(d => d.split('-')[0]);
     return years.every(y => y === years[0]);
-  };
-
-  if (!checkYearConsistency(signedDates)) {
-    console.warn(`Inconsistent signed years for Mapping ID: ${group.mapping_id}`);
-    alert(`Warning: Inconsistent signed years for Mapping ID: ${group.mapping_id}`);
   }
 
-  if (!checkYearConsistency(expirationDates)) {
-    console.warn(`Inconsistent expiration years for Mapping ID: ${group.mapping_id}`);
-    alert(`Warning: Inconsistent expiration years for Mapping ID: ${group.mapping_id}`);
+  // Helper function to format dates
+  private formatDate(dates: string[]): string | null {
+    const fullDate = dates.find(d => /^\d{4}-\d{2}-\d{2}$/.test(d));
+    return fullDate || dates.find(d => /^\d{4}$/.test(d)) || null;
   }
 
-  return { signed, expiration };
-}
+  // Method to get group dates and check inconsistencies
+  getGroupDates(group: GroupedLicense): { signed: string | null, expiration: string | null } {
+    if (group.mapping_id === 'In Progress') return { signed: null, expiration: null };
+
+    const signedDates = group.licenses.map((l: License) => l.signed_date).filter(Boolean);
+    const expirationDates = group.licenses.map((l: License) => l.expiration_date).filter(Boolean);
+
+    const signed = this.formatDate(signedDates);
+    const expiration = this.formatDate(expirationDates);
+
+    const messages: string[] = [];
+
+    if (!this.checkYearConsistency(signedDates)) {
+      messages.push('Inconsistent signed years.');
+    }
+
+    if (!this.checkYearConsistency(expirationDates)) {
+      messages.push('Inconsistent expiration years.');
+    }
+
+    // Show alert if there are messages and the alert for this mapping ID hasn't been shown yet
+    if (messages.length > 0 && !this.shownAlerts.has(group.mapping_id)) {
+      alert(`Mapping ID: ${group.mapping_id}\n${messages.join('\n')}`);
+      this.shownAlerts.add(group.mapping_id); // Mark this mapping ID as having shown an alert
+    }
+
+    return { signed, expiration };
+  }
+
+  // Method to get ML group dates and check inconsistencies
+  getMlGroupDates(group: GroupedMlLicense): { signed: string | null, expiration: string | null } {
+    if (group.mapping_id === 'In Progress') return { signed: null, expiration: null };
+
+    const signedDates = group.Mlicenses.map((ml: MLicense) => ml.signed_date).filter(Boolean);
+    const expirationDates = group.Mlicenses.map((ml: MLicense) => ml.expiration_date).filter(Boolean);
+
+    const signed = this.formatDate(signedDates);
+    const expiration = this.formatDate(expirationDates);
+
+    const messages: string[] = [];
+
+    if (!this.checkYearConsistency(signedDates)) {
+      messages.push('Inconsistent signed years.');
+    }
+
+    if (!this.checkYearConsistency(expirationDates)) {
+      messages.push('Inconsistent expiration years.');
+    }
+
+    // Show alert if there are messages and the alert for this mapping ID hasn't been shown yet
+    if (messages.length > 0 && !this.shownAlerts.has(group.mapping_id)) {
+      alert(`Mapping ID: ${group.mapping_id}\n${messages.join('\n')}`);
+      this.shownAlerts.add(group.mapping_id); // Mark this mapping ID as having shown an alert
+    }
+
+    return { signed, expiration };
+  }
+
+
 
 getMlUniqueValues(Mlicenses: any[], key: string): string[] {
   const values = Mlicenses.map(Mlicenses => Mlicenses[key]).filter(Boolean);

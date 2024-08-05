@@ -32,7 +32,7 @@ export class ConnectionService {
       catchError(this.handleError)
     );
   }
-  
+
   getTableData(): string[][] {
     return this.tableData;
   }
@@ -91,7 +91,7 @@ deleteMultipleLicenses(id: any): Observable<any> {
 
 updateLicenseeName(id: any, license: any): Observable<any> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
-    const modifiedValue = license.licensee === 'Unknown' ? id : null; 
+    const modifiedValue = license.licensee === 'Unknown' ? id : null;
     const body = { ...license, modified: modifiedValue };
     return this.http.put<any>(`${this.url}/${id}`, body, { headers });
 }
@@ -133,13 +133,13 @@ updateMLDetails(id: number, updatedDetails: string): Observable<any> {
   }
 
 
- 
+
     // Define a method to fetch distinct licensee names from the server
     getDistinctLicensees(): Observable<string[]> {
       return this.http.get<string[]>(''); // Replace '/api/distinct/licensees' with your actual API endpoint
     }
 
-  
+
   getDataByLicensor(licensorName: string): Observable<any[]> {
     const params = new HttpParams().set('licensor', licensorName);
     return this.http.get<any[]>(`${this.baseUrl}`, { params }).pipe(
@@ -156,7 +156,7 @@ updateMLDetails(id: number, updatedDetails: string): Observable<any> {
     );
 
   }
-  updateMultipleLicensee(id: any, license: any, comment: string): Observable<any> {
+  updateMultipleLicensee(id: any, license: any, comment?: string): Observable<any> {
     let modifiedValue = null;
     const licenseeRegex = /^([^|]+)(?:\s*\|\s*([^|]+))*$/;
 
@@ -214,7 +214,7 @@ updateLicenseMappingId(itemId: number, mappingId: string): Observable<any> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
     return this.http.put(url, mappingId, { headers }); // Include the headers in the request
   }
-  
+
   updateMLMappingId(itemId: number, mappingId: string): Observable<any> {
     const url = `${this.baseUrlML}/${itemId}/MLmappingId`;
     const headers = this.getHeaders(); // Get the headers including the JWT token
