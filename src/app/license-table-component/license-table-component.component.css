@@ -153,40 +153,61 @@ h1 {
 /* Adjust the size of the icon */
 /* Center the icon */
 /* Center the content vertically and horizontally */
+.tooltip-container {
+  position: relative; /* Ensure tooltip is positioned relative to the container */
+  cursor: pointer; /* Indicate that it is clickable */
+}
+
+
+.tooltip-container {
+  position: relative; /* Ensure tooltip is positioned relative to the container */
+  cursor: pointer; /* Indicate that it is clickable */
+}
+
 .tooltip {
   position: absolute;
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
-  border-radius: 10px; /* Adjust the value to change the roundness */
+  border-radius: 10px;
   padding: 5px;
   z-index: 1;
-  display: none;
+  display: none; /* Hide by default */
   left: auto;
   right: 100%;
-  transform: translateX(-10px); /* Adjust the value to add space between tooltip and target */
+  transform: translateX(-0.1px); /* Adjust spacing */
+  max-width: 300px; /* Adjust max-width as needed */
+  box-sizing: border-box; /* Include padding and border in width */
+}
+
+/* Ensure tooltip is visible when active */
+.tooltip.active {
+  display: block;
+}
+
+/* Keep tooltip visible when hovering over tooltip container */
+.tooltip-container:hover .tooltip,
+.tooltip-container:hover .icon {
+  display: block; /* Show tooltip and icon when hovering over container */
 }
 
 
-/* Adjust the size of the table cells to fit the icon size */
-td {
-position: relative;
-padding: 20px; /* Adjust the padding to fit the icon size */
-}
 
-/* Style the icon */
 .icon {
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-width: 20px;
-height: 20px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
 }
 
 .icon.hidden {
-display: none;
-}/* Define styles for the tables */
-/* Styles for the popup overlay */
+  display: none;
+}
+
+td {
+  position: relative; /* Ensure tooltip is positioned relative to the table cell */
+}
 
 @media (max-width: 768px) {
   .popup-content {

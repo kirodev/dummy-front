@@ -69,8 +69,8 @@ const routes: Routes = [
   { path: 'library', component: LibraryComponent },
 
 
-  { path: '', redirectTo: '/register', pathMatch: 'full' },
-  { path: '**', redirectTo: '/register', pathMatch: 'full' }
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '**', redirectTo: '/login', pathMatch: 'full' }
 ];
 
 @NgModule({

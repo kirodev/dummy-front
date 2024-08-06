@@ -180,9 +180,9 @@ deleteMultiplePayment(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrlML}/${id}`, { headers }); // Include the headers in the request
 }
 
-undoUpdateMultipleLicensee(id: any, comment: string): Observable<any[]> {
+undoUpdateMultipleLicensee(id: any): Observable<any[]> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
-    return this.http.put<any>(`${this.baseUrlML}/${id}/undo`, comment, { headers }); // Include the headers in the request
+    return this.http.put<any>(`${this.baseUrlML}/${id}/undo`, { headers }); // Include the headers in the request
 }
 
 

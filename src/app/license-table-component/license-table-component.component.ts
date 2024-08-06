@@ -261,12 +261,10 @@ export class LicenseTableComponent implements OnInit {
 fetchTimelineData(): void {
   this.timelineConnection.getTimelineData().subscribe(
     (data: any[]) => {
-      console.log("Fetched Timeline Data:", data); // Print fetched data
       this.timelineData = data;
       this.filteredTimelineData = this.timelineData.filter(
         item => item.licensor === this.licensorName && item.licensee === this.licenseeName
       );
-      console.log("Filtered Timeline Data:", this.filteredTimelineData); // Print filtered data
       this.plotData(); // <-- Plot the data after fetching
     },
     (error) => {
@@ -431,6 +429,11 @@ plotData(): void {
     item.showComment = false;
   }
 
+// In your component.ts file
+toggleCommentTooltip(item: any): void {
+  // Toggle the tooltip visibility
+  item.showComment = !item.showComment;
+}
 
   updateRow(item: any, comment: string): void {
     console.log('updateLicense method called');
@@ -442,7 +445,6 @@ plotData(): void {
             // Include comment in the request body
             this.connectionService.updateLicense(item.id, item, comment).subscribe(
                 (response) => {
-                    console.log('Row updated successfully:', response);
                     this.fetchLicenseData();
                 },
                 (error) => {
@@ -494,7 +496,6 @@ fetchDistinctLicenses(): void {
 fetchMultipleLicensesData(): void {
   this.connectionService.getMultipleLicenses().subscribe(
     (data: any[]) => {
-      console.log('Data received from backend:', data);
 
       // Filtered based on both licensor and known licensee conditions
       this.filteredMultipleLicenses = data.filter(item => {
@@ -504,17 +505,14 @@ fetchMultipleLicensesData(): void {
       });
       this.groupMLData(this.filteredMultipleLicenses);
 
-      console.log('Filtered multiple licenses:', this.filteredMultipleLicenses);
 
       // Filtered based on licensor only
       const confirmedTableRows = this.filteredMultipleLicenses.map(item => item.id);
       this.multipleLicenses = data.filter(item => !confirmedTableRows.includes(item.id) && item.licensor === this.licensorName);
 
-      console.log('Multiple licenses:', this.multipleLicenses);
 
       // Filter for licenseeName only
       const matchingRowsLicenseeOnly = data.filter(item => item.indiv_licensee === this.licenseeName);
-      console.log('Matching rows for licensee only:', matchingRowsLicenseeOnly);
 
       this.initializeUniqueLicenses();
     },
@@ -537,13 +535,12 @@ fetchMultipleLicensesData(): void {
     this.uniqueLicenses = uniqueLicenses;
   }
 
-
   updateMultipleLicenses(item: any, comment: string): void {
     // Check if licenseeName already exists in the licensee string
     const licenseeNames = item.licensee ? item.licensee.split(' | ') : [];
     if (licenseeNames.includes(this.licenseeName)) {
-      alert(`${this.licenseeName} already exists in the licensee list.`);
-      return;
+        alert(`${this.licenseeName} already exists in the licensee list.`);
+        return;
     }
 
     // Fetch all rows with the same snippet_id
@@ -551,8 +548,8 @@ fetchMultipleLicensesData(): void {
     const itemsToUpdate = this.multipleLicenses.filter(license => license.snippet_id === snippetId);
 
     if (itemsToUpdate.length === 0) {
-      console.error('No rows found with the provided snippet_id.');
-      return;
+        console.error('No rows found with the provided snippet_id.');
+        return;
     }
 
     // Identify the row with the highest ID
@@ -560,133 +557,167 @@ fetchMultipleLicensesData(): void {
 
     // Update the licensee field for all rows
     itemsToUpdate.forEach(itemToUpdate => {
-      const currentLicenseeNames = itemToUpdate.licensee ? itemToUpdate.licensee.split(' | ') : [];
-      // Concatenate this.licenseeName to the existing licensee value, separated by " | "
-      const updatedLicensee = itemToUpdate.licensee
-        ? `${itemToUpdate.licensee} | ${this.licenseeName}`
-        : this.licenseeName;
+        const currentLicenseeNames = itemToUpdate.licensee ? itemToUpdate.licensee.split(' | ') : [];
+        const updatedLicensee = itemToUpdate.licensee
+            ? `${itemToUpdate.licensee} | ${this.licenseeName}`
+            : this.licenseeName;
 
-      // Ensure no duplicate names exist
-      const uniqueLicensees = new Set(updatedLicensee.split(' | '));
-      const updatedLicenseeString = Array.from(uniqueLicensees).join(' | ');
+        // Ensure no duplicate names exist
+        const uniqueLicensees = new Set(updatedLicensee.split(' | '));
+        const updatedLicenseeString = Array.from(uniqueLicensees).join(' | ');
 
-      // Update the licensee and modified fields
-      itemToUpdate.licensee = updatedLicenseeString;
-      itemToUpdate.modified = `${itemToUpdate.snippet_id}_${itemToUpdate.id}`;
+        // Decrement the multiplier for the row with id matching modified value
+        if (itemToUpdate.id === parseInt(item.modified, 10)) {
+            if (itemToUpdate.multiplier > 0) {
+                itemToUpdate.multiplier -= 1;
+            } else {
+                alert(`Multiplier for row ID ${itemToUpdate.id} cannot be less than 0.`);
+            }
+        }
 
-      // Save each updated item to the backend without the comment
-      this.connectionService.updateMultipleLicensee(itemToUpdate.id, { ...itemToUpdate, licensee: itemToUpdate.licensee })
-        .subscribe(
-          (response) => {
-            console.log('License updated successfully:', response);
-          },
-          (error) => {
-            console.error('Error updating license:', error);
-          }
+        // Update the licensee and modified fields
+        itemToUpdate.licensee = updatedLicenseeString;
+        itemToUpdate.modified = `${itemToUpdate.id}`;
+
+        // Save each updated item to the backend
+        this.connectionService.updateMultipleLicensee(itemToUpdate.id, {
+            ...itemToUpdate,
+            licensee: itemToUpdate.licensee,
+            comment: itemToUpdate.comment,
+            multiplier: itemToUpdate.multiplier
+        }).subscribe(
+            (response) => {
+                console.log('License updated successfully:', response);
+            },
+            (error) => {
+                console.error('Error updating license:', error);
+            }
         );
     });
 
     // Clone the original row without duplicating the licenseeName
     const updatedLicenseeNames = item.licensee ? item.licensee.split(' | ') : [];
     if (!updatedLicenseeNames.includes(this.licenseeName)) {
-      updatedLicenseeNames.push(this.licenseeName);
+        updatedLicenseeNames.push(this.licenseeName);
     }
     const newRowLicenseeString = updatedLicenseeNames.join(' | ');
 
     const newRow = {
-      ...item,
-      id: undefined,
-      indiv_licensee: this.licenseeName,
-      licensee: newRowLicenseeString,
-      modified: `${item.snippet_id}_${item.id}`,
-      comment: comment  // Add the comment to the new row
+        ...item,
+        id: undefined,
+        indiv_licensee: this.licenseeName,
+        licensee: newRowLicenseeString,
+        modified: `${item.id}`,
+        comment: comment,  // Add the comment to the new row
+        multiplier: 0  // Set multiplier to 0 for the new row
     };
 
     // Save the new row to the backend
     this.connectionService.createMultipleLicensee(newRow).subscribe(
-      (response) => {
-        console.log('New license row created successfully:', response);
-        this.fetchMultipleLicensesData();
-      },
-      (error) => {
-        console.error('Error creating new license row:', error);
-      }
+        (response) => {
+            console.log('New license row created successfully:', response);
+            this.fetchMultipleLicensesData();
+        },
+        (error) => {
+            console.error('Error creating new license row:', error);
+        }
     );
+}
+
+
+  undoUpdateML(item: any): void {
+    this.confirmAction('Are you sure you want to revert the modification?', () => {
+      if (!item.modified) {
+        console.error('Item modified field is missing.');
+        return;
+      }
+
+      const originalId = parseInt(item.modified, 10);
+
+      if (isNaN(originalId)) {
+        console.error('Failed to parse original ID from modified field:', item.modified);
+        return;
+      }
+
+      console.log('Original ID extracted from modified field:', originalId);
+
+      // Find the row with the ID extracted from the modified field
+      const originalRow = this.multipleLicenses.find(license => license.id === originalId);
+
+      if (originalRow) {
+        // Increment the multiplier of the identified original row by 1 if it's not null
+        if (originalRow.multiplier !== null) {
+          originalRow.multiplier += 1;
+
+          console.log(`Updating original row id: ${originalRow.id} with new multiplier: ${originalRow.multiplier}`);
+
+          // Create a new object without the comment field
+          const { comment, ...originalRowWithoutComment } = originalRow;
+
+          // Save the updated original row
+          this.connectionService.updateMultipleLicensee(originalRow.id, originalRowWithoutComment).subscribe(
+            (updateResponse) => {
+              console.log('Original row multiplier updated successfully:', updateResponse);
+
+              // Proceed with updating the other rows
+              const rowsToUpdate = this.multipleLicenses.filter(license => license.snippet_id === item.snippet_id);
+
+              // Track the number of rows processed
+              let rowsProcessed = 0;
+
+              rowsToUpdate.forEach((row) => {
+                // Remove the licenseeName from the licensee field
+                const licensees = row.licensee.split(' | ').filter((name: string) => name !== this.licenseeName);
+                row.licensee = licensees.join(' | ');
+
+                // Create a new object without the comment field
+                const { comment: rowComment, ...rowWithoutComment } = row;
+
+                // Update each row in the backend
+                this.connectionService.updateMultipleLicensee(row.id, rowWithoutComment).subscribe(
+                  (updateResponse) => {
+                    console.log('Row updated successfully:', updateResponse);
+                    rowsProcessed++;
+
+                    // Check if all rows have been processed
+                    if (rowsProcessed === rowsToUpdate.length) {
+                      // Delete the new row
+                      this.connectionService.deleteMultiplePayment(item.id).subscribe(
+                        (deleteResponse) => {
+                          console.log('New payment row deleted successfully:', deleteResponse);
+                          // Refresh the data after all updates and deletion
+                          this.fetchMultipleLicensesData();
+                        },
+                        (deleteError) => {
+                          console.error('Error deleting new payment row:', deleteError);
+                        }
+                      );
+                    }
+                  },
+                  (error) => {
+                    console.error('Error updating row:', error);
+                  }
+                );
+              });
+            },
+            (error) => {
+              console.error('Error updating original row multiplier:', error);
+            }
+          );
+        } else {
+          console.error('Multiplier is null for the original row with id:', originalId);
+        }
+      } else {
+        console.error('No original row found with the provided ID to update the multiplier.');
+      }
+    });
   }
 
 
+  openFeedbackAfterUndoML(item: any): void {
+    this.undoUpdateML(item);
+  }
 
-
-
-
-
-undoUpdateML(item: any, comment: string): void {
-  this.confirmAction('Are you sure you want to revert the modification?', () => {
-    const snippetId = item.snippet_id;
-
-    // Find all rows with the same snippet_id
-    const rowsToUpdate = this.multipleLicenses.filter(license => license.snippet_id === snippetId);
-
-    if (rowsToUpdate.length > 0) {
-      // Track the number of rows processed
-      let rowsProcessed = 0;
-
-      // Iterate through each row to update the licensee fields
-      rowsToUpdate.forEach((row) => {
-        // Remove the licenseeName from the licensee field
-        const licensees = row.licensee.split(' | ').filter((name: string) => name !== this.licenseeName);
-        row.licensee = licensees.join(' | ');
-
-        // Update each row in the backend
-        this.connectionService.updateMultipleLicensee(row.id, row, comment).subscribe(
-          (response) => {
-            console.log('Row updated successfully:', response);
-            rowsProcessed++;
-
-            // Check if all rows have been processed
-            if (rowsProcessed === rowsToUpdate.length) {
-              // Delete the new row
-              this.connectionService.deleteMultiplePayment(item.id).subscribe(
-                (deleteResponse) => {
-                  console.log('New payment row deleted successfully:', deleteResponse);
-                  // Refresh the data after all updates and deletion
-                  this.fetchMultipleLicensesData();
-                },
-                (deleteError) => {
-                  console.error('Error deleting new payment row:', deleteError);
-                }
-              );
-            }
-          },
-          (error) => {
-            console.error('Error updating row:', error);
-          }
-        );
-      });
-    } else {
-      console.error('No rows found with the provided snippet_id.');
-    }
-  });
-}
-
-
-
-
-
-openFeedbackAfterUndoML(item: AnimationPlaybackEvent): void {
-  const dialogRef = this.dialog.open(FeedbackPopupComponent, {
-    data: { item: item } // Pass item or any other data you need
-  });
-
-  dialogRef.afterClosed().subscribe(comment => {
-    console.log('The dialog was closed');
-    console.log('Feedback comment:', comment); // Handle feedback comment here if needed
-    if (comment) {
-      // If comment is not empty, proceed with undo action passing the comment
-      this.undoUpdateML(item, comment);
-    }
-  });
-}
 openFeedbackAfterUndolicense(item: AnimationPlaybackEvent): void {
   const dialogRef = this.dialog.open(FeedbackPopupComponent, {
     data: { item: item } // Pass item or any other data you need
@@ -761,7 +792,6 @@ populateUniqueMappingIds(): Promise<void> {
           ...new Set([...licensesMappingIds, ...multipleLicensesMappingIds])
         ].filter((value, index, self) => self.indexOf(value) === index);
 
-        console.log('Unique Mapping IDs:', this.uniqueMappingIds); // Log uniqueMappingIds
 
         resolve(); // Resolve the promise once unique mapping IDs are populated
       },

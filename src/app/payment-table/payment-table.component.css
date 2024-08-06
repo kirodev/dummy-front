@@ -6,7 +6,7 @@
     margin: 0 auto; /* Center the container horizontally */
     max-width: calc(100% - 200px); /* Set maximum width with 100px space on each side */
     padding: 0 100px; /* Add 50px padding on each side */
-    
+
 }
 
   table {
@@ -93,18 +93,18 @@ button:hover {
     padding: 10px;
     border: 1px solid #ccc;
   }
-  
+
   /* Style the table cells */
   td {
     padding: 10px;
     border: 1px solid #ccc;
   }
-  
+
   /* Style the table rows alternatively for better readability */
   tr:nth-child(even) {
     background-color: #f2f2f2;
   }
-  
+
   /* Style the images in the "Screenshot" column */
   td img {
     max-width: 100px; /* Adjust the maximum width of the images */
@@ -112,7 +112,7 @@ button:hover {
     cursor: pointer; /* Add a pointer cursor to indicate they are clickable */
     transition: transform 0.2s; /* Add a smooth transition effect */
   }
-  
+
   /* Apply a zoom effect to images on hover */
   td img:hover {
     transform: scale(1.1);
@@ -131,12 +131,12 @@ button:hover {
     overflow: auto; /* Enable overflow scrolling if content exceeds dimensions */
     box-sizing: border-box; /* Include padding and border in element's total width and height */
   }
-  
+
   .popup img {
     max-width: 100%;
     height: auto;
   }
-  
+
   h1 {
     color: #E57A45;
     font-family: 'ROG Fonts', sans-serif;
@@ -144,37 +144,55 @@ button:hover {
     font-style: normal;
     line-height: normal;
     margin-left:100px; /* Reset margin for h1 */
-    margin-top: 50px;  
+    margin-top: 50px;
   }
 
-  
+
   .modified-row {
     background-color: lightgreen; /* Change this to the desired shade of green */
   }
   /* Adjust the size of the icon */
 /* Center the icon */
 /* Center the content vertically and horizontally */
+.tooltip-container {
+  position: relative; /* Ensure tooltip is positioned relative to the container */
+  cursor: pointer; /* Indicate that it is clickable */
+}
+
+
+.tooltip-container {
+  position: relative; /* Ensure tooltip is positioned relative to the container */
+  cursor: pointer; /* Indicate that it is clickable */
+}
+
 .tooltip {
   position: absolute;
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
-  border-radius: 10px; /* Adjust the value to change the roundness */
+  border-radius: 10px;
   padding: 5px;
   z-index: 1;
-  display: none;
+  display: none; /* Hide by default */
+  left: auto;
+  right: 100%;
+  transform: translateX(-0.1px); /* Adjust spacing */
+  max-width: 300px; /* Adjust max-width as needed */
+  box-sizing: border-box; /* Include padding and border in width */
 }
 
+/* Ensure tooltip is visible when active */
 .tooltip.active {
   display: block;
 }
 
-/* Adjust the size of the table cells to fit the icon size */
-td {
-  position: relative;
-  padding: 20px; /* Adjust the padding to fit the icon size */
+/* Keep tooltip visible when hovering over tooltip container */
+.tooltip-container:hover .tooltip,
+.tooltip-container:hover .icon {
+  display: block; /* Show tooltip and icon when hovering over container */
 }
 
-/* Style the icon */
+
+
 .icon {
   position: absolute;
   top: 50%;
@@ -186,15 +204,19 @@ td {
 
 .icon.hidden {
   display: none;
-}/* Define styles for the tables */
-  
+}
+
+td {
+  position: relative; /* Ensure tooltip is positioned relative to the table cell */
+}
+
 
   #center-button-container {
     display: flex;
     justify-content: center;
     align-items: center;
   }
-  
+
   #center-button {
     width: 150px; /* Static width for the button */
     height: 50px; /* Static height for the button */
@@ -216,14 +238,14 @@ td {
     align-items: center;
     z-index: 1000; /* Ensure the popup is above other content */
   }
-  
+
   .popup-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
-  
+
   }
-  
+
   .popup-content {
     background: #fff;
     padding: 20px;
@@ -233,7 +255,7 @@ td {
     height: 75%;
     align-items: center;
   }
-  
+
   .close-button {
     margin-top: 10px;
     padding: 10px 20px;
@@ -243,9 +265,9 @@ td {
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    
+
   }
-  
+
   .close-button:hover {
     background-color: #0056b3;
   }
