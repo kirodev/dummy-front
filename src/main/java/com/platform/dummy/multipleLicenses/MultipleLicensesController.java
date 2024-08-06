@@ -55,29 +55,29 @@ public class MultipleLicensesController {
 
 
 
-
     @PutMapping("/{id}")
     public ResponseEntity<MultipleLicenses> updateMultiplelicense(@PathVariable Long id, @RequestBody MultipleLicenses updatedMultiplelicenses) {
         Optional<MultipleLicenses> optionalMultipleLicenses = multiplelicensesRepository.findById(id);
         if (optionalMultipleLicenses.isPresent()) {
             MultipleLicenses existingMultiplelicenses = optionalMultipleLicenses.get();
-
+    
             // Set modified with the ID
             existingMultiplelicenses.setModified(String.valueOf(id));
-
-            // Check if the updated multiplier is not null and not already zero
-            Integer updatedMultiplier = updatedMultiplelicenses.getMultiplier();
-            if (updatedMultiplier != null && updatedMultiplier > 0) {
-                // Decrease the multiplier by 1
-                int newMultiplier = updatedMultiplier - 1;
-                existingMultiplelicenses.setMultiplier(newMultiplier);
-            }
-
+    
+            // Update the licensee field
             existingMultiplelicenses.setLicensee(updatedMultiplelicenses.getLicensee());
-
-            // Set the comment
-            existingMultiplelicenses.setComment(updatedMultiplelicenses.getComment());
-
+    
+            // Update the multiplier
+            Integer updatedMultiplier = updatedMultiplelicenses.getMultiplier();
+            if (updatedMultiplier != null) {
+                existingMultiplelicenses.setMultiplier(updatedMultiplier);
+            }
+    
+            // Only update the comment if it's provided
+            if (updatedMultiplelicenses.getComment() != null) {
+                existingMultiplelicenses.setComment(updatedMultiplelicenses.getComment());
+            }
+    
             // Save the updated entity
             MultipleLicenses savedMultipleLicenses = multiplelicensesRepository.save(existingMultiplelicenses);
             return ResponseEntity.ok(savedMultipleLicenses);
@@ -85,49 +85,63 @@ public class MultipleLicensesController {
             return ResponseEntity.notFound().build();
         }
     }
+    
+    
+    
+    
     @PutMapping("/{id}/undo")
     public ResponseEntity<MultipleLicenses> undoUpdateMultiplelicense(@PathVariable("id") Long id) {
         Optional<MultipleLicenses> optionalLicense = multiplelicensesRepository.findById(id);
         if (optionalLicense.isPresent()) {
             MultipleLicenses existingLicense = optionalLicense.get();
-
+    
             // Assuming 'modified' is a property in the MultipleLicenses entity
             String modifications = existingLicense.getModified();
-
+    
             if (modifications != null && !modifications.isEmpty()) {
-                // Retrieve the current licensee value
-                String licensee = existingLicense.getLicensee();
-
-                // Remove the last value after the last " | " delimiter
-                int lastIndex = licensee.lastIndexOf(" | ");
-                if (lastIndex != -1) {
-                    licensee = licensee.substring(0, lastIndex);
-                } else {
-                    // If there's no " | " delimiter, set licensee to an empty string
-                    licensee = "";
+                // Split the modified field to extract snippet_id and row_id
+                String[] parts = modifications.split("_");
+                if (parts.length == 2) {
+                    String snippetId = parts[0];
+                    Long rowId = Long.valueOf(parts[1]);
+    
+                    // Find the original license row using the extracted coordinates
+                    Optional<MultipleLicenses> originalLicenseOpt = multiplelicensesRepository.findById(rowId);
+                    if (originalLicenseOpt.isPresent()) {
+                        MultipleLicenses originalLicense = originalLicenseOpt.get();
+    
+                        // Update the licensee and multiplier of the original license row
+                        String licensee = originalLicense.getLicensee();
+    
+                        // Remove the last value after the last " | " delimiter
+                        int lastIndex = licensee.lastIndexOf(" | ");
+                        if (lastIndex != -1) {
+                            licensee = licensee.substring(0, lastIndex);
+                        } else {
+                            // If there's no " | " delimiter, set licensee to an empty string
+                            licensee = "";
+                        }
+                        originalLicense.setLicensee(licensee);
+    
+                        // Increment the multiplier by 1 if it's not null
+                        Integer multiplier = originalLicense.getMultiplier();
+                        if (multiplier != null) {
+                            originalLicense.setMultiplier(multiplier + 1);
+                        }
+    
+                        // Set the 'modified' property to null
+                        originalLicense.setModified(null);
+    
+                        // Save the updated license entity to the database
+                        MultipleLicenses updatedLicense = multiplelicensesRepository.save(originalLicense);
+                        return new ResponseEntity<>(updatedLicense, HttpStatus.OK);
+                    }
                 }
-
-                // Update the license with the modified licensee
-                existingLicense.setLicensee(licensee);
-
-                // Increment the multiplier by 1 if it's not null
-                Integer multiplier = existingLicense.getMultiplier();
-                if (multiplier != null) {
-                    existingLicense.setMultiplier(multiplier + 1);
-                }
-
-                // Set the 'modified' property to null
-                existingLicense.setModified(null);
-
-                // Save the updated license entity to the database
-                MultipleLicenses updatedLicense = multiplelicensesRepository.save(existingLicense);
-                return new ResponseEntity<>(updatedLicense, HttpStatus.OK);
             }
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
-
-
+    
 
 
 
