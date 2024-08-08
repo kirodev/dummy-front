@@ -377,7 +377,7 @@
   </thead>
   <tbody>
     <ng-container *ngFor="let item of multiplePayments; let i = index">
-      <tr *ngIf="(item.multiplier !== 0) || (item.multiplier === 0 && item.licensee && item.licensee.includes(licenseeName))">
+      <tr *ngIf="(item.multiplier > 0 && item.indiv_licensee === null || item.multiplier === 0 && item.indiv_licensee === licenseeName)">
         <td>{{ item.id }}</td>
         <td>{{ item.snippet_id }}</td>
         <td>{{ item.mapping_id }}</td>

@@ -45,8 +45,8 @@ export class PaymentTableComponent {
     this.filterPaymentsData();
     this.fetchMultiplePaymentsData();
     this.fetchPaymentsData();
-    this.fetchDistinctPayments(); 
-    this.populateUniqueMappingIds(); 
+    this.fetchDistinctPayments();
+    this.populateUniqueMappingIds();
     this.retrieveFilteredMappingIds();
     this.fetchAnnualRevenues();
     this.loadPlotlyScript().then(() => {
@@ -194,7 +194,7 @@ export class PaymentTableComponent {
     });
   }
 
-  
+
 
 
 
@@ -367,26 +367,26 @@ generateRandomColor(): string {
     this.paymentConnection.getMultiplePayments().subscribe(
       (data: any[]) => {
         console.log('Data received from backend:', data);
-  
+
         // Filtered based on both licensor and known licensee conditions
         this.filteredMultiplePayments = data.filter(item => {
           const meetsLicensorCondition = item.licensor === this.licensorName;
           const meetsLicenseeCondition = item.indiv_licensee === this.licenseeName;
           return meetsLicensorCondition && meetsLicenseeCondition;
         });
-  
+
         console.log('Filtered multiple Pa:', this.filteredMultiplePayments);
-  
+
         // Filtered based on licensor only
         const confirmedTableRows = this.filteredMultiplePayments.map(item => item.id);
         this.multiplePayments = data.filter(item => !confirmedTableRows.includes(item.id) && item.licensor === this.licensorName);
-  
+
         console.log('Multiple licenses:', this.multiplePayments);
-  
+
         // Filter for licenseeName only
         const matchingRowsLicenseeOnly = data.filter(item => item.indiv_licensee === this.licenseeName);
         console.log('Matching rows for licensee only:', matchingRowsLicenseeOnly);
-  
+
         this.initializeUniquePayments();
       },
       (error) => {
@@ -406,66 +406,17 @@ generateRandomColor(): string {
   }
 
 
-  undoUpdateMP(item: any, comment: string): void {
-    this.confirmAction('Are you sure you want to revert the modification?', () => {
-      const snippetId = item.snippet_id;
-  
-      // Find all rows with the same snippet_id
-      const rowsToUpdate = this.multiplePayments.filter(payment => payment.snippet_id === snippetId);
-  
-      if (rowsToUpdate.length > 0) {
-        // Track the number of rows processed
-        let rowsProcessed = 0;
-  
-        // Iterate through each row to update the licensee fields
-        rowsToUpdate.forEach((row) => {
-          // Remove the licenseeName from the licensee field
-          const licensees = row.licensee.split(' | ').filter((name: string) => name !== this.licenseeName);
-          row.licensee = licensees.join(' | ');
-  
-          // Update each row in the backend
-          this.paymentConnection.updateMultiplePaymentLicensee(row.id, row, comment).subscribe(
-            (response) => {
-              console.log('Row updated successfully:', response);
-              rowsProcessed++;
-  
-              // Check if all rows have been processed
-              if (rowsProcessed === rowsToUpdate.length) {
-                // Delete the new row
-                this.paymentConnection.deleteMultiplePayment(item.id).subscribe(
-                  (deleteResponse) => {
-                    console.log('New payment row deleted successfully:', deleteResponse);
-                    // Refresh the data after all updates and deletion
-                    this.fetchMultiplePaymentsData();
-                  },
-                  (deleteError) => {
-                    console.error('Error deleting new payment row:', deleteError);
-                  }
-                );
-              }
-            },
-            (error) => {
-              console.error('Error updating row:', error);
-            }
-          );
-        });
-      } else {
-        console.error('No rows found with the provided snippet_id.');
-      }
-    });
-  }
-  
-  
-  
-  
-  
 
-  
+
+
+
+
+
   openFeedbackAfterUndoPayment(item: AnimationPlaybackEvent): void {
     const dialogRef = this.dialog.open(FeedbackPopupComponent, {
       data: { item: item } // Pass item or any other data you need
     });
-  
+
     dialogRef.afterClosed().subscribe(comment => {
       console.log('The dialog was closed');
       console.log('Feedback comment:', comment); // Handle feedback comment here if needed
@@ -475,21 +426,13 @@ generateRandomColor(): string {
       }
     });
   }
-  
+
 
   openFeedbackAfterUndoMP(item: any): void {
-    const dialogRef = this.dialog.open(FeedbackPopupComponent, {
-      data: { item: item } // Pass item or any other data you need
-    });
 
-    dialogRef.afterClosed().subscribe(comment => {
-      console.log('The dialog was closed');
-      console.log('Feedback comment:', comment); // Handle feedback comment here if needed
-      if (comment) {
         // If comment is not empty, proceed with undo action passing the comment
-        this.undoUpdateMP(item, comment);
-      }
-    });
+        this.undoUpdateMP(item);
+
   }
 
   openFeedbackAfterUpdateMultiplePayments(item: any): void {
@@ -566,7 +509,7 @@ generateRandomColor(): string {
       (response) =>  {
         console.log('Details updated successfully:', response);
         window.alert('Details updated successfully');
-        item.editing = false; 
+        item.editing = false;
         this.fetchMultiplePaymentsData();
       },
       (error) => {
@@ -604,75 +547,184 @@ generateRandomColor(): string {
 
 
 
-updateMultiplePayments(item: any, comment: string): void {
-  // Check if licenseeName already exists in the licensee string
-  const licenseeNames = item.licensee ? item.licensee.split(' | ') : [];
-  if (licenseeNames.includes(this.licenseeName)) {
-    alert(`${this.licenseeName} already exists in the licensee list.`);
-    return;
-  }
+  updateMultiplePayments(item: any, comment: string): void {
+    // Check if licenseeName already exists in the licensee string
+    const licenseeNames = item.licensee ? item.licensee.split(' | ') : [];
+    if (licenseeNames.includes(this.licenseeName)) {
+      alert(`${this.licenseeName} already exists in the licensee list.`);
+      return;
+    }
 
-  // Fetch all rows with the same snippet_id
-  const snippetId = item.snippet_id;
-  const itemsToUpdate = this.multiplePayments.filter(payment => payment.snippet_id === snippetId);
+    // Fetch all rows with the same snippet_id
+    const snippetId = item.snippet_id;
+    const itemsToUpdate = this.multiplePayments.filter(payment => payment.snippet_id === snippetId);
 
-  // Iterate through each item and update the licensee field
-  itemsToUpdate.forEach(itemToUpdate => {
-    const currentLicenseeNames = itemToUpdate.licensee ? itemToUpdate.licensee.split(' | ') : [];
-    // Concatenate this.licenseeName to the existing licensee value, separated by " | "
-    const updatedLicensee = itemToUpdate.licensee
-      ? `${itemToUpdate.licensee} | ${this.licenseeName}`
-      : this.licenseeName;
+    if (itemsToUpdate.length === 0) {
+      console.error('No rows found with the provided snippet_id.');
+      return;
+    }
 
-    // Ensure no duplicate names exist
-    const uniqueLicensees = new Set(updatedLicensee.split(' | '));
-    const updatedLicenseeString = Array.from(uniqueLicensees).join(' | ');
+    // Identify the row with the highest ID
+    const latestRow = itemsToUpdate.reduce((prev, current) => (prev.id > current.id) ? prev : current);
 
-    // Update the licensee and modified fields
-    itemToUpdate.licensee = updatedLicenseeString;
-    itemToUpdate.modified = `${itemToUpdate.snippet_id}_${itemToUpdate.id}`;
-  });
+    // Update the licensee field for all rows
+    itemsToUpdate.forEach(itemToUpdate => {
+      const currentLicenseeNames = itemToUpdate.licensee ? itemToUpdate.licensee.split(' | ') : [];
+      const updatedLicensee = itemToUpdate.licensee
+        ? `${itemToUpdate.licensee} | ${this.licenseeName}`
+        : this.licenseeName;
 
-  // Save each updated item to the backend
-  itemsToUpdate.forEach(itemToUpdate => {
-    this.paymentConnection.updateMultiplePaymentLicensee(itemToUpdate.id, { ...itemToUpdate, licensee: itemToUpdate.licensee }, comment)
-      .subscribe(
+      // Ensure no duplicate names exist
+      const uniqueLicensees = new Set(updatedLicensee.split(' | '));
+      const updatedLicenseeString = Array.from(uniqueLicensees).join(' | ');
+
+      // Decrement the multiplier for the row with id matching modified value
+      if (itemToUpdate.id === parseInt(item.modified, 10)) {
+        if (itemToUpdate.multiplier > 0) {
+          itemToUpdate.multiplier -= 1;
+        } else {
+          alert(`Multiplier for row ID ${itemToUpdate.id} cannot be less than 0.`);
+        }
+      }
+
+      // Update the licensee and modified fields
+      itemToUpdate.licensee = updatedLicenseeString;
+      itemToUpdate.modified = `${itemToUpdate.id}`;
+
+      // Save each updated item to the backend
+      this.paymentConnection.updateMultiplePaymentLicensee(itemToUpdate.id, {
+        ...itemToUpdate,
+        licensee: itemToUpdate.licensee,
+        comment: itemToUpdate.comment,
+        multiplier: itemToUpdate.multiplier
+      }).subscribe(
         (response) => {
           console.log('Payment updated successfully:', response);
-          this.fetchMultiplePaymentsData();
         },
         (error) => {
           console.error('Error updating payment:', error);
         }
       );
-  });
+    });
 
-  // Clone the original row without duplicating the licenseeName
-  const updatedLicenseeNames = item.licensee ? item.licensee.split(' | ') : [];
-  if (!updatedLicenseeNames.includes(this.licenseeName)) {
-    updatedLicenseeNames.push(this.licenseeName);
-  }
-  const newRowLicenseeString = updatedLicenseeNames.join(' | ');
-
-  const newRow = {
-    ...item,
-    id: undefined,
-    indiv_licensee: this.licenseeName,
-    licensee: newRowLicenseeString,
-    modified: `${item.snippet_id}_${item.id}`
-  };
-
-  // Save the new row to the backend
-  this.paymentConnection.createMultiplePayment(newRow).subscribe(
-    (response) => {
-      console.log('New payment row created successfully:', response);
-      this.fetchMultiplePaymentsData();
-    },
-    (error) => {
-      console.error('Error creating new payment row:', error);
+    // Clone the original row without duplicating the licenseeName
+    const updatedLicenseeNames = item.licensee ? item.licensee.split(' | ') : [];
+    if (!updatedLicenseeNames.includes(this.licenseeName)) {
+      updatedLicenseeNames.push(this.licenseeName);
     }
-  );
-}
+    const newRowLicenseeString = updatedLicenseeNames.join(' | ');
+
+    const newRow = {
+      ...item,
+      id: undefined,
+      indiv_licensee: this.licenseeName,
+      licensee: newRowLicenseeString,
+      modified: `${item.id}`,
+      comment: comment,  // Add the comment to the new row
+      multiplier: 0  // Set multiplier to 0 for the new row
+    };
+
+    // Save the new row to the backend
+    this.paymentConnection.createMultiplePayment(newRow).subscribe(
+      (response) => {
+        console.log('New payment row created successfully:', response);
+        this.fetchMultiplePaymentsData();
+      },
+      (error) => {
+        console.error('Error creating new payment row:', error);
+      }
+    );
+  }
+
+
+  undoUpdateMP(item: any): void {
+    this.confirmAction('Are you sure you want to revert the modification?', () => {
+      if (!item.modified) {
+        console.error('Item modified field is missing.');
+        return;
+      }
+
+      const originalId = parseInt(item.modified, 10);
+
+      if (isNaN(originalId)) {
+        console.error('Failed to parse original ID from modified field:', item.modified);
+        return;
+      }
+
+      console.log('Original ID extracted from modified field:', originalId);
+
+      // Find the row with the ID extracted from the modified field
+      const originalRow = this.multiplePayments.find(payment => payment.id === originalId);
+
+      if (originalRow) {
+        // Increment the multiplier of the identified original row by 1 if it's not null
+        if (originalRow.multiplier !== null) {
+          originalRow.multiplier += 1;
+
+          console.log(`Updating original row id: ${originalRow.id} with new multiplier: ${originalRow.multiplier}`);
+
+          // Create a new object without the comment field
+          const { comment, ...originalRowWithoutComment } = originalRow;
+
+          // Save the updated original row
+          this.paymentConnection.updateMultiplePaymentLicensee(originalRow.id, originalRowWithoutComment).subscribe(
+            (updateResponse) => {
+              console.log('Original row multiplier updated successfully:', updateResponse);
+
+              // Proceed with updating the other rows
+              const rowsToUpdate = this.multiplePayments.filter(payment => payment.snippet_id === item.snippet_id);
+
+              // Track the number of rows processed
+              let rowsProcessed = 0;
+
+              rowsToUpdate.forEach((row) => {
+                // Remove the licenseeName from the licensee field
+                const licensees = row.licensee.split(' | ').filter((name: string) => name !== this.licenseeName);
+                row.licensee = licensees.join(' | ');
+
+                // Create a new object without the comment field
+                const { comment: rowComment, ...rowWithoutComment } = row;
+
+                // Update each row in the backend
+                this.paymentConnection.updateMultiplePaymentLicensee(row.id, rowWithoutComment).subscribe(
+                  (updateResponse) => {
+                    console.log('Row updated successfully:', updateResponse);
+                    rowsProcessed++;
+
+                    // Check if all rows have been processed
+                    if (rowsProcessed === rowsToUpdate.length) {
+                      // Delete the new row
+                      this.paymentConnection.deleteMultiplePayment(item.id).subscribe(
+                        (deleteResponse) => {
+                          console.log('New payment row deleted successfully:', deleteResponse);
+                          // Refresh the data after all updates and deletion
+                          this.fetchMultiplePaymentsData();
+                        },
+                        (deleteError) => {
+                          console.error('Error deleting new payment row:', deleteError);
+                        }
+                      );
+                    }
+                  },
+                  (error) => {
+                    console.error('Error updating row:', error);
+                  }
+                );
+              });
+            },
+            (error) => {
+              console.error('Error updating original row multiplier:', error);
+            }
+          );
+        } else {
+          console.error('Multiplier is null for the original row with id:', originalId);
+        }
+      } else {
+        console.error('No original row found with the provided ID to update the multiplier.');
+      }
+    });
+  }
+
 
 
 maxCounter: number = 0; // Class-level variable to store the maximum counter value
@@ -718,7 +770,7 @@ AddMappingId(itemId: number, item: any, tableType: 'payments' | 'multiplePayment
       }
 
       item.mapping_id = generatedMappingId;
-      this.uniqueMappingIds.push(generatedMappingId); 
+      this.uniqueMappingIds.push(generatedMappingId);
       this.updateMappingId(itemId, generatedMappingId, tableType, useMPMappingId);
       this.mappingIdCounter.set(itemId, this.maxCounter);
     } else {
@@ -852,7 +904,7 @@ deleteMPMappingId(id: number): void {
   this.paymentConnection.deleteMPMappingId(id).subscribe(
     () => {
       console.log('Mapping ID deleted successfully');
-      
+
       // Fetch data after successful deletion
       this.fetchMultiplePaymentsData();
     },

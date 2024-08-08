@@ -566,6 +566,11 @@ fetchMultipleLicensesData(): void {
         const uniqueLicensees = new Set(updatedLicensee.split(' | '));
         const updatedLicenseeString = Array.from(uniqueLicensees).join(' | ');
 
+        // Ensure 'modified' is set to allow decrementing the multiplier
+        if (!itemToUpdate.modified) {
+            itemToUpdate.modified = `${itemToUpdate.id}`;
+        }
+
         // Decrement the multiplier for the row with id matching modified value
         if (itemToUpdate.id === parseInt(item.modified, 10)) {
             if (itemToUpdate.multiplier > 0) {
@@ -577,7 +582,6 @@ fetchMultipleLicensesData(): void {
 
         // Update the licensee and modified fields
         itemToUpdate.licensee = updatedLicenseeString;
-        itemToUpdate.modified = `${itemToUpdate.id}`;
 
         // Save each updated item to the backend
         this.connectionService.updateMultipleLicensee(itemToUpdate.id, {
@@ -623,6 +627,7 @@ fetchMultipleLicensesData(): void {
         }
     );
 }
+
 
 
   undoUpdateML(item: any): void {

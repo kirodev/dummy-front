@@ -16,7 +16,7 @@ export class PaymentConnection {
   private baseUrlqRev = this.url +'quarterly-revenues';
   private baseUrlaRev = this.url +'annual-revenues';
 
-  
+
   private getHeaders(): HttpHeaders {
     const token = this.tokenStorageService.getToken(); // Get the JWT token from your token storage service
     return new HttpHeaders({
@@ -51,7 +51,7 @@ export class PaymentConnection {
     const params = new HttpParams().set('details', updatedDetails); // Send updatedDetails as a request parameter
     return this.http.put(url, {}, { params, headers }); // Send an empty request body since details are sent as a parameter
   }
-  
+
   updateMPDetails(id: number, updatedDetails: string): Observable<any> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
     const url = `${this.baseUrlMP}/${id}/details`;
@@ -60,7 +60,7 @@ export class PaymentConnection {
   }
 
   updateLicenseeName(id: any, license: any): Observable<any> {
-    const modifiedValue = license.licensee === 'Unknown' ? id : null; 
+    const modifiedValue = license.licensee === 'Unknown' ? id : null;
     const body = { ...license, modified: modifiedValue };
     const headers = this.getHeaders(); // Get the headers including the JWT token
 
@@ -87,7 +87,7 @@ export class PaymentConnection {
 
 
   updatePaymentLicensee(id: any, payment: any): Observable<any> {
-    const modifiedValue = payment.licensee === 'Unknown' ? id : null; 
+    const modifiedValue = payment.licensee === 'Unknown' ? id : null;
     const body = { ...payment, modified: modifiedValue };
     const headers = this.getHeaders(); // Get the headers including the JWT token
 
@@ -105,17 +105,17 @@ export class PaymentConnection {
 
   deleteMappingId(id: number): Observable<void> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
-  
+
     return this.http.delete<void>(`${this.baseUrl}/${id}/mapping_id`, { headers });
   }
-  
-  
+
+
   deleteMPMappingId(id: number): Observable<void> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
-  
+
     return this.http.delete<void>(`${this.baseUrlMP}/${id}/mapping_id`, { headers });
   }
-  
+
   undoUpdatePayment(id: any, comment: string): Observable<any[]> {
   const headers = this.getHeaders(); // Get the headers including the JWT token
   return this.http.put<any>(`${this.baseUrl}/${id}/undoP`,  { comment }, { headers }); // Include the headers in the request
@@ -138,7 +138,7 @@ createMultiplePayment(newPayment: any): Observable<any> {
   );
 
 }
-updateMultiplePaymentLicensee(id: any, payment: any, comment: string): Observable<any> {
+updateMultiplePaymentLicensee(id: any, payment: any, comment?: string): Observable<any> {
     let modifiedValue = null;
     const licenseeRegex = /^([^|]+)(?:\s*\|\s*([^|]+))*$/;
 
@@ -167,18 +167,18 @@ updateMultiplePaymentLicensee(id: any, payment: any, comment: string): Observabl
 
 
 
-  undoUpdateMultiplePayment(id: any, comment: string): Observable<any> {
+  undoUpdateMultiplePayment(id: any): Observable<any> {
     const headers = this.getHeaders();
-    return this.http.put<any>(`${this.baseUrlMP}/${id}/undoP`, { comment }, { headers });
+    return this.http.put<any>(`${this.baseUrlMP}/${id}/undoP`, { headers });
   }
-  
-  
+
+
   updatePaymentMappingId(itemId: number, mappingId: string): Observable<any> {
     const url = `${this.baseUrl}/${itemId}/mappingId`;
     const headers = this.getHeaders(); // Get the headers including the JWT token
     return this.http.put(url, mappingId, { headers }); // Include the headers in the request
   }
-  
+
   updateMPMappingId(itemId: number, mappingId: string): Observable<any> {
     const url = `${this.baseUrlMP}/${itemId}/MPmappingId`;
     const headers = this.getHeaders(); // Get the headers including the JWT token
