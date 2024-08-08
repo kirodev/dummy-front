@@ -132,6 +132,11 @@ updateMLDetails(id: number, updatedDetails: string): Observable<any> {
     return this.http.put<any>(`${this.baseUrl}/${id}`, { knownLicensee });
   }
 
+  getMultipleLicensesDetails(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrlML}`, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
+  }
 
 
     // Define a method to fetch distinct licensee names from the server
