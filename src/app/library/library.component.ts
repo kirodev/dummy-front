@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { PdfLibraryService } from '../pdf-library-service.service';
 import { ExamplePdfViewerComponent } from '../example-pdf-viewer/example-pdf-viewer.component';
+import { HttpClient } from '@angular/common/http';
 
 interface PdfFile {
   path: string;
@@ -9,6 +10,8 @@ interface PdfFile {
   date?: string;
   details?: string;
   directory_path?: string;
+  exists?: boolean;
+  showDetails?: boolean; // Manage visibility of details
 }
 
 @Component({
@@ -28,15 +31,24 @@ export class LibraryComponent implements OnInit {
   searchByDate: boolean = false;
   searchByDetails: boolean = false;
 
-  constructor(private pdfLibraryService: PdfLibraryService) {}
+  constructor(private pdfLibraryService: PdfLibraryService, private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loadPdfFiles();
   }
 
+  async checkFileExists(filePath: string): Promise<boolean> {
+    try {
+      await this.http.head(filePath, { observe: 'response' }).toPromise();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   loadPdfFiles(): void {
     this.pdfLibraryService.getPdfFiles().subscribe({
-      next: (response: any) => {
+      next: async (response: any) => {
         if (!Array.isArray(response)) {
           console.error('API response is not an array:', response);
           return;
@@ -44,34 +56,32 @@ export class LibraryComponent implements OnInit {
 
         const files = response as PdfFile[];
 
-        console.log('Loaded PDF files:', files);
-
-        this.pdfFiles = files.map((file: PdfFile) => {
+        this.pdfFiles = await Promise.all(files.map(async (file: PdfFile) => {
           if (!file.directory_path) {
             console.error('File directory_path is missing for file:', file);
             return {
               ...file,
               title: 'Unknown Title',
-              date: 'Unknown Year'
+              date: 'Unknown Year',
+              exists: false,
+              showDetails: false
             };
           }
 
-          const fullName = file.directory_path.split('\\').pop() || '';
-          const title = fullName.replace('.pdf', '') || 'Unknown Title';
-          const yearMatch = file.directory_path.match(/\b\d{4}\b/);
-          const year = yearMatch ? yearMatch[0] : 'Unknown Year';
+          const filePath = file.directory_path; // Use the full path
+          const url = `/assets/${encodeURIComponent(filePath)}`;
+          const exists = await this.checkFileExists(url);
 
           return {
             ...file,
-            title: title,
-            date: year
+            title: filePath.split('/').pop()?.replace('.pdf', '') || 'Unknown Title',
+            date: filePath.match(/\b\d{4}\b/)?.[0] || 'Unknown Year',
+            exists,
+            showDetails: false
           };
-        });
-
-        console.log('Processed PDF files:', this.pdfFiles);
+        }));
 
         this.filteredPdfFiles = this.pdfFiles;
-        console.log('Filtered PDF files:', this.filteredPdfFiles);
       },
       error: (err: any) => {
         console.error('Error loading PDF files', err);
@@ -81,24 +91,11 @@ export class LibraryComponent implements OnInit {
 
   searchFiles(): void {
     const query = this.searchQuery.toLowerCase();
-    console.log('Search Query:', query);
-    console.log('Search Flags:', {
-      searchByTitle: this.searchByTitle,
-      searchByDate: this.searchByDate,
-      searchByDetails: this.searchByDetails
-    });
 
     this.filteredPdfFiles = this.pdfFiles.filter((file: PdfFile) => {
       const titleMatch = this.searchByTitle && file.title ? file.title.toLowerCase().includes(query) : true;
       const dateMatch = this.searchByDate && file.date ? file.date.toLowerCase().includes(query) : true;
       const detailsMatch = this.searchByDetails && file.details ? file.details.toLowerCase().includes(query) : true;
-
-      console.log('File:', file);
-      console.log('Matches:', {
-        titleMatch,
-        dateMatch,
-        detailsMatch
-      });
 
       const matchesQuery = (this.searchByTitle && titleMatch) ||
                            (this.searchByDate && dateMatch) ||
@@ -107,37 +104,39 @@ export class LibraryComponent implements OnInit {
 
       const reportTypeMatch = this.selectedReportType ? file.directory_path?.includes(this.selectedReportType) : true;
 
-      console.log('Report Type Match:', reportTypeMatch);
-
       return matchesQuery && reportTypeMatch;
     });
-
-    console.log('Filtered PDF files after search:', this.filteredPdfFiles);
   }
 
-
-  openPDFViewer(file: PdfFile): void {
+  openPDFViewer(file: PdfFile, event: Event): void {
+    event.stopPropagation(); // Prevent toggling details when clicking view button
     if (!file.directory_path) {
       console.error('File path is undefined for file:', file);
       return;
     }
 
-    const directory_path = file.directory_path.replace(/^.*[\\\/]/, ''); // Remove leading path
-    const url = `/assets/${directory_path}`;
-    this.pdfSrc = url;
-    this.showPDFViewerPopup();
+    const url = `http://localhost:4200/assets/${encodeURIComponent(file.directory_path)}`;
+    console.log('Constructed PDF URL:', url); // Log the constructed URL for debugging
+
+    // Open the PDF file in a new sub-browser window
+    const windowFeatures = 'width=800,height=600,resizable=yes,scrollbars=yes,status=yes';
+    window.open(url, '_blank', windowFeatures);
   }
 
-  showPDFViewer: boolean = false;
-  showPopup: boolean = false;
+showPopup: boolean = false;
+showPDFViewer: boolean = false;
 
-  showPDFViewerPopup(): void {
-    this.showPDFViewer = true;
-    this.showPopup = true;
-  }
+closePopup(): void {
+  this.showPopup = false;
+  this.showPDFViewer = false;
+}
 
-  closePopup(): void {
-    this.showPopup = false;
-    this.showPDFViewer = false;
-  }
+showPDFViewerPopup(): void {
+  this.showPDFViewer = true;
+  this.showPopup = true;
+}
+toggleDetails(file: PdfFile, event: Event): void {
+  event.stopPropagation(); // Prevent clicking the card
+  file.showDetails = !file.showDetails;
+}
 }

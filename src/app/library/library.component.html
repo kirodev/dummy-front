@@ -51,19 +51,27 @@
 
 <!-- Card Container -->
 <div class="card-container">
-  <div *ngFor="let file of filteredPdfFiles" class="card">
+  <div *ngFor="let file of filteredPdfFiles" class="card" [ngClass]="{'card-green': file.exists, 'card-red': !file.exists}">
     <div class="card-content">
       <h3>{{ file.title || 'Unknown Title' }}</h3>
-      <p>{{ file.date || 'Unknown Date' }}</p>
-      <button (click)="openPDFViewer(file)">View</button>
+      <p>Date: {{ file.date || 'Unknown Date' }}</p>
+      <button (click)="openPDFViewer(file, $event)">View</button>
+      <button (click)="toggleDetails(file, $event)">Toggle Details</button>      <div *ngIf="file.showDetails">
+        <p>{{ file.details }}</p>
+      </div>
+      <div *ngIf="!file.exists">
+        <p>File not available in local storage</p>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Popup for PDF Viewer -->
+<!-- PDF Viewer -->
+<app-example-pdf-viewer *ngIf="showPDFViewer" [pdfSrc]="pdfSrc"></app-example-pdf-viewer>
+
+<!-- Popup -->
 <div class="popup-overlay" *ngIf="showPopup">
   <div class="popup-content">
-    <app-example-pdf-viewer *ngIf="showPDFViewer" [pdfSrc]="pdfSrc"></app-example-pdf-viewer>
     <div class="button-container">
       <button (click)="closePopup()">Close</button>
     </div>
