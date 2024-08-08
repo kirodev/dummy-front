@@ -217,7 +217,7 @@ plotData(): void {
   const yearPaymentsMap = new Map<number, { payment_amount: number, type: string }[]>();
 
   dataCopy.forEach(item => {
-    if (item.payment_type != null) { // Only process items with a non-null payment_type
+    if (item.payment_type != null) {
       const existingRecords = yearPaymentsMap.get(item.year) || [];
       const existingRecord = existingRecords.find(record => record.payment_amount === item.payment_amount);
 
@@ -244,10 +244,7 @@ plotData(): void {
     });
   }
 
-  let totalRevenuesTraces: any[] = [];
-  let otherTraces: any[] = [];
-
-  // Map to store colors for each payment type
+  let traces: any[] = [];
   const paymentTypeColors: Map<string, string> = new Map();
 
   yearPaymentsMap.forEach((records, year) => {
@@ -256,38 +253,38 @@ plotData(): void {
 
       let color: string;
       if (!paymentTypeColors.has(type)) {
-        // Generate a new random color for this payment type
         color = this.generateRandomColor();
         paymentTypeColors.set(type, color);
       } else {
-        // Reuse the color if already assigned to this payment type
         color = paymentTypeColors.get(type)!;
       }
 
-      const trace = {
-        x: [year],
-        y: [record.payment_amount],
-        type: 'bar',
-        name: type,
-        marker: {
-          color: type === "Total Revenues" ? 'rgba(169, 169, 169, 0.7)' : color
-        },
-        text: `Year: ${year}, Payment: ${record.payment_amount}, Type: ${type}`,
-        hoverinfo: 'text',
-        showlegend: type !== "Total Revenues" // Don't show Total Revenues in the legend
-      };
+      const existingTrace = traces.find(trace => trace.name === type);
+      if (!existingTrace) {
+        const trace = {
+          x: [year],
+          y: [record.payment_amount],
+          type: 'bar',
+          name: type,
+          marker: {
+            color: type === "Total Revenues" ? 'rgba(169, 169, 169, 0.7)' : color
+          },
+          text: `Year: ${year}, Payment: ${record.payment_amount}, Type: ${type}`,
+          hoverinfo: 'text',
+          showlegend: type !== "Total Revenues"
+        };
 
-      if (type === "Total Revenues") {
-        totalRevenuesTraces.push(trace);
+        traces.push(trace);
       } else {
-        otherTraces.push(trace);
+        // Update existing trace with new data
+        existingTrace.x.push(year);
+        existingTrace.y.push(record.payment_amount);
       }
     });
   });
 
-  // Combine the traces and sort by payment amount in descending order
-  let traces = [...totalRevenuesTraces, ...otherTraces];
-  traces.sort((a, b) => b.y[0] - a.y[0]);
+  // Sort traces by the payment amount of the first year in descending order
+  traces.sort((a, b) => Math.max(...b.y) - Math.max(...a.y));
 
   const layout = {
     height: 600,
@@ -299,9 +296,9 @@ plotData(): void {
       tickformat: ',d',
       type: 'linear',
       rangemode: 'tozero',
-      range: [0, Math.ceil(Math.max(...traces.map(trace => trace.y[0])) / 10000) * 10000]
+      range: [0, Math.ceil(Math.max(...traces.map(trace => Math.max(...trace.y))) / 10000) * 10000]
     },
-    barmode: 'overlay', // Keep barmode as 'overlay'
+    barmode: 'overlay',
   };
 
   Plotly.newPlot('myDiv', traces, layout);
@@ -315,6 +312,8 @@ generateRandomColor(): string {
   }
   return color;
 }
+
+
 
 
 
