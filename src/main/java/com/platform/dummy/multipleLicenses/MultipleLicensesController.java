@@ -54,22 +54,23 @@ public class MultipleLicensesController {
     }
 
 
-
     @PutMapping("/{id}")
     public ResponseEntity<MultipleLicenses> updateMultiplelicense(@PathVariable Long id, @RequestBody MultipleLicenses updatedMultiplelicenses) {
         Optional<MultipleLicenses> optionalMultipleLicenses = multiplelicensesRepository.findById(id);
         if (optionalMultipleLicenses.isPresent()) {
             MultipleLicenses existingMultiplelicenses = optionalMultipleLicenses.get();
     
-            // Set modified with the ID
-            existingMultiplelicenses.setModified(String.valueOf(id));
+            // If 'modified' is null or empty, set it to the current ID
+            if (existingMultiplelicenses.getModified() == null || existingMultiplelicenses.getModified().isEmpty()) {
+                existingMultiplelicenses.setModified(String.valueOf(id));
+            }
     
             // Update the licensee field
             existingMultiplelicenses.setLicensee(updatedMultiplelicenses.getLicensee());
     
             // Update the multiplier
             Integer updatedMultiplier = updatedMultiplelicenses.getMultiplier();
-            if (updatedMultiplier != null) {
+            if (updatedMultiplier != null && updatedMultiplier > 0) {
                 existingMultiplelicenses.setMultiplier(updatedMultiplier);
             }
     
@@ -85,7 +86,6 @@ public class MultipleLicensesController {
             return ResponseEntity.notFound().build();
         }
     }
-    
     
     
     
@@ -214,4 +214,5 @@ public class MultipleLicensesController {
             return ResponseEntity.notFound().build();
         }
     }
+
 }

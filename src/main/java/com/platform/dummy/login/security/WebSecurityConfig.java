@@ -81,7 +81,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers(HttpMethod.GET,
 						"/mappingId",
 						"/quarterly-revenues",
-						"/annual-revenues"
+						"/annual-revenues",
+						"/licenses", "/payments", "/multiple-payments","/multiple-licenses"
+
 				).hasRole("ADMIN")
 				.antMatchers(HttpMethod.DELETE,
 						"/mappingId"

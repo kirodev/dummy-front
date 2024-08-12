@@ -46,84 +46,93 @@ public class MultiplePaymentsController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MultiplePayments> updateMultiplePayment(@PathVariable Long id, @RequestBody MultiplePayments updatedMultiplePayments) {
-        Optional<MultiplePayments> optionalMultiplePayments = multiplePaymentsRepository.findById(id);
-        if (optionalMultiplePayments.isPresent()) {
-            MultiplePayments existingMultiplePayments = optionalMultiplePayments.get();
+public ResponseEntity<MultiplePayments> updateMultiplePayment(@PathVariable Long id, @RequestBody MultiplePayments updatedMultiplePayments) {
+    Optional<MultiplePayments> optionalMultiplePayments = multiplePaymentsRepository.findById(id);
+    if (optionalMultiplePayments.isPresent()) {
+        MultiplePayments existingMultiplePayments = optionalMultiplePayments.get();
 
-            // Set modified with the ID
-            existingMultiplePayments.setModified(String.valueOf(id));
+        // Set modified with the ID
+        existingMultiplePayments.setModified(String.valueOf(id));
 
-            // Check if the updated multiplier is not null and not already zero
-            Integer updatedMultiplier = updatedMultiplePayments.getMultiplier();
-            if (updatedMultiplier != null && updatedMultiplier > 0) {
-                // Decrease the multiplier by 1
-                int newMultiplier = updatedMultiplier - 1;
-                existingMultiplePayments.setMultiplier(newMultiplier);
-            }
+        // Update the licensee field
+        existingMultiplePayments.setLicensee(updatedMultiplePayments.getLicensee());
 
-            existingMultiplePayments.setLicensee(updatedMultiplePayments.getLicensee());
+        // Update the multiplier
+        Integer updatedMultiplier = updatedMultiplePayments.getMultiplier();
+        if (updatedMultiplier != null) {
+            existingMultiplePayments.setMultiplier(updatedMultiplier);
+        } 
+       
 
-            // Set the comment
+        // Only update the comment if it's provided
+        if (updatedMultiplePayments.getComment() != null) {
             existingMultiplePayments.setComment(updatedMultiplePayments.getComment());
-
-            // Save the updated entity
-            MultiplePayments savedMultiplePayments = multiplePaymentsRepository.save(existingMultiplePayments);
-            return ResponseEntity.ok(savedMultiplePayments);
-        } else {
-            return ResponseEntity.notFound().build();
         }
-    }
 
-
-    @PutMapping("/{id}/undoP")
-    public ResponseEntity<MultiplePayments> undoUpdateMultiplePayment(@PathVariable("id") Long id, @RequestBody String comment) throws JSONException {
-        // Here, the 'comment' parameter will directly contain the string value of the comment
-        Optional<MultiplePayments> optionalPayment = multiplePaymentsRepository.findById(id);
-        if (optionalPayment.isPresent()) {
-            MultiplePayments existingPayment = optionalPayment.get();
-
-            // Retrieve the current licensee value
-            String licensee = existingPayment.getLicensee();
-
-            // Remove the last value after the last " | " delimiter
-            int lastIndex = licensee.lastIndexOf(" | ");
-            if (lastIndex != -1) {
-                licensee = licensee.substring(0, lastIndex);
-            } else {
-                // If there's no " | " delimiter, set licensee to an empty string
-                licensee = "";
-            }
-
-            // Update the payment with the modified licensee
-            existingPayment.setLicensee(licensee);
-
-            // Increment the multiplier by 1 if it's not null
-            Integer multiplier = existingPayment.getMultiplier();
-            if (multiplier != null) {
-                existingPayment.setMultiplier(multiplier + 1);
-            }
-
-            // Set modified to null to indicate the restoration of the original state
-            existingPayment.setModified(null);
-
-            // Create a JSONObject from the comment string
-            JSONObject commentJson = new JSONObject(comment);
-
-            // Extract the comment value from the JSONObject
-            String extractedComment = commentJson.getString("comment");
-
-            // Set the extracted comment to the existingPayment
-            existingPayment.setComment(extractedComment);
-
-            // Save the updated payment entity to the database
-            MultiplePayments updatedPayment = multiplePaymentsRepository.save(existingPayment);
-
-            // Return the updated payment entity
-            return ResponseEntity.ok(updatedPayment);
-        }
+        // Save the updated entity
+        MultiplePayments savedMultiplePayments = multiplePaymentsRepository.save(existingMultiplePayments);
+        return ResponseEntity.ok(savedMultiplePayments);
+    } else {
         return ResponseEntity.notFound().build();
     }
+}
+
+
+@PutMapping("/{id}/undoP")
+public ResponseEntity<MultiplePayments> undoUpdateMultiplePayment(@PathVariable("id") Long id) {
+    Optional<MultiplePayments> optionalPayment = multiplePaymentsRepository.findById(id);
+    if (optionalPayment.isPresent()) {
+        MultiplePayments existingPayment = optionalPayment.get();
+
+        // Assuming 'modified' is a property in the MultiplePayments entity
+        String modifications = existingPayment.getModified();
+
+        if (modifications != null && !modifications.isEmpty()) {
+            // Split the modified field to extract snippet_id and row_id
+            String[] parts = modifications.split("_");
+            if (parts.length == 2) {
+                String snippetId = parts[0];
+                Long rowId = Long.valueOf(parts[1]);
+
+                // Find the original payment row using the extracted coordinates
+                Optional<MultiplePayments> originalPaymentOpt = multiplePaymentsRepository.findById(rowId);
+                if (originalPaymentOpt.isPresent()) {
+                    MultiplePayments originalPayment = originalPaymentOpt.get();
+
+                    // Update the licensee and multiplier of the original payment row
+                    String licensee = originalPayment.getLicensee();
+
+                    // Remove the last value after the last " | " delimiter
+                    int lastIndex = licensee.lastIndexOf(" | ");
+                    if (lastIndex != -1) {
+                        licensee = licensee.substring(0, lastIndex);
+                    } else {
+                        // If there's no " | " delimiter, set licensee to an empty string
+                        licensee = "";
+                    }
+                    originalPayment.setLicensee(licensee);
+
+                    // Increment the multiplier by 1 if it's not null
+                    Integer multiplier = originalPayment.getMultiplier();
+                    if (multiplier != null) {
+                        originalPayment.setMultiplier(multiplier + 1);
+                    }
+
+                    // Set the 'modified' property to null
+                    originalPayment.setModified(null);
+
+
+                    // Save the updated payment entity to the database
+                    MultiplePayments updatedPayment = multiplePaymentsRepository.save(originalPayment);
+
+                    // Return the updated payment entity
+                    return new ResponseEntity<>(updatedPayment, HttpStatus.OK);
+                }
+            }
+        }
+    }
+    return ResponseEntity.notFound().build();
+}
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMultiplePayment(@PathVariable Long id) {
