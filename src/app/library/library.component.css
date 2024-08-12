@@ -162,3 +162,13 @@ select {
 .card-content button {
   margin-bottom: 10px; /* Space between button and details */
 }
+.details-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.details-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  white-space: pre-wrap; /* Preserve whitespace formatting */
+}

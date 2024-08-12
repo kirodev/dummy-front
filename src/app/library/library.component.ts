@@ -1,8 +1,6 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { PdfLibraryService } from '../pdf-library-service.service';
 import { ExamplePdfViewerComponent } from '../example-pdf-viewer/example-pdf-viewer.component';
-import { HttpClient } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
 
 interface PdfFile {
   path: string;
@@ -11,7 +9,6 @@ interface PdfFile {
   date?: string;
   details?: string;
   directory_path?: string;
-  exists?: boolean;
   showDetails?: boolean;
 }
 
@@ -32,76 +29,69 @@ export class LibraryComponent implements OnInit {
   searchByDate: boolean = false;
   searchByDetails: boolean = false;
 
-  constructor(private pdfLibraryService: PdfLibraryService, private http: HttpClient) {}
+  constructor(private pdfLibraryService: PdfLibraryService) {}
 
   ngOnInit(): void {
     this.loadPdfFiles();
   }
-
-  async checkFileExists(filePath: string): Promise<boolean> {
-    try {
-      const normalizedFilePath = filePath.replace(/\\/g, '/');
-      console.log(`Checking file existence for path: ${normalizedFilePath}`);
-
-      const result = await forkJoin({
-        existsInTables: this.pdfLibraryService.checkFileExistsInAllTables(normalizedFilePath),
-        existsInAssets: this.pdfLibraryService.checkFileExistsInAssets(normalizedFilePath)
-      }).toPromise();
-
-      const existsInTables = result?.existsInTables ?? false;
-      const existsInAssets = result?.existsInAssets ?? false;
-      const exists = existsInTables && existsInAssets;
-
-      if (exists) {
-        console.log(`File exists in both tables and assets: ${normalizedFilePath}`);
-      } else {
-        console.log(`File does not exist in both tables and assets: ${normalizedFilePath}`);
-        if (existsInTables) console.log(`File exists in tables but not in assets: ${normalizedFilePath}`);
-        if (existsInAssets) console.log(`File exists in assets but not in tables: ${normalizedFilePath}`);
-      }
-
-      return exists;
-    } catch (error) {
-      console.error(`Error checking file existence for path: ${filePath}`, error);
-      return false;
-    }
-  }
-
   loadPdfFiles(): void {
     this.pdfLibraryService.getPdfFilesFromAllTables().subscribe({
-      next: async (files: PdfFile[]) => {
-        // Group files by title or another unique identifier
-        const groupedFiles: { [key: string]: PdfFile } = {};
+      next: (files: PdfFile[]) => {
+        this.pdfFiles = files.map((file: PdfFile) => {
+          let title = 'Unknown Title';
+          let date = 'Unknown Year';
 
-        for (const file of files) {
-          if (!file.directory_path) {
-            console.error('File directory_path is missing for file:', file);
-            continue;
+          if (file.directory_path) {
+            // Extract title from the text after the last backslash
+            const lastBackslashIndex = file.directory_path.lastIndexOf('\\');
+            if (lastBackslashIndex !== -1) {
+              title = file.directory_path.substring(lastBackslashIndex + 1).replace('.pdf', '') || 'Unknown Title';
+            }
+
+            // Extract date (year) from the path
+            const dateMatch = file.directory_path.match(/\b\d{4}\b/);
+            if (dateMatch) {
+              date = dateMatch[0];
+            }
           }
 
-          const filePath = file.directory_path;
-          const exists = await this.checkFileExists(filePath);
-          const title = filePath.split('/').pop()?.replace('.pdf', '') || 'Unknown Title';
-          const date = filePath.match(/\b\d{4}\b/)?.[0] || 'Unknown Year';
+          return {
+            ...file,
+            title: title,
+            date: date,
+            showDetails: false
+          };
+        });
 
-          // Use title or another property to group duplicates
-          if (groupedFiles[title]) {
-            // If the title already exists, append details
-            groupedFiles[title].details += `, ${file.details}`;
+        // Group files by title and date
+        const uniqueFilesMap = new Map<string, PdfFile[]>();
+
+        this.pdfFiles.forEach((file: PdfFile) => {
+          const key = `${file.title}_${file.date}`;
+
+          if (uniqueFilesMap.has(key)) {
+            uniqueFilesMap.get(key)?.push(file);
           } else {
-            // Create a new entry for the title
-            groupedFiles[title] = {
-              ...file,
-              title,
-              date,
-              exists,
-              showDetails: false
-            };
+            uniqueFilesMap.set(key, [file]);
           }
-        }
-  
-        // Convert the grouped files object back to an array
-        this.pdfFiles = Object.values(groupedFiles);
+        });
+
+        // Merge files with the same title and date
+        this.pdfFiles = Array.from(uniqueFilesMap.values()).map(groupedFiles => {
+          const baseFile = groupedFiles[0]; // Take the first file as the base
+          const combinedDetails = groupedFiles
+            .map(f => f.details)
+            .filter(Boolean)
+            .join('\n---\n'); // Join details with a separator
+
+          return {
+            ...baseFile,
+            details: combinedDetails || baseFile.details,
+            showDetails: false
+          };
+        });
+
+        // Set filtered files to all files initially
         this.filteredPdfFiles = this.pdfFiles;
       },
       error: (err: any) => {
@@ -138,13 +128,26 @@ export class LibraryComponent implements OnInit {
       return;
     }
 
-    const url = `http://localhost:4200/assets/${encodeURIComponent(file.directory_path)}`;
-    console.log('Constructed PDF URL:', url); // Log the constructed URL for debugging
+    const filePath = file.directory_path;
 
-    // Open the PDF file in a new sub-browser window
-    const windowFeatures = 'width=800,height=600,resizable=yes,scrollbars=yes,status=yes';
-    window.open(url, '_blank', windowFeatures);
+    this.pdfLibraryService.checkFileExistsInAssets(filePath).subscribe(existsInAssets => {
+      if (existsInAssets) {
+        const url = `/assets/${encodeURIComponent(filePath)}`;
+        console.log('Constructed PDF URL:', url); // Log the constructed URL for debugging
+
+        // Open the PDF file in a new sub-browser window
+        const windowFeatures = 'width=800,height=600,resizable=yes,scrollbars=yes,status=yes';
+        window.open(url, '_blank', windowFeatures);
+      } else {
+        alert('The selected file is not available in local storage.');
+      }
+    }, error => {
+      console.error('Error checking file existence:', error);
+      alert('There was an error checking the file availability.');
+    });
   }
+
+
 
   showPopup: boolean = false;
   showPDFViewer: boolean = false;
@@ -160,7 +163,8 @@ export class LibraryComponent implements OnInit {
   }
 
   toggleDetails(file: PdfFile, event: Event): void {
-    event.stopPropagation(); // Prevent clicking the card
+    event.stopPropagation(); // Prevent clicking the card from triggering other actions
     file.showDetails = !file.showDetails;
   }
+
 }

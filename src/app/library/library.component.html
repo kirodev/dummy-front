@@ -51,20 +51,26 @@
 
 <!-- Card Container -->
 <div class="card-container">
-  <div *ngFor="let file of filteredPdfFiles" class="card" [ngClass]="{'card-green': file.exists, 'card-red': !file.exists}">
+  <div *ngFor="let file of filteredPdfFiles" class="card">
     <div class="card-content">
       <h3>{{ file.title || 'Unknown Title' }}</h3>
       <p>Date: {{ file.date || 'Unknown Date' }}</p>
       <button (click)="openPDFViewer(file, $event)">View</button>
-      <button (click)="toggleDetails(file, $event)">Toggle Details</button>      <div *ngIf="file.showDetails">
-        <p>{{ file.details }}</p>
-      </div>
-      <div *ngIf="!file.exists">
-        <p>File not available in local storage</p>
+      <button (click)="toggleDetails(file, $event)">Toggle Details</button>
+
+      <!-- Display details in a table format if showDetails is true -->
+      <div *ngIf="file.showDetails">
+        <table class="details-table">
+          <!-- Use a fallback empty string if file.details is undefined -->
+          <tr *ngFor="let detail of (file.details || '').split('\n---\n')">
+            <td>{{ detail }}</td>
+          </tr>
+        </table>
       </div>
     </div>
   </div>
 </div>
+
 
 <!-- PDF Viewer -->
 <app-example-pdf-viewer *ngIf="showPDFViewer" [pdfSrc]="pdfSrc"></app-example-pdf-viewer>
