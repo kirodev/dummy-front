@@ -124,7 +124,7 @@ export class LibraryComponent implements OnInit {
 
     this.filteredPdfFiles = this.pdfFiles.filter(file => {
       // Filter by report type
-      if (this.selectedReportType && (!file.title || !file.title.includes(this.selectedReportType))) {
+      if (this.selectedReportType && (!file.directory_path || !file.directory_path.includes(this.selectedReportType))) {
         return false;
       }
 
@@ -135,6 +135,8 @@ export class LibraryComponent implements OnInit {
 
       // If no search terms and not filtering by title or details, keep the file
       if (filteredTerms.length === 0 && !this.searchByTitle && !this.searchByDetails) {
+        file.highlightedDetails = [file.details || '']; // Show all details if no filter
+        file.showDetails = false; // Ensure details are not shown by default
         return true;
       }
 
@@ -143,6 +145,8 @@ export class LibraryComponent implements OnInit {
 
       // Only process title search if "Search by Title" is checked
       if (this.searchByTitle && file.title) {
+        file.showDetails = false; // Ensure details are not shown by default
+
         const titleLower = file.title!.toLowerCase();
         matchesTitle = isAndOperation
           ? filteredTerms.every(term => this.isTermMatch(titleLower, term))
@@ -165,7 +169,7 @@ export class LibraryComponent implements OnInit {
           file.highlightedDetails = matchingRows.map(row =>
             this.highlightMatchingDetails(row, filteredTerms)
           );
-          file.showDetails = true;
+          file.showDetails = true; // Ensure details are shown when filtered
         } else {
           file.highlightedDetails = [];
           file.showDetails = false;
@@ -176,6 +180,9 @@ export class LibraryComponent implements OnInit {
       return (this.searchByTitle && matchesTitle) || (this.searchByDetails && matchesDetails);
     });
   }
+
+
+
 
   isTermMatch(text: string, term: string): boolean {
     // Use regex to ensure term is matched as a whole word and not preceded by a hyphen or letters
@@ -209,15 +216,14 @@ export class LibraryComponent implements OnInit {
 
 
   highlightMatchingDetails(details: string, terms: string[]): string {
-    let highlightedDetails = details;
+    // Escape special characters in the search terms
+    const escapedTerms = terms.map(term => this.escapeRegExp(term));
+    // Create regex pattern to match terms
+    const regexPattern = `(${escapedTerms.join('|')})`;
+    const regex = new RegExp(regexPattern, 'gi');
 
-    terms.forEach(term => {
-      // Use regex with boundaries to highlight the exact term
-      const regex = new RegExp(`(^|[^\\w-])${term}([^\\w-]|$)`, 'gi');
-      highlightedDetails = highlightedDetails.replace(regex, (match, p1, p2) => `${p1}<mark>${match.trim()}</mark>${p2}`);
-    });
-
-    return highlightedDetails;
+    // Highlight matching terms
+    return details.replace(regex, match => `<mark>${match}</mark>`);
   }
 
 
@@ -282,9 +288,29 @@ export class LibraryComponent implements OnInit {
     this.showPDFViewer = true;
     this.showPopup = true;
   }
-
   toggleDetails(file: PdfFile, event: Event): void {
     event.stopPropagation();
+
+    // Toggle details visibility
     file.showDetails = !file.showDetails;
+
+    if (file.showDetails) {
+      // If details are shown, prepare them for table display
+      if (!this.searchByDetails || !file.highlightedDetails || file.highlightedDetails.length === 0) {
+        // Split details by the delimiter and format them for table display
+        const detailRows = (file.details || '').split('\n---\n');
+        file.highlightedDetails = detailRows.map(row =>
+          this.highlightMatchingDetails(row, this.searchQuery.toLowerCase().split(/\s+/))
+        );
+      }
+    } else {
+      file.highlightedDetails = [];
+    }
+
+    console.log('Toggling details for file:', file);
+    console.log('Highlighted Details:', file.highlightedDetails); // Check contents
   }
+
+
+
 }

@@ -79,13 +79,15 @@ export class PdfLibraryService {
     );
   }
 
-
   checkFileExistsInAssets(path: string): Observable<boolean> {
-    return this.http.head(`/assets/${path}`, { observe: 'response' }).pipe(
+    // Normalize the path to use forward slashes
+    const normalizedPath = path.replace(/\\/g, '/');
+    return this.http.head(`/assets/${normalizedPath}`, { observe: 'response' }).pipe(
       map(response => response.status === 200),
       catchError(() => of(false))
     );
   }
+
 
   private handleError(error: any): Observable<never> {
     console.error('An error occurred:', error);

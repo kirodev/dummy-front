@@ -36,7 +36,7 @@
       <option value="Annual report">Annual Report</option>
       <option value="Quarterly report">Quarterly Report</option>
       <option value="Press release">Press Release</option>
-      <option value="Judicial documents">Judicial Documents</option>
+      <option value="Judicial_documents">Judicial Documents</option>
       <option value="Licensing programs">Licensing Programs</option>
     </select>
   </div>
@@ -55,7 +55,10 @@
       <h3>{{ file.title || 'Unknown Title' }}</h3>
       <p>Date: {{ file.date || 'Unknown Date' }}</p>
       <button (click)="openPDFViewer(file, $event)">View</button>
-      <button (click)="toggleDetails(file, $event)">Toggle Details</button>
+<!-- Example HTML snippet for toggle button -->
+<button *ngIf="!searchByTitle && !searchByDetails && file.details" (click)="toggleDetails(file, $event)">
+  Toggle Details
+</button>
 
       <!-- Display matching details in a table format if showDetails is true -->
       <div *ngIf="file.showDetails">
