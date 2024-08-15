@@ -172,3 +172,7 @@ select {
   padding: 8px;
   white-space: pre-wrap; /* Preserve whitespace formatting */
 }
+.highlight {
+  background-color: yellow;
+  font-weight: bold;
+}

@@ -4,7 +4,7 @@
     type="text"
     [(ngModel)]="searchQuery"
     (input)="searchFiles()"
-    placeholder="Search..."
+    placeholder="Search by details (use AND, OR operators)..."
   />
 
   <!-- Search Options -->
@@ -17,14 +17,7 @@
       />
       Search by Title
     </label>
-    <label>
-      <input
-        type="checkbox"
-        [(ngModel)]="searchByDate"
-        (change)="searchFiles()"
-      />
-      Search by Date
-    </label>
+
     <label>
       <input
         type="checkbox"
@@ -47,6 +40,12 @@
       <option value="Licensing programs">Licensing Programs</option>
     </select>
   </div>
+
+  <label>Search by date: </label>
+  <select [(ngModel)]="selectedDate" (change)="searchFiles()">
+    <option value="">All Dates</option>
+    <option *ngFor="let date of uniqueDates" [value]="date">{{ date }}</option>
+  </select>
 </div>
 
 <!-- Card Container -->
@@ -58,12 +57,11 @@
       <button (click)="openPDFViewer(file, $event)">View</button>
       <button (click)="toggleDetails(file, $event)">Toggle Details</button>
 
-      <!-- Display details in a table format if showDetails is true -->
+      <!-- Display matching details in a table format if showDetails is true -->
       <div *ngIf="file.showDetails">
         <table class="details-table">
-          <!-- Use a fallback empty string if file.details is undefined -->
-          <tr *ngFor="let detail of (file.details || '').split('\n---\n')">
-            <td>{{ detail }}</td>
+          <tr *ngFor="let detail of file.highlightedDetails">
+            <td [innerHTML]="detail"></td>
           </tr>
         </table>
       </div>

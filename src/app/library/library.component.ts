@@ -11,8 +11,8 @@ interface PdfFile {
   details?: string;
   directory_path?: string;
   showDetails?: boolean;
+  highlightedDetails?: string[]; // Change this to string[]
 }
-
 @Component({
   selector: 'app-library',
   templateUrl: './library.component.html',
@@ -27,9 +27,14 @@ export class LibraryComponent implements OnInit {
   filteredPdfFiles: PdfFile[] = [];
   searchQuery: string = '';
   selectedReportType: string = '';
+  selectedDate: string = '';
   searchByTitle: boolean = false;
-  searchByDate: boolean = false;
   searchByDetails: boolean = false;
+
+  showPopup: boolean = false;
+  showPDFViewer: boolean = false;
+
+  uniqueDates: string[] = [];
 
   constructor(private pdfLibraryService: PdfLibraryService) {}
 
@@ -45,24 +50,18 @@ export class LibraryComponent implements OnInit {
           let date = 'Unknown Year';
 
           if (file.directory_path) {
-            // Normalize path: Replace backslashes with forward slashes
             const normalizedPath = file.directory_path.replace(/\\/g, '/');
-
-            // Extract title from the text after the last forward slash
             const lastSlashIndex = normalizedPath.lastIndexOf('/');
             if (lastSlashIndex !== -1) {
               title = normalizedPath.substring(lastSlashIndex + 1).replace('.pdf', '') || 'Unknown Title';
             }
-
-            // Extract date (year) from the path
             const dateMatch = normalizedPath.match(/\b\d{4}\b/);
             if (dateMatch) {
               date = dateMatch[0];
             }
-
             return {
               ...file,
-              directory_path: normalizedPath, // Update to normalized path
+              directory_path: normalizedPath,
               title: title,
               date: date,
               showDetails: false
@@ -72,12 +71,14 @@ export class LibraryComponent implements OnInit {
           }
         });
 
-        // Group files by title and date
-        const uniqueFilesMap = new Map<string, PdfFile[]>();
+        this.uniqueDates = Array.from(new Set(
+          this.pdfFiles.map(file => file.date).filter((date): date is string => date !== 'Unknown Year')
+        ));
+        this.uniqueDates.sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
 
+        const uniqueFilesMap = new Map<string, PdfFile[]>();
         this.pdfFiles.forEach((file: PdfFile) => {
           const key = `${file.title}_${file.date}`;
-
           if (uniqueFilesMap.has(key)) {
             uniqueFilesMap.get(key)?.push(file);
           } else {
@@ -85,14 +86,12 @@ export class LibraryComponent implements OnInit {
           }
         });
 
-        // Merge files with the same title and date
         this.pdfFiles = Array.from(uniqueFilesMap.values()).map(groupedFiles => {
-          const baseFile = groupedFiles[0]; // Take the first file as the base
+          const baseFile = groupedFiles[0];
           const combinedDetails = groupedFiles
             .map(f => f.details)
             .filter(Boolean)
-            .join('\n---\n'); // Join details with a separator
-
+            .join('\n---\n');
           return {
             ...baseFile,
             details: combinedDetails || baseFile.details,
@@ -100,7 +99,14 @@ export class LibraryComponent implements OnInit {
           };
         });
 
-        // Set filtered files to all files initially
+        this.pdfFiles.sort((a, b) => {
+          if (a.date === 'Unknown Year' && b.date !== 'Unknown Year') return 1;
+          if (b.date === 'Unknown Year' && a.date !== 'Unknown Year') return -1;
+          const yearA = parseInt(a.date ?? '0', 10);
+          const yearB = parseInt(b.date ?? '0', 10);
+          return yearB - yearA;
+        });
+
         this.filteredPdfFiles = this.pdfFiles;
       },
       error: (err: any) => {
@@ -110,26 +116,140 @@ export class LibraryComponent implements OnInit {
   }
 
   searchFiles(): void {
-    const query = this.searchQuery.toLowerCase();
+    const query = this.searchQuery.toLowerCase().trim();
+    const { terms, operators } = this.parseQuery(query);
 
-    this.filteredPdfFiles = this.pdfFiles.filter((file: PdfFile) => {
-      const titleMatch = this.searchByTitle && file.title ? file.title.toLowerCase().includes(query) : true;
-      const dateMatch = this.searchByDate && file.date ? file.date.toLowerCase().includes(query) : true;
-      const detailsMatch = this.searchByDetails && file.details ? file.details.toLowerCase().includes(query) : true;
+    const filteredTerms = terms.map(term => term.trim());
+    const isAndOperation = operators.includes('AND') && !operators.includes('OR');
 
-      const matchesQuery = (this.searchByTitle && titleMatch) ||
-                           (this.searchByDate && dateMatch) ||
-                           (this.searchByDetails && detailsMatch) ||
-                           (!this.searchByTitle && !this.searchByDate && !this.searchByDetails);
+    this.filteredPdfFiles = this.pdfFiles.filter(file => {
+      // Filter by report type
+      if (this.selectedReportType && (!file.title || !file.title.includes(this.selectedReportType))) {
+        return false;
+      }
 
-      const reportTypeMatch = this.selectedReportType ? file.directory_path?.includes(this.selectedReportType) : true;
+      // Filter by date
+      if (this.selectedDate && file.date !== this.selectedDate) {
+        return false;
+      }
 
-      return matchesQuery && reportTypeMatch;
+      // If no search terms and not filtering by title or details, keep the file
+      if (filteredTerms.length === 0 && !this.searchByTitle && !this.searchByDetails) {
+        return true;
+      }
+
+      let matchesTitle = false;
+      let matchesDetails = false;
+
+      // Only process title search if "Search by Title" is checked
+      if (this.searchByTitle && file.title) {
+        const titleLower = file.title!.toLowerCase();
+        matchesTitle = isAndOperation
+          ? filteredTerms.every(term => this.isTermMatch(titleLower, term))
+          : filteredTerms.some(term => this.isTermMatch(titleLower, term));
+      }
+
+      // Only process details search if "Search by Details" is checked
+      if (this.searchByDetails && file.details) {
+        const detailRows = file.details.split('\n---\n');
+        const matchingRows = detailRows.filter(row => {
+          const rowLower = row.toLowerCase();
+          return isAndOperation
+            ? filteredTerms.every(term => this.isTermMatch(rowLower, term))
+            : filteredTerms.some(term => this.isTermMatch(rowLower, term));
+        });
+
+        matchesDetails = matchingRows.length > 0;
+
+        if (matchesDetails) {
+          file.highlightedDetails = matchingRows.map(row =>
+            this.highlightMatchingDetails(row, filteredTerms)
+          );
+          file.showDetails = true;
+        } else {
+          file.highlightedDetails = [];
+          file.showDetails = false;
+        }
+      }
+
+      // Return true only if the conditions for title or details search are satisfied
+      return (this.searchByTitle && matchesTitle) || (this.searchByDetails && matchesDetails);
     });
   }
 
+  isTermMatch(text: string, term: string): boolean {
+    // Use regex to ensure term is matched as a whole word and not preceded by a hyphen or letters
+    const regex = new RegExp(`(^|[^\\w-])${term}([^\\w-]|$)`, 'i');
+    return regex.test(text);
+  }
+
+
+
+
+
+  matchWholeWord(text: string, terms: string[], isAndOperation: boolean): boolean {
+    const termPatterns = terms.map(term => `\\b${this.escapeRegExp(term)}\\b`);
+    const regexPattern = isAndOperation
+      ? termPatterns.join(')(?=.*?')
+      : termPatterns.join('|');
+
+    const regex = new RegExp(regexPattern, 'i');
+
+    return isAndOperation
+      ? terms.every(term => new RegExp(`\\b${this.escapeRegExp(term)}\\b`, 'i').test(text))
+      : regex.test(text);
+  }
+
+
+  escapeRegExp(term: string): string {
+    return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+
+
+
+  highlightMatchingDetails(details: string, terms: string[]): string {
+    let highlightedDetails = details;
+
+    terms.forEach(term => {
+      // Use regex with boundaries to highlight the exact term
+      const regex = new RegExp(`(^|[^\\w-])${term}([^\\w-]|$)`, 'gi');
+      highlightedDetails = highlightedDetails.replace(regex, (match, p1, p2) => `${p1}<mark>${match.trim()}</mark>${p2}`);
+    });
+
+    return highlightedDetails;
+  }
+
+
+
+
+
+
+  parseQuery(query: string): { terms: string[], operators: string[] } {
+    const terms: string[] = [];
+    const operators: string[] = [];
+
+    const regex = /\s*(AND|OR)\s*/i;
+    const splitQuery = query.split(regex);
+
+    splitQuery.forEach((part, index) => {
+      if (index % 2 === 0) {
+        if (part.trim().length > 0) {
+          terms.push(part.trim());
+        }
+      } else {
+        operators.push(part.trim().toUpperCase());
+      }
+    });
+
+    return { terms, operators };
+  }
+
+
+
+
   openPDFViewer(file: PdfFile, event: Event): void {
-    event.stopPropagation(); // Prevent toggling details when clicking view button
+    event.stopPropagation();
     if (!file.directory_path) {
       console.error('File path is undefined for file:', file);
       return;
@@ -140,9 +260,8 @@ export class LibraryComponent implements OnInit {
     this.pdfLibraryService.checkFileExistsInAssets(filePath).subscribe(existsInAssets => {
       if (existsInAssets) {
         const url = `${this.url}/assets/${filePath}`;
-        console.log('Constructed PDF URL:', url); // Log the constructed URL for debugging
+        console.log('Constructed PDF URL:', url);
 
-        // Open the PDF file in a new sub-browser window
         const windowFeatures = 'width=800,height=600,resizable=yes,scrollbars=yes,status=yes';
         window.open(url, '_blank', windowFeatures);
       } else {
@@ -153,9 +272,6 @@ export class LibraryComponent implements OnInit {
       alert('There was an error checking the file availability.');
     });
   }
-
-  showPopup: boolean = false;
-  showPDFViewer: boolean = false;
 
   closePopup(): void {
     this.showPopup = false;
@@ -168,7 +284,7 @@ export class LibraryComponent implements OnInit {
   }
 
   toggleDetails(file: PdfFile, event: Event): void {
-    event.stopPropagation(); // Prevent clicking the card from triggering other actions
+    event.stopPropagation();
     file.showDetails = !file.showDetails;
   }
 }
