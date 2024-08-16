@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CellSelectionService } from '../cell-selection-service.service';
 import { ConnectionService } from '../connection.service';
 import { PaymentConnection } from '../payment-connection.service';
@@ -13,12 +15,14 @@ export class MobileComponent implements OnInit {
   licensees: string[] = [];
   licensors: string[] = [];
   tableData: string[][] = [];
+  filteredTableData: string[][] = [];
   fetchedData: any[] = [];
   paymentsData: any[] = [];
   multiplePayments: any[] = [];
   multipleLicenses: any[] = [];
+  searchTerm$ = new BehaviorSubject<string>('');
   searchTerm: string = '';
-  sortOrder: 'alphabetical' | 'count' = 'alphabetical'; // Track current sort order
+  sortOrder: 'alphabetical' | 'count' = 'alphabetical';
 
   constructor(
     private router: Router,
@@ -29,7 +33,19 @@ export class MobileComponent implements OnInit {
 
   ngOnInit(): void {
     this.fetchLicenseData();
+
+    this.searchTerm$.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(term => {
+      this.filterTableData(term);
+    });
+
+    // Set the default sort order to 'count' and apply the sorting
+    this.sortOrder = 'count';
+    this.sortLicensees();
   }
+
 
   fetchLicenseData(): void {
     this.connectionService.getData().subscribe(
@@ -38,7 +54,6 @@ export class MobileComponent implements OnInit {
         this.licensors = [...new Set(data.map((item: any) => item.licensor))].filter(licensor => licensor !== null);
         this.licensees = [...new Set(data.map((item: any) => item.licensee))].filter(licensee => licensee !== 'Unknown' && licensee !== null);
 
-        // Fetch payments data and merge licensees and licensors
         this.paymentConnection.getPayments().subscribe(
           (payments: any[]) => {
             this.paymentsData = payments;
@@ -55,9 +70,8 @@ export class MobileComponent implements OnInit {
                 this.connectionService.getMultipleLicenses().subscribe(
                   (multipleLicenses: any[]) => {
                     this.multipleLicenses = multipleLicenses;
-                    // Initialize tableData and apply sorting
                     this.initializeTableData();
-                    this.sortLicensees(); // Sort after initialization
+                    this.sortLicensees();
                   },
                   (error) => {
                     console.error('Error fetching multiple licenses data:', error);
@@ -81,18 +95,11 @@ export class MobileComponent implements OnInit {
   }
 
   initializeTableData(): void {
-    this.tableData = [];
-
-    // Initialize tableData with all cells set to white color
-    for (let i = 0; i < this.licensors.length; i++) {
-      const row: string[] = [];
-      for (let j = 0; j < this.licensees.length; j++) {
-        row.push('white');
-      }
-      this.tableData.push(row);
-    }
-
+    this.tableData = Array(this.licensors.length).fill(null).map(() =>
+      Array(this.licensees.length).fill('white')
+    );
     this.updateCellColors();
+    this.filteredTableData = this.tableData.map(row => [...row]);
   }
 
   updateCellColors(): void {
@@ -114,62 +121,44 @@ export class MobileComponent implements OnInit {
 
   sortLicenseesAlphabetically(): void {
     this.licensees.sort();
+    this.updateTableData();
   }
 
   sortLicenseesByCount(): void {
-    this.licensees.sort((a, b) => {
-      const countA = this.getLicenseeCount(a);
-      const countB = this.getLicenseeCount(b);
-      return countB - countA; // Sort in descending order of green cells count
-    });
+    this.licensees.sort((a, b) => this.getLicenseeCount(b) - this.getLicenseeCount(a));
+    this.updateTableData();
+  }
+
+  updateTableData(): void {
+    this.tableData = Array(this.licensors.length).fill(null).map(() =>
+      Array(this.licensees.length).fill('white')
+    );
+    this.updateCellColors();
+    this.filterTableData(this.searchTerm$.getValue());
   }
 
   getLicenseeCount(licensee: string): number {
-    let count = 0;
-    this.tableData.forEach(row => {
-      const index = this.licensees.indexOf(licensee);
-      if (row[index] === 'green') count++;
-    });
-    return count;
+    return this.tableData.map(row => row[this.licensees.indexOf(licensee)]).filter(color => color === 'green').length;
   }
 
-  filterLicensees(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.searchTerm = input.value.toLowerCase();
-    this.updateTableData();
+  onSearchInput(): void {
+    this.searchTerm$.next(this.searchTerm.trim());
   }
+
   resetFilters(): void {
-    this.searchTerm = ''; // Clear the search term
-    this.initializeTableData(); // Reinitialize table data to restore original state
+    this.searchTerm = '';
+    this.searchTerm$.next('');
+    this.filteredTableData = this.tableData.map(row => [...row]);
   }
 
 
-  private updateTableData(): void {
-    this.tableData = this.tableData.map((row, rowIndex) => {
-      return row.map((cell, colIndex) => {
-        const licensee = this.licensees[colIndex];
-        if (this.shouldInclude(licensee)) {
-          return cell;
-        } else {
-          return 'transparent'; // Hide the cell
-        }
-      });
-    });
-  }
 
-  private shouldInclude(licensee: string): boolean {
-    if (!this.searchTerm) return true;
-    return licensee.toLowerCase().includes(this.searchTerm);
-  }
-
-  public sortLicensees(): void {
+  sortLicensees(): void {
     if (this.sortOrder === 'alphabetical') {
       this.sortLicenseesAlphabetically();
     } else if (this.sortOrder === 'count') {
       this.sortLicenseesByCount();
     }
-    // Reinitialize tableData after sorting
-    this.initializeTableData();
   }
 
   getCellDescription(rowIndex: number, colIndex: number): string {
@@ -184,24 +173,60 @@ export class MobileComponent implements OnInit {
     const dynamicTitle = licenseeName + '-' + licensorName;
     const cellColor = this.tableData[rowIndex][colIndex];
 
-    // Save the current clicked dynamic title to local storage
     localStorage.setItem('currentDynamicTitle', dynamicTitle);
     localStorage.setItem('licensorName', licensorName);
     localStorage.setItem('licenseeName', licenseeName);
 
-    // Add unselected cell
     this.cellSelectionService.addUnselectedCell({ row: rowIndex, col: colIndex });
 
-    // Navigate based on cell color and clickable cases
     if (cellColor === 'green') {
       this.router.navigate(['/license']);
     } else {
       this.router.navigate(['/payment']);
     }
 
-    // Save unselected cells to local storage
     const unselectedCells = this.cellSelectionService.getUnselectedCells();
     localStorage.removeItem('unselectedCell');
     localStorage.setItem('unselectedCells', JSON.stringify(unselectedCells));
   }
+  private filterTableData(searchTerm: string): void {
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
+    // Determine matching columns
+    const matchingColumnIndices: number[] = this.licensees
+      .map((licensee, colIndex) => licensee.toLowerCase().includes(lowerCaseSearchTerm) ? colIndex : -1)
+      .filter(index => index !== -1);
+
+    // Create arrays for the ordered licensees and table data
+    const orderedLicensees: string[] = [];
+    const orderedTableData: string[][] = [];
+
+    // Add matching columns first
+    matchingColumnIndices.forEach((colIndex) => {
+      orderedLicensees.push(this.licensees[colIndex]);
+      orderedTableData.push(this.tableData.map(row => row[colIndex]));
+    });
+
+    // Add remaining columns
+    this.licensees.forEach((licensee, colIndex) => {
+      if (!matchingColumnIndices.includes(colIndex)) {
+        orderedLicensees.push(licensee);
+        orderedTableData.push(this.tableData.map(row => row[colIndex]));
+      }
+    });
+
+    // Update licensees and table data to the new order
+    this.licensees = orderedLicensees;
+    this.tableData = orderedTableData[0].map((_, colIndex) => orderedTableData.map(row => row[colIndex]));
+  
+    // Create a new filtered table data array
+    this.filteredTableData = this.tableData.map((row, rowIndex) =>
+      row.map((cell, colIndex) => {
+        const originalColIndex = this.licensees.indexOf(this.licensees[colIndex]);
+        return matchingColumnIndices.includes(originalColIndex) ? cell : 'transparent';
+      })
+    );
+  }
+
+
 }

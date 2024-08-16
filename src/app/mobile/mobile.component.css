@@ -253,3 +253,6 @@ td.vertical-header:not(:first-child)::before {
   width: 20px; /* Adjust width if needed */
   height: 20px; /* Adjust height if needed */
 }
+.transparent-cell {
+  background-color: transparent;
+}

@@ -2,12 +2,10 @@
 <h2>Find your focal license in The Matrix below:</h2>
 <div class="container">
   <div class="filter-container">
-    <input type="text" placeholder="Search Licensees" (input)="filterLicensees($event)" />
     <button (click)="sortOrder = 'alphabetical'; sortLicensees()">Sort Alphabetically</button>
-      <button (click)="sortOrder = 'count'; sortLicensees()">Sort by Count</button>
-      <button (click)="resetFilters()">Reset Filters</button>
-
-
+    <button (click)="sortOrder = 'count'; sortLicensees()">Sort by Count</button>
+    <input type="text" [(ngModel)]="searchTerm" (input)="onSearchInput()" placeholder="Search Licensees" />
+    <button (click)="resetFilters()">Reset Filters</button>
   </div>
 
   <div class="table-container">
@@ -20,11 +18,12 @@
         <tr *ngFor="let licensor of licensors; let rowIndex = index">
           <td class="row-name">{{ licensor }}</td>
           <td
-            *ngFor="let cell of tableData[rowIndex]; let colIndex = index"
+            *ngFor="let cell of filteredTableData[rowIndex]; let colIndex = index"
             [ngClass]="{
               'green-cell': cell === 'green',
               'white-cell': cell === 'white',
               'red-cell': cell === 'red',
+              'transparent-cell': cell === 'transparent'
             }"
             (click)="cellClick(rowIndex, colIndex)"
             [title]="getCellDescription(rowIndex, colIndex)"
@@ -34,13 +33,11 @@
     </table>
   </div>
 
-  <!-- Legend for Colors -->
   <div class="legend">
     <div class="legend-item">
       <div class="legend-color green"></div>
       <span class="legend-text">Available</span>
     </div>
-
     <div class="legend-item">
       <div class="legend-color white"></div>
       <span class="legend-text">Not Available</span>
