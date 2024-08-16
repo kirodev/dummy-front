@@ -1,6 +1,15 @@
 <h1>Mobile Basic Matrix</h1>
 <h2>Find your focal license in The Matrix below:</h2>
 <div class="container">
+  <div class="filter-container">
+    <input type="text" placeholder="Search Licensees" (input)="filterLicensees($event)" />
+    <button (click)="sortOrder = 'alphabetical'; sortLicensees()">Sort Alphabetically</button>
+      <button (click)="sortOrder = 'count'; sortLicensees()">Sort by Count</button>
+      <button (click)="resetFilters()">Reset Filters</button>
+
+
+  </div>
+
   <div class="table-container">
     <table>
       <tbody>

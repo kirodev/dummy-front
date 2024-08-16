@@ -80,13 +80,16 @@ export class RevenuesComponent implements OnInit {
         return colors;
     }
 
-    const companies = Array.from(new Set(this.annualRevenues.map(item => item.licensor)));
+    // Filter out Samsung Electronics Co., Ltd. data
+    const filteredRevenues = this.annualRevenues.filter(item => item.licensor !== 'Samsung Electronics Co., Ltd.');
+
+    const companies = Array.from(new Set(filteredRevenues.map(item => item.licensor)));
     const colors = generateDistinctColors(companies.length);
     companies.forEach((company, index) => {
         companyColors.set(company, colors[index]);
     });
 
-    this.annualRevenues.forEach(item => {
+    filteredRevenues.forEach(item => {
         const year = item.year;
         const company = item.licensor;
         const licensing_revenue = item.licensingRevenue;
@@ -98,7 +101,7 @@ export class RevenuesComponent implements OnInit {
     });
 
     const traces: Partial<Plotly.PlotData>[] = [];
-    const uniqueYears = Array.from(new Set(this.annualRevenues.map(item => item.year)))
+    const uniqueYears = Array.from(new Set(filteredRevenues.map(item => item.year)))
                             .filter(year => year !== null && year !== undefined && year !== 0) // Remove nulls and 0
                             .sort((a, b) => a - b);
 
@@ -161,8 +164,7 @@ export class RevenuesComponent implements OnInit {
             title: 'Licensing Revenue (in thousands)',
             tickformat: ',d',
             type: 'linear',
-            rangemode: 'tozero',
-            range: [5000000, 20000000], // Set explicit range
+            rangemode: 'tozero', // Ensure y-axis starts at 0
             automargin: true,
         },
         barmode: 'stack',

@@ -4,7 +4,7 @@
     type="text"
     [(ngModel)]="searchQuery"
     (input)="searchFiles()"
-    placeholder="Search by details (use AND, OR operators)..."
+    placeholder="Search by Statements (use AND, OR operators)..."
   />
 
   <!-- Search Options -->
@@ -24,7 +24,7 @@
         [(ngModel)]="searchByDetails"
         (change)="searchFiles()"
       />
-      Search by Details
+      Search by Statements
     </label>
   </div>
 
@@ -41,9 +41,9 @@
     </select>
   </div>
 
-  <label>Search by date: </label>
+  <label>Search by Year: </label>
   <select [(ngModel)]="selectedDate" (change)="searchFiles()">
-    <option value="">All Dates</option>
+    <option value="">All Years</option>
     <option *ngFor="let date of uniqueDates" [value]="date">{{ date }}</option>
   </select>
 </div>
@@ -53,7 +53,7 @@
   <div *ngFor="let file of filteredPdfFiles" class="card">
     <div class="card-content">
       <h3>{{ file.title || 'Unknown Title' }}</h3>
-      <p>Date: {{ file.date || 'Unknown Date' }}</p>
+      <p>Year: {{ file.date || 'Unknown Date' }}</p>
       <button (click)="openPDFViewer(file, $event)">View</button>
 <!-- Example HTML snippet for toggle button -->
 <button *ngIf="!searchByTitle && !searchByDetails && file.details" (click)="toggleDetails(file, $event)">
