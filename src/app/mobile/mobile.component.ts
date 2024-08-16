@@ -38,6 +38,7 @@ export class MobileComponent implements OnInit {
       debounceTime(300),
       distinctUntilChanged()
     ).subscribe(term => {
+      this.searchTerm = term;
       this.filterTableData(term);
     });
 
@@ -45,7 +46,6 @@ export class MobileComponent implements OnInit {
     this.sortOrder = 'count';
     this.sortLicensees();
   }
-
 
   fetchLicenseData(): void {
     this.connectionService.getData().subscribe(
@@ -151,8 +151,6 @@ export class MobileComponent implements OnInit {
     this.filteredTableData = this.tableData.map(row => [...row]);
   }
 
-
-
   sortLicensees(): void {
     if (this.sortOrder === 'alphabetical') {
       this.sortLicenseesAlphabetically();
@@ -189,6 +187,7 @@ export class MobileComponent implements OnInit {
     localStorage.removeItem('unselectedCell');
     localStorage.setItem('unselectedCells', JSON.stringify(unselectedCells));
   }
+
   private filterTableData(searchTerm: string): void {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
 
@@ -218,7 +217,7 @@ export class MobileComponent implements OnInit {
     // Update licensees and table data to the new order
     this.licensees = orderedLicensees;
     this.tableData = orderedTableData[0].map((_, colIndex) => orderedTableData.map(row => row[colIndex]));
-  
+
     // Create a new filtered table data array
     this.filteredTableData = this.tableData.map((row, rowIndex) =>
       row.map((cell, colIndex) => {
@@ -227,6 +226,4 @@ export class MobileComponent implements OnInit {
       })
     );
   }
-
-
 }
