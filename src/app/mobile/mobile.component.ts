@@ -24,6 +24,10 @@ export class MobileComponent implements OnInit {
   searchTerm: string = '';
   sortOrder: 'alphabetical' | 'count' = 'alphabetical';
 
+  // Snapshot of original data
+  private originalLicensees: string[] = [];
+  private originalTableData: string[][] = [];
+
   constructor(
     private router: Router,
     private cellSelectionService: CellSelectionService,
@@ -44,7 +48,6 @@ export class MobileComponent implements OnInit {
 
     // Set the default sort order to 'count' and apply the sorting
     this.sortOrder = 'count';
-    this.sortLicensees();
   }
 
   fetchLicenseData(): void {
@@ -99,6 +102,11 @@ export class MobileComponent implements OnInit {
       Array(this.licensees.length).fill('white')
     );
     this.updateCellColors();
+
+    // Capture the initial state of data
+    this.originalLicensees = [...this.licensees];
+    this.originalTableData = this.tableData.map(row => [...row]);
+
     this.filteredTableData = this.tableData.map(row => [...row]);
   }
 
@@ -120,11 +128,13 @@ export class MobileComponent implements OnInit {
   }
 
   sortLicenseesAlphabetically(): void {
+    this.resetFilters();
     this.licensees.sort();
     this.updateTableData();
   }
 
   sortLicenseesByCount(): void {
+    this.resetFilters();
     this.licensees.sort((a, b) => this.getLicenseeCount(b) - this.getLicenseeCount(a));
     this.updateTableData();
   }
@@ -141,13 +151,17 @@ export class MobileComponent implements OnInit {
     return this.tableData.map(row => row[this.licensees.indexOf(licensee)]).filter(color => color === 'green').length;
   }
 
-  onSearchInput(): void {
-    this.searchTerm$.next(this.searchTerm.trim());
-  }
-
   resetFilters(): void {
     this.searchTerm = '';
     this.searchTerm$.next('');
+
+    // Reset licensees to the original order
+    this.licensees = [...this.originalLicensees];
+
+    // Reset table data to the original order
+    this.tableData = this.originalTableData.map(row => [...row]);
+
+    // Reset filtered data to match original data
     this.filteredTableData = this.tableData.map(row => [...row]);
   }
 
@@ -191,39 +205,51 @@ export class MobileComponent implements OnInit {
   private filterTableData(searchTerm: string): void {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
 
-    // Determine matching columns
+    // Determine matching column indices
     const matchingColumnIndices: number[] = this.licensees
       .map((licensee, colIndex) => licensee.toLowerCase().includes(lowerCaseSearchTerm) ? colIndex : -1)
       .filter(index => index !== -1);
 
-    // Create arrays for the ordered licensees and table data
-    const orderedLicensees: string[] = [];
-    const orderedTableData: string[][] = [];
+    if (matchingColumnIndices.length === 0) {
+      this.filteredTableData = this.tableData.map(row => [...row]);
+      return;
+    }
 
-    // Add matching columns first
+    // Prepare arrays to hold the reordered licensees and table data
+    const reorderedLicensees: string[] = [];
+    const reorderedTableData: string[][] = [];
+
+    // Move matching columns to the left
     matchingColumnIndices.forEach((colIndex) => {
-      orderedLicensees.push(this.licensees[colIndex]);
-      orderedTableData.push(this.tableData.map(row => row[colIndex]));
+      reorderedLicensees.push(this.licensees[colIndex]);
+      reorderedTableData.push(this.tableData.map(row => row[colIndex]));
     });
 
-    // Add remaining columns
+    // Add remaining non-matching columns
     this.licensees.forEach((licensee, colIndex) => {
       if (!matchingColumnIndices.includes(colIndex)) {
-        orderedLicensees.push(licensee);
-        orderedTableData.push(this.tableData.map(row => row[colIndex]));
+        reorderedLicensees.push(licensee);
+        reorderedTableData.push(this.tableData.map(row => row[colIndex]));
       }
     });
 
-    // Update licensees and table data to the new order
-    this.licensees = orderedLicensees;
-    this.tableData = orderedTableData[0].map((_, colIndex) => orderedTableData.map(row => row[colIndex]));
-
-    // Create a new filtered table data array
-    this.filteredTableData = this.tableData.map((row, rowIndex) =>
-      row.map((cell, colIndex) => {
-        const originalColIndex = this.licensees.indexOf(this.licensees[colIndex]);
-        return matchingColumnIndices.includes(originalColIndex) ? cell : 'transparent';
-      })
+    // Reconstruct tableData with non-matching columns set to transparent
+    this.licensees = reorderedLicensees;
+    this.filteredTableData = reorderedTableData[0].map((_, rowIndex) =>
+      reorderedTableData.map(column => column[rowIndex])
+    ).map((row, rowIndex) =>
+      row.map((cell, colIndex) => colIndex < matchingColumnIndices.length ? cell : 'transparent')
     );
+  }
+
+  onSearchInput(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      this.searchTerm$.next(this.searchTerm);
+    }
+  }
+
+  onSortOrderChange(event: any): void {
+    this.sortOrder = event.target.value;
+    this.sortLicensees();
   }
 }

@@ -187,8 +187,7 @@ export class SalesComponent implements OnInit {
       }
     }, 100);
   }
-
-handlePointClick(data: any): void {
+  handlePointClick(data: any): void {
     const point = data.points[0];
     const customData = point.customdata;
 
@@ -197,41 +196,84 @@ handlePointClick(data: any): void {
     infoText += `<strong>Quarter:</strong> ${customData.quarter}<br>`;
     infoText += `<strong>Sales:</strong> ${customData.sales ? customData.sales.toFixed(2) : 'N/A'}<br><br>`;
 
+    // Function to extract and format domain from URL
+    const extractDomain = (url: string): string => {
+      try {
+        const { hostname } = new URL(url);
+        const domain = hostname.replace(/^www\./, '').split('.')[0];
+        return domain;
+      } catch (e) {
+        console.error('Invalid URL:', url);
+        return 'Invalid URL';
+      }
+    };
+
+    // Handling sources
     infoText += '<strong>Source:</strong><br>';
     customData.source.forEach((source: any) => {
-        if (source.source !== source.discarded) {
-            infoText += `${source.source}: ${source.sales} (<a href="${source.link}" target="_blank">Link</a>)<br>`;
+      if (source.source !== source.discarded) {
+        const links = source.link.split(';')
+          .filter((link: string) => link.trim() !== '')  // Filter out empty links
+          .map((link: string) => {
+            const domain = extractDomain(link);
+            return `<a href="${link}" target="_blank">${domain}</a>`;
+          })
+          .join(', ');
+        if (links) {
+          infoText += `${source.source}: ${source.sales} (${links})<br>`;
         }
+      }
     });
 
+    // Handling used
     const usedSet = new Set<string>();
     customData.source.forEach((source: any) => {
-        if (source.used && source.used.trim() !== '') {
-            usedSet.add(`${source.used} (<a href="${source.link}" target="_blank">Link</a>)`);
+      if (source.used && source.used.trim() !== '') {
+        const links = source.link.split(';')
+          .filter((link: string) => link.trim() !== '')  // Filter out empty links
+          .map((link: string) => {
+            const domain = extractDomain(link);
+            return `<a href="${link}" target="_blank">${domain}</a>`;
+          })
+          .join(', ');
+        if (links) {
+          usedSet.add(`${source.used} (${links})`);
         }
+      }
     });
     if (usedSet.size > 0) {
-        infoText += '<br><strong>Used:</strong><br>';
-        usedSet.forEach(item => {
-            infoText += `${item}<br>`;
-        });
+      infoText += '<br><strong>Used:</strong><br>';
+      usedSet.forEach(item => {
+        infoText += `${item}<br>`;
+      });
     }
 
+    // Handling discarded
     const discardedSet = new Set<string>();
     customData.source.forEach((source: any) => {
-        if (source.source === source.discarded) {
-            discardedSet.add(`${source.source}: ${source.sales} (<a href="${source.link}" target="_blank">Link</a>)`);
+      if (source.source === source.discarded) {
+        const links = source.link.split(';')
+          .filter((link: string) => link.trim() !== '')  // Filter out empty links
+          .map((link: string) => {
+            const domain = extractDomain(link);
+            return `<a href="${link}" target="_blank">${domain}</a>`;
+          })
+          .join(', ');
+        if (links) {
+          discardedSet.add(`${source.source}: ${source.sales} (${links})`);
         }
+      }
     });
     if (discardedSet.size > 0) {
-        infoText += '<br><strong>Discarded:</strong><br>';
-        discardedSet.forEach(item => {
-            infoText += `${item}<br>`;
-        });
+      infoText += '<br><strong>Discarded:</strong><br>';
+      discardedSet.forEach(item => {
+        infoText += `${item}<br>`;
+      });
     }
 
     this.showPopup(infoText);
-}
+  }
+
 
 
 

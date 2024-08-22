@@ -3,8 +3,8 @@
 <div class="container">
   <div class="filter-container">
     <button (click)="sortOrder = 'alphabetical'; sortLicensees()">Sort Alphabetically</button>
-    <button (click)="sortOrder = 'count'; sortLicensees()">Sort by Count</button>
-    <input type="text" [(ngModel)]="searchTerm" (input)="onSearchInput()" placeholder="Search Licensees" />
+    <button (click)="sortOrder = 'count'; sortLicensees()">Sort by Total Statements</button>
+    <input type="text" [(ngModel)]="searchTerm" (keyup)="onSearchInput($event)" placeholder="Search Licensees" />
     <button (click)="resetFilters()">Reset Filters</button>
   </div>
 
