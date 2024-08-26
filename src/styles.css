@@ -2,3 +2,25 @@
   font-family: 'ROG Fonts';
   src: url('src/assets/7032-fontps.ttf') format('truetype');
 }
+@import url('https://fonts.googleapis.com/css2?family=Nova+Square&display=swap');
+
+body{
+  font-family: 'Nova Square', 'Poppins', cursive;
+
+  background-color: #F2F1EA;
+}
+:host {
+  display: block;
+  height: 100vh;
+  font-family: 'Nova Square', 'Poppins', cursive;
+  background: var(--background-Color);
+  color: #e1e1e1;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+:root {
+  --Text-Color: #e1e1e1;
+  --background-Color: #F3F2EB;
+  --square-color: #26c245;
+}

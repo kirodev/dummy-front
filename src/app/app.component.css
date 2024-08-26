@@ -6,8 +6,8 @@
     padding: 10px 20px;
     border-radius: 8px;
     position: relative;
-    z-index: 1;
-    background-color: #fff;
+    z-index: 10;
+    background-color: #DED8C4;
 }
 
 .logo img {
@@ -97,4 +97,3 @@
     display: flex;
     align-items: center; /* Vertically center items */
   }
-  

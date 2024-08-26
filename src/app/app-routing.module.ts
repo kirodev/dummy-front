@@ -28,6 +28,7 @@ import { RegisterComponent } from './register/register.component';
 import { SalesComponent } from './sales/sales.component';
 import { RevenuesComponent } from './revenues/revenues.component';
 import { LibraryComponent } from './library/library.component';
+import { NotFoundComponent } from './not-found/not-found.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent },
@@ -70,7 +71,7 @@ const routes: Routes = [
 
 
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: '**', redirectTo: '/login', pathMatch: 'full' }
+  { path: '**', component: NotFoundComponent } // 404 page
 ];
 
 @NgModule({

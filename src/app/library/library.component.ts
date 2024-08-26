@@ -54,6 +54,8 @@ export class LibraryComponent implements OnInit {
             const lastSlashIndex = normalizedPath.lastIndexOf('/');
             if (lastSlashIndex !== -1) {
               title = normalizedPath.substring(lastSlashIndex + 1).replace('.pdf', '') || 'Unknown Title';
+              // Remove the year in brackets from the title
+              title = title.replace(/\s*\[\d{4}\]\s*/, '');
             }
             const dateMatch = normalizedPath.match(/\b\d{4}\b/);
             if (dateMatch) {
@@ -70,6 +72,7 @@ export class LibraryComponent implements OnInit {
             return file;
           }
         });
+
 
         this.uniqueDates = Array.from(new Set(
           this.pdfFiles.map(file => file.date).filter((date): date is string => date !== 'Unknown Year')

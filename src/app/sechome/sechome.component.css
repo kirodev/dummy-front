@@ -1,127 +1,160 @@
-.container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 50px; /* Add space on top */
+/* Body */
+body {
+  position: relative;
+  background-image: url('src/assets/MAIN-background.png');
+  background-size: 800px 1000px; /* Background size to fit the image */
+  background-repeat: repeat; /* Repeat both horizontally and vertically */
+  background-attachment: fixed; /* Keep background fixed during scroll */
+  background-color: #ffffff; /* Fallback color */
+  margin: 0;
+  padding: 0;
+  height: 100vh; /* Full viewport height */
+  overflow: hidden; /* Hide scrollbars */
+}
 
-  }
-  .rec {
-    width: 1050px; /* Set width to three times the width of a single square */
-    height: 50px; /* Adjust the height */
-    border-radius: 10px; /* Adjust the border radius for rounded corners */
-    display: flex; /* Use flexbox */
-    justify-content: center; /* Center content horizontally */
-    align-items: center; /* Center content vertically */
-    border: 2px solid #E57A45;
-    margin: 0 auto; /* Center the button horizontally */
-    transition: transform 0.3s ease-in-out; /* Add transition for hover effect */
-  }
-  
-  .rec:hover {
-    transform: scale(1.05); /* Increase size on hover */
-  }
-  
-  
-  .square-container {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    margin-top: 50px; /* Adjust the margin to reduce the space */
-  }
-  .h2-container {
-    text-align: left;
-    margin-bottom: -70px;
-    padding-left: 100px;
-    text-align: left;
-  }
-  
-  /* Your existing styles */
-  
-  .square {
-    width: 350px; /* Increase the width */
-    height: 350px; /* Increase the height */
-    background-color: white;
-    border: 2px solid #E57A45;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    cursor: pointer;
-    border-radius: 10px;
-    transition: transform 0.3s ease-in-out;
-    padding: 10px;
-    box-sizing: border-box;
-  }
-  
-  h1 {
-    color: #E57A45;
-    font-family: Constantia;
-    font-size: 28px; /* Adjust the font size */
-    font-style: normal;
-    font-weight: 700;
-    text-align: left;
-  }
-  
-  .square p {
-    font-family: Constantia;
-    font-size: 14px; /* Adjust the font size */
-    font-style: normal;
-    font-weight: 400;
-    line-height: normal;
-    padding: 10px;
-    text-align: left;
-  }
-  
-  .square:hover {
-    transform: scale(1.05);
-  }
-  a {
-    text-decoration: none;
-    color: inherit;
-  }
-  
-  h2 {
-    font-family: Constantia;
-    font-size: 20px; /* Adjust the font size */
-    font-style: normal;
-    line-height: normal;
-    margin: 0;
-    margin-left:100px; /* Reset margin for h1 */
-    margin-top: 168px;
-  }
-  
-  body {
-    position: relative; 
-    background-image: url('src/assets/MAIN-background.png');
-    background-repeat: repeat; 
-    background-color: #ffffff; 
-    z-index: 0; 
-  }
-  /* Create an overlay with opacity */
-  body::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.9); /* Adjust the opacity here */
-    z-index: -1; /* Place the overlay below the content */
-  }
-  
-  .grey-square {
-    background-color: white;
-    border-color: #DBDBDB;
-  }
-  
-  
-  .grey-text {
-    color: #DBDBDB;
-  }
-  body {
-    background-image: url('src/assets/MAIN-background.png');
-    background-size: 800PX 1000PX; /* Reset background size */
-    background-repeat: repeat; /* Repeat both horizontally and vertically */
-    background-attachment: fixed;
-    /* Add additional styles as needed */
-  }
+/* Container */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50px; /* Space on top */
+  z-index: 2; /* Ensure container is above background */
+  position: relative; /* Allow z-index to work */
+}
+
+/* Rectangle */
+.rec {
+  width: 1050px; /* Set width */
+  height: 50px; /* Adjust height */
+  border-radius: 10px; /* Rounded corners */
+  display: flex; /* Flexbox */
+  justify-content: center; /* Center content horizontally */
+  align-items: center; /* Center content vertically */
+  border: 2px solid #E57A45;
+  margin: 0 auto; /* Center horizontally */
+  transition: transform 0.3s ease-in-out; /* Hover effect */
+  z-index: 3; /* Ensure button is above everything */
+}
+
+.rec:hover {
+  transform: scale(1.05); /* Scale up on hover */
+}
+
+/* H2 Container */
+.h2-container {
+  text-align: left;
+  margin-bottom: -70px;
+  padding-left: 100px;
+}
+
+/* Square Container */
+.square-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 50px; /* Margin for spacing */
+  z-index: 2; /* Ensure container is above background */
+  position: relative; /* Allow z-index to work */
+}
+
+/* Squares */
+.square {
+  width: 350px; /* Increase width */
+  height: 350px; /* Increase height */
+  background-color: #F6F6F0;
+  border: 2px solid #E57A45;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: transform 0.3s ease-in-out, background-color 0.3s ease-in-out;
+  padding: 10px;
+  box-sizing: border-box;
+  position: relative; /* Ensure z-index works */
+  z-index: 3; /* Ensure it is above background */
+}
+
+.square:hover {
+  transform: scale(1.05); /* Scale up on hover */
+  background-color: #E8E5D8; /* Change background color on hover */
+}
+
+/* Links */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Headers */
+h1 {
+  color: #E57A45;
+  font-family: Constantia;
+  font-size: 28px; /* Adjust font size */
+  font-style: normal;
+  font-weight: 700;
+  text-align: left;
+}
+
+.square p {
+  font-family: Constantia;
+  font-size: 14px; /* Adjust font size */
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  padding: 10px;
+  text-align: left;
+}
+
+h2 {
+  font-family: Constantia;
+  font-size: 20px; /* Adjust font size */
+  font-style: normal;
+  line-height: normal;
+  margin: 0;
+  margin-left: 100px; /* Adjust margin for alignment */
+  margin-top: 168px;
+}
+
+/* Grey Squares */
+.grey-square {
+  background-color: white;
+  border-color: #DBDBDB;
+}
+
+/* Grey Text */
+.grey-text {
+  color: #DBDBDB;
+}
+
+/* Background Styles */
+.Background {
+  position: fixed; /* Keep background fixed */
+  top: 0;
+  left: 0;
+  width: 100vw; /* Full viewport width */
+  height: 100vh; /* Full viewport height */
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: center;
+  overflow: hidden; /* Hide overflow to avoid scrollbars */
+  animation: hue_rotate 60s linear both infinite;
+  z-index: -2; /* Ensure background is behind other content */
+}
+
+.Background .Square {
+  width: 60px; /* Width of each square */
+  height: 60px; /* Height of each square */
+  border: rgb(20, 20, 20) 1px solid; /* Border color */
+  box-sizing: border-box; /* Include border in element's total width and height */
+  background-color: transparent; /* Ensure squares are visible */
+  transition: 10s linear;
+
+}
+.Background .Square:hover, .Background .Square.active {
+  background-color: var(--square-color);
+  border: var(--square-color) 1px solid;
+  transition: 0ms linear;
+}

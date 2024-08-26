@@ -191,21 +191,27 @@ export class SalesComponent implements OnInit {
     const point = data.points[0];
     const customData = point.customdata;
 
-    let infoText = `<strong>Company:</strong> ${customData.company}<br>`;
-    infoText += `<strong>Year:</strong> ${customData.year}<br>`;
-    infoText += `<strong>Quarter:</strong> ${customData.quarter}<br>`;
+    let infoText = `<strong>Company:</strong> ${this.sanitizeHtml(customData.company)}<br>`;
+    infoText += `<strong>Year:</strong> ${this.sanitizeHtml(customData.year)}<br>`;
+    infoText += `<strong>Quarter:</strong> ${this.sanitizeHtml(customData.quarter)}<br>`;
     infoText += `<strong>Sales:</strong> ${customData.sales ? customData.sales.toFixed(2) : 'N/A'}<br><br>`;
 
     // Function to extract and format domain from URL
     const extractDomain = (url: string): string => {
       try {
         const { hostname } = new URL(url);
-        const domain = hostname.replace(/^www\./, '').split('.')[0];
-        return domain;
+        return hostname.replace(/^www\./, '');
       } catch (e) {
         console.error('Invalid URL:', url);
         return 'Invalid URL';
       }
+    };
+
+    // Function to create safe link
+    const createSafeLink = (url: string): string => {
+      const sanitizedUrl = this.sanitizeUrl(url);
+      const domain = extractDomain(url);
+      return `<a href="${sanitizedUrl}" target="_blank" rel="noopener noreferrer">${this.sanitizeHtml(domain)}</a>`;
     };
 
     // Handling sources
@@ -213,14 +219,11 @@ export class SalesComponent implements OnInit {
     customData.source.forEach((source: any) => {
       if (source.source !== source.discarded) {
         const links = source.link.split(';')
-          .filter((link: string) => link.trim() !== '')  // Filter out empty links
-          .map((link: string) => {
-            const domain = extractDomain(link);
-            return `<a href="${link}" target="_blank">${domain}</a>`;
-          })
+          .filter((link: string) => link.trim() !== '')
+          .map(createSafeLink)
           .join(', ');
         if (links) {
-          infoText += `${source.source}: ${source.sales} (${links})<br>`;
+          infoText += `${this.sanitizeHtml(source.source)}: ${source.sales} (${links})<br>`;
         }
       }
     });
@@ -230,14 +233,11 @@ export class SalesComponent implements OnInit {
     customData.source.forEach((source: any) => {
       if (source.used && source.used.trim() !== '') {
         const links = source.link.split(';')
-          .filter((link: string) => link.trim() !== '')  // Filter out empty links
-          .map((link: string) => {
-            const domain = extractDomain(link);
-            return `<a href="${link}" target="_blank">${domain}</a>`;
-          })
+          .filter((link: string) => link.trim() !== '')
+          .map(createSafeLink)
           .join(', ');
         if (links) {
-          usedSet.add(`${source.used} (${links})`);
+          usedSet.add(`${this.sanitizeHtml(source.used)} (${links})`);
         }
       }
     });
@@ -253,14 +253,11 @@ export class SalesComponent implements OnInit {
     customData.source.forEach((source: any) => {
       if (source.source === source.discarded) {
         const links = source.link.split(';')
-          .filter((link: string) => link.trim() !== '')  // Filter out empty links
-          .map((link: string) => {
-            const domain = extractDomain(link);
-            return `<a href="${link}" target="_blank">${domain}</a>`;
-          })
+          .filter((link: string) => link.trim() !== '')
+          .map(createSafeLink)
           .join(', ');
         if (links) {
-          discardedSet.add(`${source.source}: ${source.sales} (${links})`);
+          discardedSet.add(`${this.sanitizeHtml(source.source)}: ${source.sales} (${links})`);
         }
       }
     });
@@ -272,6 +269,34 @@ export class SalesComponent implements OnInit {
     }
 
     this.showPopup(infoText);
+  }
+
+  // Add these helper methods to your component if not already present
+  private sanitizeHtml(input: string): string {
+    // Implement HTML sanitization logic here
+    // You can use a library like DOMPurify or Angular's built-in sanitizer
+    return input.replace(/[&<>"']/g, (char) => {
+      const entities: { [key: string]: string } = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return entities[char];
+    });
+  }
+
+  private sanitizeUrl(url: string): string {
+    // Implement URL sanitization logic here
+    // This is a basic example; consider using a more robust solution
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.toString();
+    } catch (e) {
+      console.error('Invalid URL:', url);
+      return '#';
+    }
   }
 
 

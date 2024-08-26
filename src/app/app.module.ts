@@ -36,6 +36,7 @@ import { SalesComponent } from './sales/sales.component';
 import { RevenuesComponent } from './revenues/revenues.component';
 import { LibraryComponent } from './library/library.component';
 import { KeysPipe } from './keys.pipe';
+import { NotFoundComponent } from './not-found/not-found.component';
 
 
 
@@ -67,7 +68,8 @@ import { KeysPipe } from './keys.pipe';
     SalesComponent,
     RevenuesComponent,
     LibraryComponent,
-    KeysPipe
+    KeysPipe,
+    NotFoundComponent
   ],
   
   imports: [

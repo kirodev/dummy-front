@@ -34,9 +34,11 @@ table {
 }
 
 
+
+
 button {
-  background-color: #007BFF; /* Button background color */
-  color: #fff; /* Button text color */
+  background-color: #E7E4D6;
+  color: black;
   border: none;
   border-radius: 5px;
   padding: 10px 10px;
@@ -50,7 +52,7 @@ button {
 }
 
 button:hover {
-  background-color: #0056b3; /* Button background color on hover */
+  background-color: #DED8C4;
 }
 
 .lighter-green-cell {

@@ -129,7 +129,7 @@ export class MobileComponent implements OnInit {
 
   sortLicenseesAlphabetically(): void {
     this.resetFilters();
-    this.licensees.sort();
+    this.licensees.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     this.updateTableData();
   }
 

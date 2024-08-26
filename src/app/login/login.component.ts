@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, NgZone } from '@angular/core';
 import { TokenStorageService } from '../_services/token-storage.service';
 import { AuthService } from '../_services/auth.service';
 
@@ -7,7 +7,7 @@ import { AuthService } from '../_services/auth.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, AfterViewInit {
 
   form: any = {};
   isLoggedIn = false;
@@ -15,13 +15,25 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   roles: string[] = [];
 
-  constructor(private authService: AuthService, private tokenStorage: TokenStorageService) { }
+  constructor(
+    private authService: AuthService,
+    private tokenStorage: TokenStorageService,
+    private ngZone: NgZone
+  ) { }
 
   ngOnInit(): void {
     if (this.tokenStorage.getToken()) {
       this.isLoggedIn = true;
       this.roles = this.tokenStorage.getUser().roles;
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.initializeBackground();
+      }, 0);
+    });
   }
 
   onSubmit(): void {
@@ -46,4 +58,25 @@ export class LoginComponent implements OnInit {
     window.location.reload();
   }
 
+  initializeBackground(): void {
+    const square = document.querySelector(".Square") as HTMLElement;
+    const background = document.getElementById("Background");
+    if (square && background) {
+      const windowWidth = window.innerWidth || document.documentElement.clientWidth;
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      const squareLen = Math.ceil((windowWidth / square.clientWidth) * (windowHeight / square.clientHeight));
+
+      let squares = '';
+      for (let i = 0; i < squareLen; i++) {
+        squares += square.outerHTML;
+      }
+      background.innerHTML = squares;
+    }
+  }
+
+  activeSquare(event: MouseEvent): void {
+    if (event.target instanceof HTMLElement) {
+      event.target.classList.toggle("active");
+    }
+  }
 }
