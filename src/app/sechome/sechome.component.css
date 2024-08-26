@@ -119,8 +119,8 @@ h2 {
 
 /* Grey Squares */
 .grey-square {
-  background-color: white;
-  border-color: #DBDBDB;
+  background-color: rgb(105, 105, 105);
+  border-color: #7e7e7e;
 }
 
 /* Grey Text */
@@ -157,4 +157,8 @@ h2 {
   background-color: var(--square-color);
   border: var(--square-color) 1px solid;
   transition: 0ms linear;
+}
+.frand-container h1  {
+  background-color: rgb(105, 105, 105);
+  color: #7e7e7e;
 }
