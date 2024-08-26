@@ -90,6 +90,7 @@ button:hover {
   overflow: hidden;
   animation: hue_rotate 60s linear both infinite;
   z-index: -2;
+  animation: hue_rotate 60s linear both infinite;
 }
 
 .Background .Square {
