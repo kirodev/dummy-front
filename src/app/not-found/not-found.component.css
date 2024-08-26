@@ -15,6 +15,7 @@ body {
 /* ----- Background ----- */
 .Background {
   position: fixed; /* Keep background fixed */
+  background-color: #000000;
   top: 0;
   left: 0;
   width: 100vw; /* Full viewport width */
@@ -25,7 +26,7 @@ body {
   justify-content: center;
   overflow: hidden; /* Hide overflow to avoid scrollbars */
   animation: hue_rotate 60s linear both infinite;
-  z-index: -1; /* Ensure background is behind other content */
+  z-index: -2; /* Ensure background is behind other content */
 }
 .Background .Square {
   width: 60px; /* Width of each square */
@@ -60,7 +61,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  background: rgba(117, 67, 34, 0.35);
+  background: rgba(112, 112, 112, 0.507);
   backdrop-filter: blur(16px) saturate(100%);
   box-shadow: 0 0 16px 0 rgba(100, 100, 100, 0.22);
   border: 1px rgba(255, 255, 255, 0.08) solid;

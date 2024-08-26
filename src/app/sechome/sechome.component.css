@@ -88,6 +88,10 @@ body {
 a {
   text-decoration: none;
   color: inherit;
+  background: rgba(222, 216, 196, 0.35);
+  backdrop-filter: blur(16px) saturate(100%);
+  box-shadow: 0 0 16px 0 rgba(100, 100, 100, 0.22);
+  border: 1px rgba(0, 0, 0, 0.08) solid;
 }
 
 /* Headers */
