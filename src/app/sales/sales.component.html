@@ -1,3 +1,23 @@
+<!-- Tab navigation -->
+<ul class="nav nav-tabs custom-tabs">
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="activeTab === 'sales'" (click)="setActiveTab('sales')">Sales Over Time</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="activeTab === 'comparison'" (click)="setActiveTab('comparison')">Sales Comparison</a>
+  </li>
+</ul>
+
+<!-- Tab content -->
+<div [ngSwitch]="activeTab">
+  <div *ngSwitchCase="'sales'">
+    <div id="myDiv"></div>
+  </div>
+  <div *ngSwitchCase="'comparison'">
+    <div id="comparisonDiv"></div>
+  </div>
+</div>
+
 <!-- Popup Overlay -->
 <div *ngIf="isPopupVisible" class="popup-overlay">
   <div class="popup-content">
@@ -5,6 +25,3 @@
     <div [innerHTML]="popupText"></div>
   </div>
 </div>
-
-<!-- Your Plotly Graph Container -->
-<div id="myDiv"></div>

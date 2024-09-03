@@ -23,6 +23,8 @@ export class MobileComponent implements OnInit {
   searchTerm$ = new BehaviorSubject<string>('');
   searchTerm: string = '';
   sortOrder: 'alphabetical' | 'count' = 'alphabetical';
+  startDate: string = '';
+  endDate: string = '';
 
   // Snapshot of original data
   private originalLicensees: string[] = [];
@@ -53,9 +55,10 @@ export class MobileComponent implements OnInit {
   fetchLicenseData(): void {
     this.connectionService.getData().subscribe(
       (data: any[]) => {
-        this.fetchedData = data;
-        this.licensors = [...new Set(data.map((item: any) => item.licensor))].filter(licensor => licensor !== null);
-        this.licensees = [...new Set(data.map((item: any) => item.licensee))].filter(licensee => licensee !== 'Unknown' && licensee !== null);
+        // Filter the data based on the date range
+        this.fetchedData = this.filterDataByDateRange(data);
+        this.licensors = [...new Set(this.fetchedData.map((item: any) => item.licensor))].filter(licensor => licensor !== null);
+        this.licensees = [...new Set(this.fetchedData.map((item: any) => item.licensee))].filter(licensee => licensee !== 'Unknown' && licensee !== null);
 
         this.paymentConnection.getPayments().subscribe(
           (payments: any[]) => {
@@ -74,7 +77,7 @@ export class MobileComponent implements OnInit {
                   (multipleLicenses: any[]) => {
                     this.multipleLicenses = multipleLicenses;
                     this.initializeTableData();
-                    this.sortLicensees();
+                    this.updateTableData(); // Update the table based on filtered data
                   },
                   (error) => {
                     console.error('Error fetching multiple licenses data:', error);
@@ -97,6 +100,43 @@ export class MobileComponent implements OnInit {
     );
   }
 
+  filterDataByDateRange(data: any[]): any[] {
+    return data.filter(item => this.isWithinDateRange(item.signed_date, item.expiration_date));
+  }
+
+  updateTableData(): void {
+    this.updateCellColors(); // Update cell colors based on the filtered data
+    this.filterTableData(this.searchTerm$.getValue());
+  }
+
+  updateCellColors(): void {
+    this.tableData = Array(this.licensors.length).fill(null).map(() =>
+      Array(this.licensees.length).fill('white')
+    );
+
+    this.applyDataColors(this.fetchedData);
+    this.applyDataColors(this.paymentsData);
+    this.applyDataColors(this.multiplePayments);
+    this.applyDataColors(this.multipleLicenses);
+
+    console.log('Table data after updating cell colors:', this.tableData);
+  }
+
+  applyDataColors(data: any[]): void {
+    for (const dataItem of data) {
+      const licensorIndex = this.licensors.indexOf(dataItem.licensor);
+      const licenseeIndex = this.licensees.indexOf(dataItem.licensee);
+
+      if (licensorIndex !== -1 && licenseeIndex !== -1 && dataItem.licensee !== 'Unknown') {
+        if (this.isWithinDateRange(dataItem.signed_date, dataItem.expiration_date)) {
+          this.tableData[licensorIndex][licenseeIndex] = 'green';
+          console.log(`Cell marked green: Licensor "${dataItem.licensor}", Licensee "${dataItem.licensee}"`);
+        }
+      }
+    }
+  }
+
+
   initializeTableData(): void {
     this.tableData = Array(this.licensors.length).fill(null).map(() =>
       Array(this.licensees.length).fill('white')
@@ -110,21 +150,22 @@ export class MobileComponent implements OnInit {
     this.filteredTableData = this.tableData.map(row => [...row]);
   }
 
-  updateCellColors(): void {
-    this.applyDataColors(this.fetchedData);
-    this.applyDataColors(this.paymentsData);
-    this.applyDataColors(this.multiplePayments);
-    this.applyDataColors(this.multipleLicenses);
-  }
 
-  applyDataColors(data: any[]): void {
-    for (const dataItem of data) {
-      const licensorIndex = this.licensors.indexOf(dataItem.licensor);
-      const licenseeIndex = this.licensees.indexOf(dataItem.licensee);
-      if (licensorIndex !== -1 && licenseeIndex !== -1) {
-        this.tableData[licensorIndex][licenseeIndex] = 'green';
-      }
+
+
+  parseDate(date: string): Date | null {
+    if (!date) return null;
+
+    // Try parsing as "yyyy-mm-dd"
+    let parsed = new Date(date);
+    if (!isNaN(parsed.getTime())) return parsed;
+
+    // Try parsing as "yyyy"
+    if (/^\d{4}$/.test(date)) {
+      return new Date(parseInt(date), 0, 1);
     }
+
+    return null;
   }
 
   sortLicenseesAlphabetically(): void {
@@ -139,13 +180,6 @@ export class MobileComponent implements OnInit {
     this.updateTableData();
   }
 
-  updateTableData(): void {
-    this.tableData = Array(this.licensors.length).fill(null).map(() =>
-      Array(this.licensees.length).fill('white')
-    );
-    this.updateCellColors();
-    this.filterTableData(this.searchTerm$.getValue());
-  }
 
   getLicenseeCount(licensee: string): number {
     return this.tableData.map(row => row[this.licensees.indexOf(licensee)]).filter(color => color === 'green').length;
@@ -154,6 +188,8 @@ export class MobileComponent implements OnInit {
   resetFilters(): void {
     this.searchTerm = '';
     this.searchTerm$.next('');
+    this.startDate = '';
+    this.endDate = '';
 
     // Reset licensees to the original order
     this.licensees = [...this.originalLicensees];
@@ -211,7 +247,8 @@ export class MobileComponent implements OnInit {
       .filter(index => index !== -1);
 
     if (matchingColumnIndices.length === 0) {
-      this.filteredTableData = this.tableData.map(row => [...row]);
+      this.filteredTableData = this.tableData.map(row => row.map(cell => cell === 'white' ? 'transparent' : cell));
+      console.log('No matching columns found. Filtered table data set to all transparent:', this.filteredTableData);
       return;
     }
 
@@ -238,9 +275,13 @@ export class MobileComponent implements OnInit {
     this.filteredTableData = reorderedTableData[0].map((_, rowIndex) =>
       reorderedTableData.map(column => column[rowIndex])
     ).map((row, rowIndex) =>
-      row.map((cell, colIndex) => colIndex < matchingColumnIndices.length ? cell : 'transparent')
+      row.map((cell, colIndex) => colIndex < matchingColumnIndices.length && this.licensees[colIndex] !== 'Unknown' ? cell : 'transparent')
     );
+
+    console.log('Filtered table data after applying search term:', this.filteredTableData);
   }
+
+
 
   onSearchInput(event: KeyboardEvent): void {
     if (event.key === 'Enter') {
@@ -252,4 +293,30 @@ export class MobileComponent implements OnInit {
     this.sortOrder = event.target.value;
     this.sortLicensees();
   }
+
+
+
+  applyDateFilter(): void {
+    this.updateTableData();
+
+    console.log('Table data after applying date filter:', this.tableData);
+  }
+
+
+  isWithinDateRange(signedDate: string, expirationDate: string): boolean {
+    if (!this.startDate && !this.endDate) return true; // If no date range is set, consider all dates valid
+
+    const start = this.parseDate(this.startDate);
+    const end = this.parseDate(this.endDate);
+    const signed = this.parseDate(signedDate);
+    const expiration = this.parseDate(expirationDate);
+
+    // If either date is null, consider it within range
+    if (signed === null || expiration === null) return true;
+
+    // Check if the record's period overlaps with the selected period
+    return (start === null || expiration >= start) && (end === null || signed <= end);
+  }
+
+
 }

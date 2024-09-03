@@ -6,8 +6,9 @@ body {
   background-repeat: repeat; /* Repeat both horizontally and vertically */
   background-attachment: fixed; /* Keep background fixed during scroll */
   background-color: #ffffff; /* Fallback color */
-  margin: 0;
-  padding: 0;
+  margin: 0; /* Remove default margin */
+  padding: 0; /* Remove default padding */
+  width: 100vw; /* Full viewport width */
   height: 100vh; /* Full viewport height */
   overflow: hidden; /* Hide scrollbars */
 }
@@ -34,6 +35,8 @@ body {
   margin: 0 auto; /* Center horizontally */
   transition: transform 0.3s ease-in-out; /* Hover effect */
   z-index: 3; /* Ensure button is above everything */
+  animation: hue_rotate 60s linear both infinite;
+
 }
 
 .rec:hover {
@@ -58,7 +61,7 @@ body {
 }
 
 /* Squares */
-.square {
+.big-square {
   width: 350px; /* Increase width */
   height: 350px; /* Increase height */
   background: rgba(222, 216, 196, 0.35);
@@ -72,16 +75,25 @@ body {
   align-items: center;
   cursor: pointer;
   border-radius: 10px;
-  transition: transform 0.3s ease-in-out, background-color 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out;
   padding: 10px;
   box-sizing: border-box;
   position: relative; /* Ensure z-index works */
-  z-index: 3; /* Ensure it is above background */
+  z-index: -15;
+  font-style: black;
+  animation: none; /* Default state */
 }
 
-.square:hover {
+.big-square:hover {
   transform: scale(1.05); /* Scale up on hover */
-  background-color: #E8E5D8; /* Change background color on hover */
+  background: rgba(222, 216, 196, 100);
+
+}
+
+.big-square.active {
+  background-color: var(--square-color); /* Change background color for active state */
+  border: var(--square-color) 1px solid;
+  animation: none; /* Stop animation when active */
 }
 
 /* Links */
@@ -137,6 +149,7 @@ h2 {
 
 
 /* Background Styles */
+/* Background Styles */
 .Background {
   position: fixed; /* Keep background fixed */
   top: 0;
@@ -148,24 +161,34 @@ h2 {
   align-content: flex-start;
   justify-content: center;
   overflow: hidden; /* Hide overflow to avoid scrollbars */
-  animation: hue_rotate 60s linear both infinite;
+  animation: hue_rotate 60s linear infinite;
   z-index: -1; /* Ensure background is behind other content */
+  margin: 0; /* Remove any default margin */
+  padding: 0; /* Remove any default padding */
 }
+
+/* Square Styles */
 .Background .Square {
-  width: 60px; /* Width of each square */
-  height: 60px; /* Height of each square */
-  border: rgb(20, 20, 20) 1px solid; /* Border color */
+  width: 40px; /* Width of each square */
+  height: 40px; /* Height of each square */
+  border: rgba(20, 20, 20, 0.055) 1px solid; /* Border color */
   box-sizing: border-box; /* Include border in element's total width and height */
   background-color: transparent; /* Ensure squares are visible */
   transition: 10s linear;
-
 }
-.Background .Square:hover, .Background .Square.active {
+
+.Background .Square:hover,
+.Background .Square.active {
   background-color: var(--square-color);
   border: var(--square-color) 1px solid;
   transition: 0ms linear;
 }
 
+@keyframes hue_rotate {
+  0% {
+    filter: hue-rotate(360deg);
+  }
+}
 /* Glass Box Styles */
 .glass-Box {
   width: 400px;

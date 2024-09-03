@@ -77,32 +77,36 @@ button:hover {
 
 
 /* Background Styles */
+/* Background Styles */
 .Background {
-  position: fixed; /* Make the background fixed */
+  position: fixed; /* Keep background fixed */
   top: 0;
   left: 0;
-  width: auto; /* Full viewport width */
-  height: auto; /* Full viewport height */
+  width: 100vw; /* Full viewport width */
+  height: 100vh; /* Full viewport height */
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
   justify-content: center;
-  overflow: hidden;
-  animation: hue_rotate 60s linear both infinite;
-  z-index: -2;
-  animation: hue_rotate 60s linear both infinite;
+  overflow: hidden; /* Hide overflow to avoid scrollbars */
+  animation: hue_rotate 60s linear infinite;
+  z-index: -1; /* Ensure background is behind other content */
+  margin: 0; /* Remove any default margin */
+  padding: 0; /* Remove any default padding */
 }
 
+/* Square Styles */
 .Background .Square {
-  width: 60px; /* Width of each square */
-  height: 60px; /* Height of each square */
-  border: rgb(20, 20, 20) 1px solid; /* Border color */
+  width: 40px; /* Width of each square */
+  height: 40px; /* Height of each square */
+  border: rgba(20, 20, 20, 0.055) 1px solid; /* Border color */
   box-sizing: border-box; /* Include border in element's total width and height */
   background-color: transparent; /* Ensure squares are visible */
   transition: 10s linear;
 }
 
-.Background .Square:hover, .Background .Square.active {
+.Background .Square:hover,
+.Background .Square.active {
   background-color: var(--square-color);
   border: var(--square-color) 1px solid;
   transition: 0ms linear;
@@ -153,6 +157,7 @@ button:hover {
 
 .glass-Box h1 {
   font-size: 6rem;
+
 }
 
 .glass-Box p {

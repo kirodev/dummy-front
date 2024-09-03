@@ -1,11 +1,19 @@
 <!-- Table for rows with defined licensee -->
 
+<!-- Tab Navigation -->
+<ul class="nav nav-tabs custom-tabs">
+  <li class="nav-item">
+    <a class="nav-link" routerLink="/payment" routerLinkActive="active">Payments</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" routerLink="/license" routerLinkActive="active">Licenses</a>
+  </li>
+</ul>
 
-<div class="table-container">
-  <div id="center-button-container">
-    <button id="center-button" routerLink="/license">Licenses</button>
-  </div>
-
+<!-- Content will be rendered here based on the active route -->
+<div class="tab-content">
+  <router-outlet></router-outlet>
+</div>
 
   <div id='myDiv'></div>
   <h1>Payment :</h1>
@@ -437,7 +445,6 @@
     </ng-container>
   </tbody>
 </table>
-</div>
 
 
 <div class="popup-overlay" *ngIf="showPopup">

@@ -6,6 +6,15 @@
     <button (click)="sortOrder = 'count'; sortLicensees()">Sort by Total Statements</button>
     <input type="text" [(ngModel)]="searchTerm" (keyup)="onSearchInput($event)" placeholder="Search Licensees (Enter)" />
     <button (click)="resetFilters()">Reset Filters</button>
+    <div>
+      <label for="startDate">Start Date:</label>
+      <input type="date" id="startDate" [(ngModel)]="startDate">
+      
+      <label for="endDate">End Date:</label>
+      <input type="date" id="endDate" [(ngModel)]="endDate">
+
+      <button (click)="applyDateFilter()">Apply Filter</button>
+    </div>
   </div>
 
   <div class="table-container">

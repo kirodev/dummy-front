@@ -29,6 +29,7 @@ import { SalesComponent } from './sales/sales.component';
 import { RevenuesComponent } from './revenues/revenues.component';
 import { LibraryComponent } from './library/library.component';
 import { NotFoundComponent } from './not-found/not-found.component';
+import { EquationsPaymentsComponent } from './equations-payments/equations-payments.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent },
@@ -68,10 +69,11 @@ const routes: Routes = [
   { path: 'sales', component: SalesComponent },
   { path: 'revenues', component: RevenuesComponent },
   { path: 'library', component: LibraryComponent },
+  { path: 'equations', component: EquationsPaymentsComponent },
 
 
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: '**', component: NotFoundComponent } // 404 page
+  { path: '**', component: NotFoundComponent }
 ];
 
 @NgModule({

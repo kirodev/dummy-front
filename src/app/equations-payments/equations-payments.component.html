@@ -1,0 +1,54 @@
+<div class="container">
+  <h2>Equations List</h2>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Snippet ID</th>
+        <th>Licensor</th>
+        <th>Licensee</th>
+        <th>Year</th>
+        <th>Yearly Quarters</th>
+        <th>Details</th>
+        <th>Equation Type</th>
+        <th>Equation</th>
+        <th>Equation Result</th>
+        <th>Advanced Equation Type</th>
+        <th>Advanced Equation</th>
+        <th>Coefficient</th>
+        <th>Advanced Equation Type Result</th>
+        <th>Advanced Equation Result</th>
+        <th>Royalty Rates</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let equation of equations" (click)="selectEquation(equation)">
+        <td>{{ equation.id }}</td>
+        <td>{{ equation.snippetId }}</td>
+        <td>{{ equation.licensor }}</td>
+        <td>{{ equation.licensee }}</td>
+        <td>{{ equation.year }}</td>
+        <td>{{ equation.yearlyQuarters }}</td>
+        <td>{{ equation.details }}</td>
+        <td>{{ equation.eqType }}</td>
+        <td>{{ equation.equation }}</td>
+        <td>{{ equation.eqResult }}</td>
+        <td>{{ equation.advEqType }}</td>
+        <td>{{ equation.advEquation }}</td>
+        <td>{{ equation.coef }}</td>
+        <td>{{ equation.advEqTypeResult }}</td>
+        <td>{{ equation.advEqResult }}</td>
+        <td>{{ equation.royaltyRates }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="selectedEquation">
+    <h3>{{ selectedEquation.id ? 'Edit' : 'Add New' }} Equation</h3>
+    <form (ngSubmit)="selectedEquation.id ? updateEquation() : createEquation()">
+      <!-- Form fields for equation properties go here -->
+      <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+  </div>
+</div>

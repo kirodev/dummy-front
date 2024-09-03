@@ -16,12 +16,35 @@ export class SalesComponent implements OnInit {
 
   isPopupVisible = false;
   popupText = '';
-
+  activeTab = 'sales'; // Default active tab
+  private plotRendered = false;
+  private comparisonPlotRendered = false;
   constructor(private salesService: SalesService) { }
 
   ngOnInit(): void {
     this.loadSales();
     this.loadPlotlyScript();
+
+  }
+  ngAfterViewChecked(): void {
+    // Re-render the plot when switching tabs
+    if (this.plotlyLoaded && this.dataLoaded) {
+      if (this.activeTab === 'sales' && !this.plotRendered) {
+        this.plotData();
+        this.plotRendered = true;
+        this.comparisonPlotRendered = false;
+      } else if (this.activeTab === 'comparison' && !this.comparisonPlotRendered) {
+        this.plotComparisonData();
+        this.comparisonPlotRendered = true;
+        this.plotRendered = false;
+      }
+    }
+  }
+
+  switchTab(tabName: string): void {
+    this.activeTab = tabName;
+    this.plotRendered = false;
+    this.comparisonPlotRendered = false;
   }
 
   loadPlotlyScript(): void {
@@ -55,6 +78,8 @@ export class SalesComponent implements OnInit {
   tryPlotData(): void {
     if (this.plotlyLoaded && this.dataLoaded) {
       this.plotData();
+      this.plotComparisonData();
+
     }
   }
 
@@ -300,7 +325,119 @@ export class SalesComponent implements OnInit {
   }
 
 
+  plotComparisonData(): void {
+    if (!this.salesList || this.salesList.length === 0) {
+      console.error('No sales data available');
+      return;
+    }
 
+    const comparisonDiv: any = document.getElementById('comparisonDiv');
+    if (!comparisonDiv) {
+      console.error('Target div for Plotly comparison graph not found');
+      return;
+    }
+
+    const salesMap = new Map<string, { others: number, companies: Map<string, number> }>();
+
+    // Group sales data by year, quarter, and company to avoid duplicates
+    this.salesList.forEach(item => {
+      if (item.years && item.quarters && item.company && item.others !== undefined && item.sales !== undefined) {
+        const key = `${item.years}|${item.quarters}`;
+        let data = salesMap.get(key);
+        if (!data) {
+          data = { others: 0, companies: new Map<string, number>() };
+          salesMap.set(key, data);
+        }
+        data.others = item.others; // Assume 'others' is the same for each unique year-quarter combination
+        data.companies.set(item.company, item.sales);
+      }
+    });
+
+    const xValues = Array.from(salesMap.keys()).sort();
+    const companies = new Set(this.salesList.map(item => item.company));
+
+    // Create company traces
+    const companyTraces: Partial<Plotly.PlotData>[] = Array.from(companies).map(company => ({
+      x: xValues,
+      y: xValues.map(key => salesMap.get(key)?.companies.get(company) || 0),
+      type: 'bar',
+      name: company,
+      marker: { color: this.generateRandomColor() },
+      hoverinfo: 'y+name'
+    }));
+
+    // Create "Others" trace
+    const othersTrace: Partial<Plotly.PlotData> = {
+      x: xValues,
+      y: xValues.map(key => salesMap.get(key)?.others || 0),
+      type: 'bar',
+      name: 'Others',
+      marker: { color: 'lightgrey' },
+      hoverinfo: 'y+name'
+    };
+
+    // Combine traces with "Others" at the end
+    const data = [...companyTraces, othersTrace];
+
+    const layout: Partial<Plotly.Layout> = {
+      title: 'Comparison of Sales and Others',
+      barmode: 'stack',
+      xaxis: { title: 'Year and Quarter' },
+      yaxis: { title: 'Sales Amount' },
+      legend: { traceorder: 'normal' },
+      height: 600,
+      autosize: true
+    };
+
+    Plotly.newPlot('comparisonDiv', data, layout).then(() => {
+      console.log('Comparison graph plotted successfully');
+
+      // Keep track of hidden traces
+      const hiddenTraces = new Set<number>();
+      let isOthersHidden = false;
+
+      comparisonDiv.on('plotly_legendclick', (data: any) => {
+        const clickedTraceIndex = data.curveNumber;
+        const clickedTrace = data.data[clickedTraceIndex];
+        const othersTraceIndex = data.data.length - 1;
+        const othersTrace = data.data[othersTraceIndex];
+
+        if (clickedTraceIndex === othersTraceIndex) {
+          // Toggling the "Others" trace
+          isOthersHidden = !isOthersHidden;
+          othersTrace.visible = isOthersHidden ? 'legendonly' : true;
+        } else {
+          if (hiddenTraces.has(clickedTraceIndex)) {
+            // Showing the trace again
+            hiddenTraces.delete(clickedTraceIndex);
+            if (!isOthersHidden) {
+              for (let i = 0; i < othersTrace.y.length; i++) {
+                othersTrace.y[i] -= clickedTrace.y[i];
+              }
+            }
+          } else {
+            // Hiding the trace
+            hiddenTraces.add(clickedTraceIndex);
+            if (!isOthersHidden) {
+              for (let i = 0; i < othersTrace.y.length; i++) {
+                othersTrace.y[i] += clickedTrace.y[i];
+              }
+            }
+          }
+
+          // Update visibility of the clicked trace
+          clickedTrace.visible = hiddenTraces.has(clickedTraceIndex) ? 'legendonly' : true;
+        }
+
+        Plotly.redraw('comparisonDiv');
+
+        // Prevent default legend click behavior
+        return false;
+      });
+    }).catch((error: any) => {
+      console.error('Error plotting comparison graph:', error);
+    });
+  }
 
   showPopup(infoText: string): void {
     this.popupText = infoText;
@@ -318,5 +455,13 @@ export class SalesComponent implements OnInit {
       color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
+  }
+
+  setActiveTab(tab: string): void {
+    this.activeTab = tab;
+    // Trigger a resize event to make sure Plotly graphs render correctly in tabs
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
   }
 }

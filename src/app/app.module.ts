@@ -37,11 +37,13 @@ import { RevenuesComponent } from './revenues/revenues.component';
 import { LibraryComponent } from './library/library.component';
 import { KeysPipe } from './keys.pipe';
 import { NotFoundComponent } from './not-found/not-found.component';
+import { EquationsPaymentsComponent } from './equations-payments/equations-payments.component';
+import { KnownlicensesComponent } from './knownlicenses/knownlicenses.component';
 
 
 
 @NgModule({
-  declarations: [
+  declarations: [	
     AppComponent,
     HomeComponent,
     FarLicencesComponent,
@@ -69,8 +71,10 @@ import { NotFoundComponent } from './not-found/not-found.component';
     RevenuesComponent,
     LibraryComponent,
     KeysPipe,
-    NotFoundComponent
-  ],
+    NotFoundComponent,
+    EquationsPaymentsComponent,
+      KnownlicensesComponent
+   ],
   
   imports: [
     BrowserModule,
