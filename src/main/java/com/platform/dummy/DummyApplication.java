@@ -11,7 +11,7 @@ import com.platform.dummy.multipleLicenses.MultipleLicensesRepository;
 @SpringBootApplication
 @RestController
 @CrossOrigin(origins = "https://dummy-front-ace8d7bf3875.herokuapp.com")
-//@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "http://localhost:4200")
 
 class DummyApplication {
 

@@ -46,52 +46,13 @@ public class Payments {
     private String document_date;
     private String comment;
     private String modified;
-    @Column(name = "eq_type")
-    private String eqType;
-    @Column(name = "equation")
-    private String equation;
-    @Column(name = "eq_result")
-    private Double eqResult;
-    @Column(name = "adv_eq_type")
-    private String advEqType;
-
-    @Column(name = "adv_equation")
-    private String advEquation;
-
-    @Column(name = "coef")
-    private Double coef;
-
-    @Column(name = "adv_eq_type_result")
-    private String advEqTypeResult;
-
-    @Column(name = "adv_eq_result")
-    private String advEqResult;
-    
-    @Column(name = "nested_eq")
-    private String nestedEq;
-    @Column(name = "nested_eq_result")
-    private String nestedEqResults;
-
-    @Column(name = "royalty_rates")
-    private String royaltyRates;
 
 
 
     public Payments() {
     }
 
-
-
-    public Payments(Long id, String mapping_id, Long snippet_id, Long pair_id, String licensor, String licensee,
-            String licensee_Affiliate, String license_sales, String indication, Integer year, String yearly_quarters,
-            String period_start, String period_end, String information_type, Float payment_amount,
-            String payment_amount_in_local_currency, String local_currency, String royalty_rate_dollar,
-            String royalty_rate_per, String royalty_min_dollar, String royalty_min_per, String royalty_max_dollar,
-            String royalty_max_per, String percentage_value, String percentage_indication, String payment_type,
-            String details, String directory_path, String document_name, String document_date, String comment,
-            String modified, String eqType, String equation, Double eqResult, String advEqType, String advEquation,
-            Double coef, String advEqTypeResult, String advEqResult, String nestedEq, String nestedEqResults,
-            String royaltyRates) {
+    public Payments(Long id, String mapping_id, Long snippet_id, Long pair_id, String licensor, String licensee, String licensee_Affiliate, String license_sales, String indication, Integer year, String yearly_quarters, String period_start, String period_end, String information_type, Float payment_amount, String payment_amount_in_local_currency, String local_currency, String royalty_rate_dollar, String royalty_rate_per, String royalty_min_dollar, String royalty_min_per, String royalty_max_dollar, String royalty_max_per, String percentage_value, String percentage_indication, String payment_type, String details, String directory_path, String document_name, String document_date, String comment, String modified) {
         this.id = id;
         this.mapping_id = mapping_id;
         this.snippet_id = snippet_id;
@@ -124,534 +85,261 @@ public class Payments {
         this.document_date = document_date;
         this.comment = comment;
         this.modified = modified;
-        this.eqType = eqType;
-        this.equation = equation;
-        this.eqResult = eqResult;
-        this.advEqType = advEqType;
-        this.advEquation = advEquation;
-        this.coef = coef;
-        this.advEqTypeResult = advEqTypeResult;
-        this.advEqResult = advEqResult;
-        this.nestedEq = nestedEq;
-        this.nestedEqResults = nestedEqResults;
-        this.royaltyRates = royaltyRates;
     }
-
-
 
     public Long getId() {
         return id;
     }
 
-
-
     public void setId(Long id) {
         this.id = id;
     }
-
-
 
     public String getMapping_id() {
         return mapping_id;
     }
 
-
-
     public void setMapping_id(String mapping_id) {
         this.mapping_id = mapping_id;
     }
-
-
 
     public Long getSnippet_id() {
         return snippet_id;
     }
 
-
-
     public void setSnippet_id(Long snippet_id) {
         this.snippet_id = snippet_id;
     }
-
-
 
     public Long getPair_id() {
         return pair_id;
     }
 
-
-
     public void setPair_id(Long pair_id) {
         this.pair_id = pair_id;
     }
-
-
 
     public String getLicensor() {
         return licensor;
     }
 
-
-
     public void setLicensor(String licensor) {
         this.licensor = licensor;
     }
-
-
 
     public String getLicensee() {
         return licensee;
     }
 
-
-
     public void setLicensee(String licensee) {
         this.licensee = licensee;
     }
-
-
 
     public String getLicensee_Affiliate() {
         return licensee_Affiliate;
     }
 
-
-
     public void setLicensee_Affiliate(String licensee_Affiliate) {
         this.licensee_Affiliate = licensee_Affiliate;
     }
-
-
 
     public String getLicense_sales() {
         return license_sales;
     }
 
-
-
     public void setLicense_sales(String license_sales) {
         this.license_sales = license_sales;
     }
-
-
 
     public String getIndication() {
         return indication;
     }
 
-
-
     public void setIndication(String indication) {
         this.indication = indication;
     }
-
-
 
     public Integer getYear() {
         return year;
     }
 
-
-
     public void setYear(Integer year) {
         this.year = year;
     }
-
-
 
     public String getYearly_quarters() {
         return yearly_quarters;
     }
 
-
-
     public void setYearly_quarters(String yearly_quarters) {
         this.yearly_quarters = yearly_quarters;
     }
-
-
 
     public String getPeriod_start() {
         return period_start;
     }
 
-
-
     public void setPeriod_start(String period_start) {
         this.period_start = period_start;
     }
-
-
 
     public String getPeriod_end() {
         return period_end;
     }
 
-
-
     public void setPeriod_end(String period_end) {
         this.period_end = period_end;
     }
-
-
 
     public String getInformation_type() {
         return information_type;
     }
 
-
-
     public void setInformation_type(String information_type) {
         this.information_type = information_type;
     }
-
-
 
     public Float getPayment_amount() {
         return payment_amount;
     }
 
-
-
     public void setPayment_amount(Float payment_amount) {
         this.payment_amount = payment_amount;
     }
-
-
 
     public String getPayment_amount_in_local_currency() {
         return payment_amount_in_local_currency;
     }
 
-
-
     public void setPayment_amount_in_local_currency(String payment_amount_in_local_currency) {
         this.payment_amount_in_local_currency = payment_amount_in_local_currency;
     }
-
-
 
     public String getLocal_currency() {
         return local_currency;
     }
 
-
-
     public void setLocal_currency(String local_currency) {
         this.local_currency = local_currency;
     }
-
-
 
     public String getRoyalty_rate_dollar() {
         return royalty_rate_dollar;
     }
 
-
-
     public void setRoyalty_rate_dollar(String royalty_rate_dollar) {
         this.royalty_rate_dollar = royalty_rate_dollar;
     }
-
-
 
     public String getRoyalty_rate_per() {
         return royalty_rate_per;
     }
 
-
-
     public void setRoyalty_rate_per(String royalty_rate_per) {
         this.royalty_rate_per = royalty_rate_per;
     }
-
-
 
     public String getRoyalty_min_dollar() {
         return royalty_min_dollar;
     }
 
-
-
     public void setRoyalty_min_dollar(String royalty_min_dollar) {
         this.royalty_min_dollar = royalty_min_dollar;
     }
-
-
 
     public String getRoyalty_min_per() {
         return royalty_min_per;
     }
 
-
-
     public void setRoyalty_min_per(String royalty_min_per) {
         this.royalty_min_per = royalty_min_per;
     }
-
-
 
     public String getRoyalty_max_dollar() {
         return royalty_max_dollar;
     }
 
-
-
     public void setRoyalty_max_dollar(String royalty_max_dollar) {
         this.royalty_max_dollar = royalty_max_dollar;
     }
-
-
 
     public String getRoyalty_max_per() {
         return royalty_max_per;
     }
 
-
-
     public void setRoyalty_max_per(String royalty_max_per) {
         this.royalty_max_per = royalty_max_per;
     }
-
-
 
     public String getPercentage_value() {
         return percentage_value;
     }
 
-
-
     public void setPercentage_value(String percentage_value) {
         this.percentage_value = percentage_value;
     }
-
-
 
     public String getPercentage_indication() {
         return percentage_indication;
     }
 
-
-
     public void setPercentage_indication(String percentage_indication) {
         this.percentage_indication = percentage_indication;
     }
-
-
 
     public String getPayment_type() {
         return payment_type;
     }
 
-
-
     public void setPayment_type(String payment_type) {
         this.payment_type = payment_type;
     }
-
-
 
     public String getDetails() {
         return details;
     }
 
-
-
     public void setDetails(String details) {
         this.details = details;
     }
-
-
 
     public String getDirectory_path() {
         return directory_path;
     }
 
-
-
     public void setDirectory_path(String directory_path) {
         this.directory_path = directory_path;
     }
-
-
 
     public String getDocument_name() {
         return document_name;
     }
 
-
-
     public void setDocument_name(String document_name) {
         this.document_name = document_name;
     }
-
-
 
     public String getDocument_date() {
         return document_date;
     }
 
-
-
     public void setDocument_date(String document_date) {
         this.document_date = document_date;
     }
-
-
 
     public String getComment() {
         return comment;
     }
 
-
-
     public void setComment(String comment) {
         this.comment = comment;
     }
-
-
 
     public String getModified() {
         return modified;
     }
 
-
-
     public void setModified(String modified) {
         this.modified = modified;
     }
-
-
-
-    public String getEqType() {
-        return eqType;
-    }
-
-
-
-    public void setEqType(String eqType) {
-        this.eqType = eqType;
-    }
-
-
-
-    public String getEquation() {
-        return equation;
-    }
-
-
-
-    public void setEquation(String equation) {
-        this.equation = equation;
-    }
-
-
-
-    public Double getEqResult() {
-        return eqResult;
-    }
-
-
-
-    public void setEqResult(Double eqResult) {
-        this.eqResult = eqResult;
-    }
-
-
-
-    public String getAdvEqType() {
-        return advEqType;
-    }
-
-
-
-    public void setAdvEqType(String advEqType) {
-        this.advEqType = advEqType;
-    }
-
-
-
-    public String getAdvEquation() {
-        return advEquation;
-    }
-
-
-
-    public void setAdvEquation(String advEquation) {
-        this.advEquation = advEquation;
-    }
-
-
-
-    public Double getCoef() {
-        return coef;
-    }
-
-
-
-    public void setCoef(Double coef) {
-        this.coef = coef;
-    }
-
-
-
-    public String getAdvEqTypeResult() {
-        return advEqTypeResult;
-    }
-
-
-
-    public void setAdvEqTypeResult(String advEqTypeResult) {
-        this.advEqTypeResult = advEqTypeResult;
-    }
-
-
-
-    public String getAdvEqResult() {
-        return advEqResult;
-    }
-
-
-
-    public void setAdvEqResult(String advEqResult) {
-        this.advEqResult = advEqResult;
-    }
-
-
-
-    public String getNestedEq() {
-        return nestedEq;
-    }
-
-
-
-    public void setNestedEq(String nestedEq) {
-        this.nestedEq = nestedEq;
-    }
-
-
-
-    public String getNestedEqResults() {
-        return nestedEqResults;
-    }
-
-
-
-    public void setNestedEqResults(String nestedEqResults) {
-        this.nestedEqResults = nestedEqResults;
-    }
-
-
-
-    public String getRoyaltyRates() {
-        return royaltyRates;
-    }
-
-
-
-    public void setRoyaltyRates(String royaltyRates) {
-        this.royaltyRates = royaltyRates;
-    }
-
-   
 }
