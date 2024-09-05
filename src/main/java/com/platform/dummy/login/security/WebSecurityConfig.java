@@ -73,7 +73,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 						"/payments/{id}/mappingId",
 						"/timeline",
 						"/annual-revenues",
-						"/multiple-licenses/{id}/undo"
+						"/multiple-licenses/{id}/undo",
+						"/equations"
 
 
 				).hasRole("ADMIN")
@@ -82,7 +83,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 						"/mappingId",
 						"/quarterly-revenues",
 						"/annual-revenues",
-						"/licenses", "/payments", "/multiple-payments","/multiple-licenses"
+						"/licenses", "/payments", 
+						"/multiple-payments",
+						"/multiple-licenses",
+						"/equations"
 
 				).hasRole("ADMIN")
 				.antMatchers(HttpMethod.DELETE,
