@@ -72,7 +72,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 						"/multiple-payments/{id}/MPmappingId",
 						"/payments/{id}/mappingId",
 						"/timeline",
-						"/annual-revenues",
+						"/annual_revenues",
 						"/multiple-licenses/{id}/undo",
 						"/equations"
 
@@ -82,7 +82,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers(HttpMethod.GET,
 						"/mappingId",
 						"/quarterly-revenues",
-						"/annual-revenues",
+						"/annual_revenues",
 						"/licenses", "/payments", 
 						"/multiple-payments",
 						"/multiple-licenses",
