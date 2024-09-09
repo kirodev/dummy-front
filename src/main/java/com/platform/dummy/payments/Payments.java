@@ -7,61 +7,42 @@ import javax.persistence.*;
 public class Payments {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
+    private Long id;   
     private String mapping_id;
     private Long snippet_id;
     private Long pair_id;
-
     private String licensor;
     private String licensee;
     private String licensee_Affiliate;
     private String license_sales;
     private String indication;
-
-    private String year;  // Changed to String as per table definition
-    
-    private String quarter;  // Ensure it’s mapped to yearly_quarters in DB
+    private String year;      
+    private String quarter;  
     private String period_start;
     private String period_end;
-    private String information_type;
-    
-    @Column(name = "payment_amount")
-    private Integer paymentAmount;  // Adjust to match DB field
-
+    private String information_type;   
+    private Integer payment_amount;  
     private Integer payment_amount_in_local_currency;
     private String local_currency;
-
-    @Column(name = "royalty_rate_dollar")
-    private Double royaltyRateDollar;  // Changed to Double
-
-    @Column(name = "royalty_rate_per")
-    private Double royaltyRatePer;  // Changed to Double
+    private Double royalty_rate_dollar;  
+    private Double royalty_rate_per;  
     private Double royalty_min_dollar;
     private Double royalty_min_per;
     private Double royalty_max_dollar;
     private Double royalty_max_per;
     private Integer percentage_value;
     private String percentage_indication;
-
     private String payment_type;
     private String details;
     private String directory_path;
     private String document_name;
     private String document_date;
     private String comment;
-
     private String modified;
-
-    @Column(name = "eq_type")
-    private String eqType;
-
+    private String eq_type;
     private String equation;
-    private String eq_result;
-    
-    @Column(name = "adv_eq_type")
-    private String advEqType;
-
+    private String eq_result;   
+    private String adv_eq_type;
     private String adv_equation;
     private String coef;
     private String adv_eq_type_result;
@@ -69,21 +50,20 @@ public class Payments {
     private String nested_eq;
     private String nested_eq_result;
     private String royalty_rates;
-
-    // Getters and setters for all fields...
+    private Double results;
 
     public Payments() {
     }
 
     public Payments(Long id, String mapping_id, Long snippet_id, Long pair_id, String licensor, String licensee,
             String licensee_Affiliate, String license_sales, String indication, String year, String quarter,
-            String period_start, String period_end, String information_type, Integer paymentAmount,
-            Integer payment_amount_in_local_currency, String local_currency, Double royaltyRateDollar,
-            Double royaltyRatePer, Double royalty_min_dollar, Double royalty_min_per, Double royalty_max_dollar,
+            String period_start, String period_end, String information_type, Integer payment_amount,
+            Integer payment_amount_in_local_currency, String local_currency, Double royalty_rate_dollar,
+            Double royalty_rate_per, Double royalty_min_dollar, Double royalty_min_per, Double royalty_max_dollar,
             Double royalty_max_per, Integer percentage_value, String percentage_indication, String payment_type,
             String details, String directory_path, String document_name, String document_date, String comment,
-            String modified, String eqType, String equation, String eq_result, String advEqType, String adv_equation,
-            String coef, String adv_eq_type_result, String adv_eq_result, String nested_eq, String nested_eq_result,
+            String modified, String eq_type, String equation, String eq_result, String adv_eq_type, String adv_equation,
+            String coef, String adv_eq_type_result, String adv_eq_result,Double results, String nested_eq, String nested_eq_result,
             String royalty_rates) {
         this.id = id;
         this.mapping_id = mapping_id;
@@ -99,11 +79,11 @@ public class Payments {
         this.period_start = period_start;
         this.period_end = period_end;
         this.information_type = information_type;
-        this.paymentAmount = paymentAmount;
+        this.payment_amount = payment_amount;
         this.payment_amount_in_local_currency = payment_amount_in_local_currency;
         this.local_currency = local_currency;
-        this.royaltyRateDollar = royaltyRateDollar;
-        this.royaltyRatePer = royaltyRatePer;
+        this.royalty_rate_dollar = royalty_rate_dollar;
+        this.royalty_rate_per = royalty_rate_per;
         this.royalty_min_dollar = royalty_min_dollar;
         this.royalty_min_per = royalty_min_per;
         this.royalty_max_dollar = royalty_max_dollar;
@@ -117,14 +97,15 @@ public class Payments {
         this.document_date = document_date;
         this.comment = comment;
         this.modified = modified;
-        this.eqType = eqType;
+        this.eq_type = eq_type;
         this.equation = equation;
         this.eq_result = eq_result;
-        this.advEqType = advEqType;
+        this.adv_eq_type = adv_eq_type;
         this.adv_equation = adv_equation;
         this.coef = coef;
         this.adv_eq_type_result = adv_eq_type_result;
         this.adv_eq_result = adv_eq_result;
+        this.results = results;
         this.nested_eq = nested_eq;
         this.nested_eq_result = nested_eq_result;
         this.royalty_rates = royalty_rates;
@@ -242,12 +223,12 @@ public class Payments {
         this.information_type = information_type;
     }
 
-    public Integer getPaymentAmount() {
-        return paymentAmount;
+    public Integer getPayment_amount() {
+        return payment_amount;
     }
 
-    public void setPaymentAmount(Integer paymentAmount) {
-        this.paymentAmount = paymentAmount;
+    public void setPayment_amount(Integer payment_amount) {
+        this.payment_amount = payment_amount;
     }
 
     public Integer getPayment_amount_in_local_currency() {
@@ -266,20 +247,20 @@ public class Payments {
         this.local_currency = local_currency;
     }
 
-    public Double getRoyaltyRateDollar() {
-        return royaltyRateDollar;
+    public Double getRoyalty_rate_dollar() {
+        return royalty_rate_dollar;
     }
 
-    public void setRoyaltyRateDollar(Double royaltyRateDollar) {
-        this.royaltyRateDollar = royaltyRateDollar;
+    public void setRoyalty_rate_dollar(Double royalty_rate_dollar) {
+        this.royalty_rate_dollar = royalty_rate_dollar;
     }
 
-    public Double getRoyaltyRatePer() {
-        return royaltyRatePer;
+    public Double getRoyalty_rate_per() {
+        return royalty_rate_per;
     }
 
-    public void setRoyaltyRatePer(Double royaltyRatePer) {
-        this.royaltyRatePer = royaltyRatePer;
+    public void setRoyalty_rate_per(Double royalty_rate_per) {
+        this.royalty_rate_per = royalty_rate_per;
     }
 
     public Double getRoyalty_min_dollar() {
@@ -386,12 +367,12 @@ public class Payments {
         this.modified = modified;
     }
 
-    public String getEqType() {
-        return eqType;
+    public String getEq_type() {
+        return eq_type;
     }
 
-    public void setEqType(String eqType) {
-        this.eqType = eqType;
+    public void setEq_type(String eq_type) {
+        this.eq_type = eq_type;
     }
 
     public String getEquation() {
@@ -410,12 +391,12 @@ public class Payments {
         this.eq_result = eq_result;
     }
 
-    public String getAdvEqType() {
-        return advEqType;
+    public String getAdv_eq_type() {
+        return adv_eq_type;
     }
 
-    public void setAdvEqType(String advEqType) {
-        this.advEqType = advEqType;
+    public void setAdv_eq_type(String adv_eq_type) {
+        this.adv_eq_type = adv_eq_type;
     }
 
     public String getAdv_equation() {
@@ -473,5 +454,14 @@ public class Payments {
     public void setRoyalty_rates(String royalty_rates) {
         this.royalty_rates = royalty_rates;
     }
+
+    public Double getResults() {
+        return results;
+    }
+
+    public void setResults(Double results) {
+        this.results = results;
+    }
+
 
 }
