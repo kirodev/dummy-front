@@ -341,7 +341,7 @@ export class SalesComponent implements OnInit {
 
     // Group sales data by year, quarter, and company to avoid duplicates
     this.salesList.forEach(item => {
-      if (item.years && item.quarters && item.company && item.others !== undefined && item.sales !== undefined) {
+      if (item.years && item.quarters && item.company && item.total !== undefined && item.sales !== undefined) {
         const key = `${item.years}|${item.quarters}`;
         let data = salesMap.get(key);
         if (!data) {

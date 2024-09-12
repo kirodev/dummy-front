@@ -394,7 +394,7 @@ plotData(): void {
       autorange: false,
       range: [-1, 7],
       showgrid: false,
-      ticktext: ['2G', '3G', '4G', '5G', '6G', 'WIFI', 'Total'],
+      ticktext: ['2G', '3G', '4G', '5G', '6G', 'WIFI', 'Overall'],
       tickvals: [0, 1, 2, 3, 4, 5, 6],
       zeroline: false,
     },

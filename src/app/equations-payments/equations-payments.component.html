@@ -1,7 +1,15 @@
 <div class="container">
-  <h2>Equations List</h2>
+  <h2>Payments List</h2>
 
-  <table class="table table-striped">
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <div *ngIf="payments.length === 0 && !error" class="alert alert-info">
+    No payments found.
+  </div>
+
+  <table class="table table-striped" *ngIf="payments.length > 0">
     <thead>
       <tr>
         <th>ID</th>
@@ -9,8 +17,8 @@
         <th>Licensor</th>
         <th>Licensee</th>
         <th>Year</th>
-        <th>Yearly Quarters</th>
-        <th>Details</th>
+        <th>Quarter</th>
+        <th>Payment Amount</th>
         <th>Equation Type</th>
         <th>Equation</th>
         <th>Equation Result</th>
@@ -19,36 +27,42 @@
         <th>Coefficient</th>
         <th>Advanced Equation Type Result</th>
         <th>Advanced Equation Result</th>
+        <th>Results</th>
+        <th>Nested Equation </th>
+        <th>Nested Equation Result</th>
         <th>Royalty Rates</th>
+
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let equation of equations" (click)="selectEquation(equation)">
-        <td>{{ equation.id }}</td>
-        <td>{{ equation.snippetId }}</td>
-        <td>{{ equation.licensor }}</td>
-        <td>{{ equation.licensee }}</td>
-        <td>{{ equation.year }}</td>
-        <td>{{ equation.yearlyQuarters }}</td>
-        <td>{{ equation.details }}</td>
-        <td>{{ equation.eqType }}</td>
-        <td>{{ equation.equation }}</td>
-        <td>{{ equation.eqResult }}</td>
-        <td>{{ equation.advEqType }}</td>
-        <td>{{ equation.advEquation }}</td>
-        <td>{{ equation.coef }}</td>
-        <td>{{ equation.advEqTypeResult }}</td>
-        <td>{{ equation.advEqResult }}</td>
-        <td>{{ equation.royaltyRates }}</td>
+      <tr *ngFor="let payment of payments" (click)="selectPayment(payment)">
+        <td>{{ payment.id }}</td>
+        <td>{{ payment.snippet_id }}</td>
+        <td>{{ payment.licensor }}</td>
+        <td>{{ payment.licensee }}</td>
+        <td>{{ payment.year }}</td>
+        <td>{{ payment.quarter }}</td>
+        <td>{{ payment.payment_amount }}</td>
+        <td>{{ payment.eq_type }}</td>
+        <td>{{ payment.equation }}</td>
+        <td>{{ payment.eq_result }}</td>
+        <td>{{ payment.adv_eq_type }}</td>
+        <td>{{ payment.adv_equation }}</td>
+        <td>{{ payment.coef }}</td>
+        <td>{{ payment.adv_eq_type_result }}</td>
+        <td>{{ payment.adv_eq_result }}</td>
+        <td>{{ payment.results }}</td>
+        <td>{{ payment.nested_eq }}</td>
+        <td>{{ payment.nested_eq_result}}</td>
+        <td>{{ payment.royalty_rates }}</td>
       </tr>
     </tbody>
   </table>
 
-  <div *ngIf="selectedEquation">
-    <h3>{{ selectedEquation.id ? 'Edit' : 'Add New' }} Equation</h3>
-    <form (ngSubmit)="selectedEquation.id ? updateEquation() : createEquation()">
-      <!-- Form fields for equation properties go here -->
-      <button type="submit" class="btn btn-primary">Save</button>
-    </form>
+
+  <!-- Debugging information -->
+  <div class="mt-4">
+    <h4>Debugging Information</h4>
+    <pre>{{ debugInfo }}</pre>
   </div>
 </div>

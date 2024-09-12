@@ -3,19 +3,19 @@
 <!-- Tab Navigation -->
 <ul class="nav nav-tabs custom-tabs">
   <li class="nav-item">
-    <a class="nav-link" routerLink="/payment" routerLinkActive="active">Payments</a>
-  </li>
-  <li class="nav-item">
     <a class="nav-link" routerLink="/license" routerLinkActive="active">Licenses</a>
   </li>
+  <li class="nav-item">
+    <a class="nav-link" routerLink="/payment" routerLinkActive="active">Payments</a>
+  </li>
+
 </ul>
 
 <!-- Content will be rendered here based on the active route -->
-<div class="tab-content">
-  <router-outlet></router-outlet>
-</div>
 
   <div id='myDiv'></div>
+
+
   <h1>Payment :</h1>
   <h1>{{ dynamicTitle }} :</h1>
 
@@ -68,7 +68,7 @@
           <td>{{ item.license_sales }}</td>
           <td>{{ item.indication }}</td>
           <td>{{ item.year }}</td>
-          <td>{{ item.yearly_quarters }}</td>
+          <td>{{ item.quarter }}</td>
           <td>{{ item.period_start }}</td>
           <td>{{ item.period_end }}</td>
           <td>{{ item.information_type }}</td>
@@ -190,7 +190,7 @@
           <td>{{ item.license_sales }}</td>
           <td>{{ item.indication }}</td>
           <td>{{ item.year }}</td>
-          <td>{{ item.yearly_quarters }}</td>
+          <td>{{ item.quarter }}</td>
           <td>{{ item.period_start }}</td>
           <td>{{ item.period_end }}</td>
           <td>{{ item.information_type }}</td>

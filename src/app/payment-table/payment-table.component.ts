@@ -213,115 +213,115 @@ fetchAnnualRevenues(): void {
 }
 plotData(): void {
   const dataCopy = [...this.filteredDataDefined];
+  console.log('Initial data:', dataCopy);
 
-  const yearPaymentsMap = new Map<number, { payment_amount: number, type: string }[]>();
+  const yearPaymentsMap = new Map<number, number>();
+  const yearRevenuesMap = new Map<number, number>();
 
+  // Process payment data
   dataCopy.forEach(item => {
-    if (item.payment_type != null) {
-      const existingRecords = yearPaymentsMap.get(item.year) || [];
-      const existingRecord = existingRecords.find(record => record.payment_amount === item.payment_amount);
+    if (item.year != null) {
+      const year = typeof item.year === 'number' ? item.year : parseInt(item.year, 10);
+      if (!isNaN(year)) {
+        let value: number | undefined;
 
-      if (!existingRecord) {
-        existingRecords.push({ payment_amount: item.payment_amount, type: item.payment_type });
-      } else if (item.payment_type === "Total revenue recognition") {
-        existingRecords.splice(existingRecords.indexOf(existingRecord), 1, { payment_amount: item.payment_amount, type: item.payment_type });
+        if (item.eq_type === 'TPY' && typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
+          value = item.payment_amount;
+        } else if (item.adv_eq_type_result === 'TPY' && typeof item.results === 'number' && !isNaN(item.results)) {
+          value = item.results;
+        }
+
+        if (value !== undefined) {
+          yearPaymentsMap.set(year, value);
+        }
       }
-
-      yearPaymentsMap.set(item.year, existingRecords);
     }
   });
 
-  if (this.annualRevenues) {
-    this.annualRevenues.forEach(revenue => {
-      const existingRecords = yearPaymentsMap.get(revenue.year) || [];
-      const existingRecord = existingRecords.find(record => record.payment_amount === revenue.totalRevenue);
-
-      if (!existingRecord) {
-        existingRecords.push({ payment_amount: revenue.totalRevenue, type: "Total Revenues" });
-      }
-
-      yearPaymentsMap.set(revenue.year, existingRecords);
-    });
-  }
-
-  let traces: any[] = [];
-  const paymentTypeColors: Map<string, string> = new Map();
-
-  yearPaymentsMap.forEach((records, year) => {
-    records.forEach(record => {
-      const type = record.type || "Unknown";
-
-      let color: string;
-      if (!paymentTypeColors.has(type)) {
-        color = this.generateRandomColor();
-        paymentTypeColors.set(type, color);
-      } else {
-        color = paymentTypeColors.get(type)!;
-      }
-
-      const existingTrace = traces.find(trace => trace.name === type);
-      if (!existingTrace) {
-        const trace = {
-          x: [year],
-          y: [record.payment_amount],
-          type: 'bar',
-          name: type,
-          marker: {
-            color: type === "Total Revenues" ? 'rgba(169, 169, 169, 0.7)' : color
-          },
-          text: `Year: ${year}, Payment: ${record.payment_amount}, Type: ${type}`,
-          hoverinfo: 'text',
-          showlegend: type !== "Total Revenues"
-        };
-
-        traces.push(trace);
-      } else {
-        // Update existing trace with new data
-        existingTrace.x.push(year);
-        existingTrace.y.push(record.payment_amount);
-      }
-    });
+  // Process annual revenue data
+  this.annualRevenues.forEach(revenue => {
+    if (revenue.year && typeof revenue.total_revenue === 'number' && !isNaN(revenue.total_revenue)) {
+      yearRevenuesMap.set(revenue.year, revenue.total_revenue);
+    }
   });
 
-  // Sort traces by the payment amount of the first year in descending order
-  traces.sort((a, b) => Math.max(...b.y) - Math.max(...a.y));
+  // Combine years from both datasets
+  const allYears = new Set([...yearPaymentsMap.keys(), ...yearRevenuesMap.keys()]);
+  const sortedYears = Array.from(allYears).sort((a, b) => a - b);
+
+  const payments: (number | null)[] = [];
+  const revenues: (number | null)[] = [];
+  const hoverTexts: string[] = [];
+
+  sortedYears.forEach(year => {
+    const payment = yearPaymentsMap.get(year) ?? null;
+    const revenue = yearRevenuesMap.get(year) ?? null;
+
+    payments.push(payment);
+    revenues.push(revenue);
+
+    let hoverText = `Year: ${year}`;
+    if (payment !== null) hoverText += `<br>Payment: ${this.formatNumber(payment)}`;
+    if (revenue !== null) hoverText += `<br>Total Revenue: ${this.formatNumber(revenue)}`;
+    hoverTexts.push(hoverText);
+  });
+
+
+  if (sortedYears.length === 0) {
+    console.error('No valid data to plot');
+    return;
+  }
+
+  const revenueTrace = {
+    x: sortedYears,
+    y: revenues,
+    type: 'bar',
+    name: 'Total Revenue',
+    marker: {
+      color: 'rgba(200, 200, 200, 0.7)'  // Gray color for background bars
+    },
+    hoverinfo: 'none'
+  };
+
+  const paymentTrace = {
+    x: sortedYears,
+    y: payments,
+    type: 'bar',
+    name: 'Payment (TPY)',
+    marker: {
+      color: 'rgba(0, 123, 255, 0.8)'  // Blue color for foreground bars
+    },
+    text: hoverTexts,
+    hoverinfo: 'text'
+  };
 
   const layout = {
     height: 600,
     autosize: true,
-    title: 'Payment Amounts Over Years',
-    xaxis: { title: 'Year' },
+    title: 'TPY Payments vs Total Revenue Over Years',
+    xaxis: {
+      title: 'Year',
+      type: 'category'  // This ensures all years are shown, even if not consecutive
+    },
     yaxis: {
-      title: 'Payment Amount (in thousands)',
+      title: 'Total payments (in thousands)',
       tickformat: ',d',
       type: 'linear',
-      rangemode: 'tozero',
-      range: [0, Math.ceil(Math.max(...traces.map(trace => Math.max(...trace.y))) / 10000) * 10000]
+      rangemode: 'tozero'
     },
     barmode: 'overlay',
+    legend: {
+      orientation: 'h',
+      y: 1.1
+    }
   };
 
-  Plotly.newPlot('myDiv', traces, layout);
+  Plotly.newPlot('myDiv', [revenueTrace, paymentTrace], layout);
 }
 
-generateRandomColor(): string {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
+private formatNumber(value: number): string {
+  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
-
-
-
-
-
-
-
-
-
-
 
   confirmAction(message: string, action: () => void): void {
     const confirmDialog = confirm(message);

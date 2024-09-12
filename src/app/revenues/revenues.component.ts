@@ -9,12 +9,12 @@ interface AnnualRevenue {
   id: number;
   licensor: string;
   year: number;
-  totalRevenue: number;
-  licensingRevenue: number;
-  recurringRevenue: number;
-  fixedFee: number;
-  perUnit: number;
-  pastSales: number;
+  total_revenue: number;
+  licensing_revenue: number;
+  recurring_revenue: number;
+  fixed_fee: number;
+  per_unit: number;
+  past_sales: number;
 }
 
 @Component({
@@ -92,7 +92,7 @@ export class RevenuesComponent implements OnInit {
     filteredRevenues.forEach(item => {
         const year = item.year;
         const company = item.licensor;
-        const licensing_revenue = item.licensingRevenue;
+        const licensing_revenue = item.licensing_revenue;
 
         if (!companyYearRevenueMap.has(company)) {
             companyYearRevenueMap.set(company, new Map());
