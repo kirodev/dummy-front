@@ -407,7 +407,6 @@ export class SalesComponent implements OnInit {
       },
       yaxis: {
         title: 'Sales Amount',
-        tickformat: '.1f',
         type: 'linear',
         rangemode: 'tozero'
       },
