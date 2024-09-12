@@ -345,30 +345,36 @@ export class SalesComponent implements OnInit {
         const key = `${item.years}|${item.quarters}`;
         let data = salesMap.get(key);
         if (!data) {
-          data = { total: item.total, companies: new Map<string, number>() };
+          data = { total: Number(item.total), companies: new Map<string, number>() };
           salesMap.set(key, data);
         } else {
           // Update total if it's larger (in case of inconsistent data)
-          data.total = Math.max(data.total, item.total);
+          data.total = Math.max(data.total, Number(item.total));
         }
-        data.companies.set(item.company, item.sales);
+        data.companies.set(item.company, Number(item.sales));
       }
     });
 
     const xValues = Array.from(salesMap.keys()).sort();
     const companies = Array.from(new Set(this.salesList.map(item => item.company)));
 
-    // Create company traces
-    const companyTraces: Partial<Plotly.PlotData>[] = companies.map(company => ({
-      x: xValues,
-      y: xValues.map(key => salesMap.get(key)?.companies.get(company) || 0),
-      type: 'bar',
-      name: company,
-      marker: { color: this.generateRandomColor() },
-      hoverinfo: 'y+name'
-    }));
+    const traces: Partial<Plotly.PlotData>[] = [];
 
-    // Calculate "Others" as total minus sum of all company sales
+    // Create company traces
+    companies.forEach(company => {
+      const yValues = xValues.map(key => salesMap.get(key)?.companies.get(company) || 0);
+      traces.push({
+        x: xValues,
+        y: yValues,
+        type: 'bar',
+        name: company,
+        marker: { color: this.generateRandomColor() },
+        hoverinfo: 'y+name',
+        hovertemplate: '%{y:.1f}<extra></extra>'
+      });
+    });
+
+    // Calculate and add "Others" trace
     const othersTrace: Partial<Plotly.PlotData> = {
       x: xValues,
       y: xValues.map(key => {
@@ -382,77 +388,68 @@ export class SalesComponent implements OnInit {
       type: 'bar',
       name: 'Others',
       marker: { color: 'lightgrey' },
-      hoverinfo: 'y+name'
+      hoverinfo: 'y+name',
+      hovertemplate: '%{y:.1f}<extra></extra>'
     };
-
-    // Combine traces with "Others" at the end
-    const data = [...companyTraces, othersTrace];
+    traces.push(othersTrace);
 
     const layout: Partial<Plotly.Layout> = {
+      height: 600,
+      autosize: true,
       title: 'Comparison of Sales and Others',
       barmode: 'stack',
-      xaxis: { title: 'Year and Quarter' },
-      yaxis: { title: 'Sales Amount' },
-      legend: { traceorder: 'normal' },
-      height: 600,
-      autosize: true
+      xaxis: {
+        title: 'Year and Quarter',
+        tickangle: -45,
+        tickmode: 'array',
+        tickvals: xValues,
+        ticktext: xValues
+      },
+      yaxis: {
+        title: 'Sales Amount',
+        tickformat: '.1f',
+        type: 'linear',
+        rangemode: 'tozero'
+      },
+      legend: {
+        traceorder: 'normal'
+      }
     };
 
-    Plotly.newPlot('comparisonDiv', data, layout).then(() => {
-      console.log('Comparison graph plotted successfully');
+    // Wait for Plotly to be loaded
+    const interval = setInterval(() => {
+      if (window['Plotly']) {
+        clearInterval(interval);
+        Plotly.newPlot('comparisonDiv', traces, layout).then(() => {
+          console.log('Comparison graph plotted successfully');
 
-      // Keep track of hidden companies
-      const hiddenCompanies = new Set<string>();
-      let isOthersHidden = false;
+          comparisonDiv.on('plotly_restyle', () => {
+            const updatedTraces = comparisonDiv.data;
+            const othersTrace = updatedTraces[updatedTraces.length - 1];
 
-      comparisonDiv.on('plotly_legendclick', (data: any) => {
-        const clickedTraceIndex = data.curveNumber;
-        const clickedTrace = data.data[clickedTraceIndex];
-        const othersTraceIndex = data.data.length - 1;
-        const othersTrace = data.data[othersTraceIndex];
+            othersTrace.y = xValues.map((key, index) => {
+              const periodData = salesMap.get(key);
+              if (periodData) {
+                let visibleSum = 0;
+                updatedTraces.forEach((trace: any, traceIndex: number) => {
+                  if (traceIndex < updatedTraces.length - 1 && trace.visible !== 'legendonly') {
+                    visibleSum += trace.y[index] || 0;
+                  }
+                });
+                return Math.max(0, periodData.total - visibleSum);
+              }
+              return 0;
+            });
 
-        if (clickedTraceIndex === othersTraceIndex) {
-          // Toggling the "Others" trace
-          isOthersHidden = !isOthersHidden;
-          othersTrace.visible = isOthersHidden ? 'legendonly' : true;
-        } else {
-          const clickedCompany = companies[clickedTraceIndex];
-          if (hiddenCompanies.has(clickedCompany)) {
-            // Showing the trace again
-            hiddenCompanies.delete(clickedCompany);
-          } else {
-            // Hiding the trace
-            hiddenCompanies.add(clickedCompany);
-          }
-
-          // Update visibility of the clicked trace
-          clickedTrace.visible = hiddenCompanies.has(clickedCompany) ? 'legendonly' : true;
-
-          // Recalculate "Others" based on visible traces
-          othersTrace.y = xValues.map(key => {
-            const data = salesMap.get(key);
-            if (data) {
-              let visibleSum = 0;
-              data.companies.forEach((sales, company) => {
-                if (!hiddenCompanies.has(company)) {
-                  visibleSum += sales;
-                }
-              });
-              return Math.max(0, data.total - visibleSum);
-            }
-            return 0;
+            Plotly.redraw('comparisonDiv');
           });
-        }
+        }).catch((error: any) => {
+          console.error('Error plotting comparison graph:', error);
+        });
+      }
+    }, 100);
+}
 
-        Plotly.redraw('comparisonDiv');
-
-        // Prevent default legend click behavior
-        return false;
-      });
-    }).catch((error: any) => {
-      console.error('Error plotting comparison graph:', error);
-    });
-  }
   showPopup(infoText: string): void {
     this.popupText = infoText;
     this.isPopupVisible = true;
