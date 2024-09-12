@@ -10,44 +10,34 @@ public class AnnualRevenues {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "licensor")
     private String licensor;
-    
-    @Column(name = "year")
     private Integer year;
+    private Long total_revenue;
+    private Long licensing_revenue;
+    private Long recurring_revenue;
+    private Long fixed_fee;
 
-    @Column(name = "total_revenue")
-    private Long totalRevenue;
+    private Long per_unit;
 
-    @Column(name = "licensing_revenue")
-    private Long licensingRevenue;
-
-    @Column(name = "recurring_revenue")
-    private Long recurringRevenue;
-
-    @Column(name = "fixed_fee")
-    private Long fixedFee;
-
-    @Column(name = "per_unit")
-    private Long perUnit;
-
-    @Column(name = "past_sales")
-    private Long pastSales;
+    private Long past_sales;
 
 
     public AnnualRevenues() {
 
     }
-    public AnnualRevenues(Integer id, String licensor, Integer year, Long totalRevenue, Long licensingRevenue, Long recurringRevenue, Long fixedFee, Long perUnit, Long pastSales) {
+
+
+    public AnnualRevenues(Integer id, String licensor, Integer year, Long total_revenue, Long licensing_revenue,
+            Long recurring_revenue, Long fixed_fee, Long per_unit, Long past_sales) {
         this.id = id;
         this.licensor = licensor;
         this.year = year;
-        this.totalRevenue = totalRevenue;
-        this.licensingRevenue = licensingRevenue;
-        this.recurringRevenue = recurringRevenue;
-        this.fixedFee = fixedFee;
-        this.perUnit = perUnit;
-        this.pastSales = pastSales;
+        this.total_revenue = total_revenue;
+        this.licensing_revenue = licensing_revenue;
+        this.recurring_revenue = recurring_revenue;
+        this.fixed_fee = fixed_fee;
+        this.per_unit = per_unit;
+        this.past_sales = past_sales;
     }
 
 
@@ -55,72 +45,89 @@ public class AnnualRevenues {
         return id;
     }
 
+
     public void setId(Integer id) {
         this.id = id;
     }
+
 
     public String getLicensor() {
         return licensor;
     }
 
+
     public void setLicensor(String licensor) {
         this.licensor = licensor;
     }
+
 
     public Integer getYear() {
         return year;
     }
 
+
     public void setYear(Integer year) {
         this.year = year;
     }
 
-    public Long getTotalRevenue() {
-        return totalRevenue;
+
+    public Long getTotal_revenue() {
+        return total_revenue;
     }
 
-    public void setTotalRevenue(Long totalRevenue) {
-        this.totalRevenue = totalRevenue;
+
+    public void setTotal_revenue(Long total_revenue) {
+        this.total_revenue = total_revenue;
     }
 
-    public Long getLicensingRevenue() {
-        return licensingRevenue;
+
+    public Long getLicensing_revenue() {
+        return licensing_revenue;
     }
 
-    public void setLicensingRevenue(Long licensingRevenue) {
-        this.licensingRevenue = licensingRevenue;
+
+    public void setLicensing_revenue(Long licensing_revenue) {
+        this.licensing_revenue = licensing_revenue;
     }
 
-    public Long getRecurringRevenue() {
-        return recurringRevenue;
+
+    public Long getRecurring_revenue() {
+        return recurring_revenue;
     }
 
-    public void setRecurringRevenue(Long recurringRevenue) {
-        this.recurringRevenue = recurringRevenue;
+
+    public void setRecurring_revenue(Long recurring_revenue) {
+        this.recurring_revenue = recurring_revenue;
     }
 
-    public Long getFixedFee() {
-        return fixedFee;
+
+    public Long getFixed_fee() {
+        return fixed_fee;
     }
 
-    public void setFixedFee(Long fixedFee) {
-        this.fixedFee = fixedFee;
+
+    public void setFixed_fee(Long fixed_fee) {
+        this.fixed_fee = fixed_fee;
     }
 
-    public Long getPerUnit() {
-        return perUnit;
+
+    public Long getPer_unit() {
+        return per_unit;
     }
 
-    public void setPerUnit(Long perUnit) {
-        this.perUnit = perUnit;
+
+    public void setPer_unit(Long per_unit) {
+        this.per_unit = per_unit;
     }
 
-    public Long getPastSales() {
-        return pastSales;
+
+    public Long getPast_sales() {
+        return past_sales;
     }
 
-    public void setPastSales(Long pastSales) {
-        this.pastSales = pastSales;
+
+    public void setPast_sales(Long past_sales) {
+        this.past_sales = past_sales;
     }
 
 }

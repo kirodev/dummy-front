@@ -42,12 +42,12 @@ public class AnnualRevenuesController {
             AnnualRevenues updatedAnnualRevenues = annualRevenue.get();
             updatedAnnualRevenues.setLicensor(annualRevenueDetails.getLicensor());
             updatedAnnualRevenues.setYear(annualRevenueDetails.getYear());
-            updatedAnnualRevenues.setTotalRevenue(annualRevenueDetails.getTotalRevenue());
-            updatedAnnualRevenues.setLicensingRevenue(annualRevenueDetails.getLicensingRevenue());
-            updatedAnnualRevenues.setRecurringRevenue(annualRevenueDetails.getRecurringRevenue());
-            updatedAnnualRevenues.setFixedFee(annualRevenueDetails.getFixedFee());
-            updatedAnnualRevenues.setPerUnit(annualRevenueDetails.getPerUnit());
-            updatedAnnualRevenues.setPastSales(annualRevenueDetails.getPastSales());
+            updatedAnnualRevenues.setTotal_revenue(annualRevenueDetails.getTotal_revenue());
+            updatedAnnualRevenues.setLicensing_revenue(annualRevenueDetails.getLicensing_revenue());
+            updatedAnnualRevenues.setRecurring_revenue(annualRevenueDetails.getRecurring_revenue());
+            updatedAnnualRevenues.setFixed_fee(annualRevenueDetails.getFixed_fee());
+            updatedAnnualRevenues.setPer_unit(annualRevenueDetails.getPer_unit());
+            updatedAnnualRevenues.setPast_sales(annualRevenueDetails.getPast_sales());
             return ResponseEntity.ok(annualRevenuesRepository.save(updatedAnnualRevenues));
         } else {
             return ResponseEntity.notFound().build();

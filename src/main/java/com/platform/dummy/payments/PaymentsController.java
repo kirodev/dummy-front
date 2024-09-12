@@ -149,4 +149,26 @@ public class PaymentsController {
         }
     }
 
+    
+    @PutMapping("/update-results")
+    public ResponseEntity<Void> updatePaymentResults(@RequestBody List<Payments> payments) {
+        try {
+            payments.forEach(payment -> {
+                Optional<Payments> existingPaymentOpt = paymentsRepository.findById(payment.getId());
+                if (existingPaymentOpt.isPresent()) {
+                    Payments existingPayment = existingPaymentOpt.get();
+                    existingPayment.setResults(payment.getResults());
+                    paymentsRepository.save(existingPayment);
+                } else {
+                    // Log that a payment wasn't found
+                    System.out.println("Payment not found with id: " + payment.getId());
+                }
+            });
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            // Log the exception
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }
