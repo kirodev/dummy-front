@@ -223,35 +223,36 @@ plotData(): void {
   const yearPaymentsMap = new Map<number, { value: number, isResult: boolean, rowData: any }>();
   const yearRevenuesMap = new Map<number, number>();
 
-  // Process payment data
+  // First pass: Process rows where eq_type is 'TRY' and payment_amount exists
   dataCopy.forEach(item => {
-    if (item.year != null) {
+    if (item.year != null && item.eq_type === 'TRY' && typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
       const year = typeof item.year === 'number' ? item.year : parseInt(item.year, 10);
       if (!isNaN(year)) {
+        yearPaymentsMap.set(year, { value: item.payment_amount, isResult: false, rowData: item });
+      }
+    }
+  });
+
+  // Second pass: Process TPY rows if not already set in first pass
+  dataCopy.forEach(item => {
+    if (item.year != null && (item.adv_eq_type === 'TPY' || item.eq_type === 'TPY')) {
+      const year = typeof item.year === 'number' ? item.year : parseInt(item.year, 10);
+      if (!isNaN(year) && !yearPaymentsMap.has(year)) {
         let value: number | undefined;
         let isResult = false;
 
         if (typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
-          // Use payment_amount if it's available
           value = item.payment_amount;
-        } else if (item.adv_eq_type === 'TPY' && typeof item.results === 'number' && !isNaN(item.results)) {
-          // Use results only if payment_amount is missing, adv_eq_type is 'TPY', and results is a valid number
+        } else if (typeof item.results === 'number' && !isNaN(item.results)) {
           value = item.results;
+          isResult = true;
+        } else if (typeof item.eq_result === 'number' && !isNaN(item.eq_result)) {
+          value = item.eq_result;
           isResult = true;
         }
 
         if (value !== undefined) {
-          if (yearPaymentsMap.has(year)) {
-            const existingData = yearPaymentsMap.get(year)!;
-            // If we already have a payment_amount, keep it. Otherwise, update if we now have a payment_amount
-            if (!existingData.isResult || !isResult) {
-              existingData.value = value;
-              existingData.isResult = isResult;
-              existingData.rowData = item;
-            }
-          } else {
-            yearPaymentsMap.set(year, { value, isResult, rowData: item });
-          }
+          yearPaymentsMap.set(year, { value, isResult, rowData: item });
         }
       }
     }
@@ -287,18 +288,17 @@ plotData(): void {
         results.push(null);
       }
       fullRowData.push(paymentData.rowData);
+
+      let hoverText = `Year: ${year}<br>`;
+      hoverText += `${paymentData.isResult ? 'Result' : 'Payment'}: ${this.formatNumber(paymentData.value)}`;
+      if (revenue !== null) hoverText += `<br>Total Revenue: ${this.formatNumber(revenue)}`;
+      hoverTexts.push(hoverText);
     } else {
       payments.push(null);
       results.push(null);
+      hoverTexts.push(`Year: ${year}`);
     }
     revenues.push(revenue);
-
-    let hoverText = `Year: ${year}<br>`;
-    if (paymentData) {
-      hoverText += `${paymentData.isResult ? 'Result' : 'Payment'}: ${this.formatNumber(paymentData.value)}`;
-    }
-    if (revenue !== null) hoverText += `<br>Total Revenue: ${this.formatNumber(revenue)}`;
-    hoverTexts.push(hoverText);
   });
 
   console.log('Full Row Data:', fullRowData);
@@ -323,7 +323,7 @@ plotData(): void {
     x: sortedYears,
     y: payments,
     type: 'bar',
-    name: 'Payment (TPY)',
+    name: 'Payment (TRY/TPY)',
     marker: {
       color: 'rgba(0, 123, 255, 0.8)'  // Blue color for payment bars
     },
@@ -348,7 +348,7 @@ plotData(): void {
   const layout = {
     height: 600,
     autosize: true,
-    title: 'TPY Payments/Results vs Total Revenue Over Years',
+    title: 'TRY/TPY Payments/Results vs Total Revenue Over Years',
     xaxis: {
       title: 'Year',
       type: 'category'  // This ensures all years are shown, even if not consecutive
