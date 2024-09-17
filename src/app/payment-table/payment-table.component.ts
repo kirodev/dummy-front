@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ExamplePdfViewerComponent } from '../example-pdf-viewer/example-pdf-viewer.component';
 import { PaymentConnection } from '../payment-connection.service';
 import { FeedbackPopupComponent } from '../feedback-popup/feedback-popup.component';
-import { MatDialog } from '@angular/material/dialog'; // Import MatDialog for opening dialog
+import { MatDialog } from '@angular/material/dialog';
 import { LicenseTableComponent } from '../license-table-component/license-table-component.component';
 import { ConnectionService } from '../connection.service';
 import { Observable, throwError, mapTo } from 'rxjs';
@@ -15,7 +15,7 @@ declare var Plotly: any;
   templateUrl: './payment-table.component.html',
   styleUrls: ['./payment-table.component.css']
 })
-export class PaymentTableComponent {
+export class PaymentTableComponent implements OnInit {
   @ViewChild(ExamplePdfViewerComponent, { static: false }) pdfViewer!: ExamplePdfViewerComponent;
   @Input() pdfSrc: string = '';
   paymentData: any[] = [];
@@ -32,11 +32,16 @@ export class PaymentTableComponent {
   uniqueLicenses: any[] = [];
   licensesMappingIds: string[] = [];
   filteredMappingIds: string[] = [];
+  tableData: any[] = [];
+  tableColumns: string[] = [];
 
-
-
-  constructor(private paymentConnection: PaymentConnection,  private licenseTableComponent: LicenseTableComponent
-,    private http: HttpClient, private dialog: MatDialog , private connectionservice : ConnectionService) { }
+  constructor(
+    private paymentConnection: PaymentConnection,
+    private licenseTableComponent: LicenseTableComponent,
+    private http: HttpClient,
+    private dialog: MatDialog,
+    private connectionservice: ConnectionService
+  ) { }
 
   ngOnInit(): void {
     this.licensorName = localStorage.getItem('licensorName') || 'Licensor Name';
@@ -215,7 +220,7 @@ plotData(): void {
   const dataCopy = [...this.filteredDataDefined];
   console.log('Initial data:', dataCopy);
 
-  const yearPaymentsMap = new Map<number, number>();
+  const yearPaymentsMap = new Map<number, { value: number, isResult: boolean, rowData: any }>();
   const yearRevenuesMap = new Map<number, number>();
 
   // Process payment data
@@ -224,15 +229,29 @@ plotData(): void {
       const year = typeof item.year === 'number' ? item.year : parseInt(item.year, 10);
       if (!isNaN(year)) {
         let value: number | undefined;
+        let isResult = false;
 
-        if (item.eq_type === 'TPY' && typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
+        if (typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
+          // Use payment_amount if it's available
           value = item.payment_amount;
-        } else if (item.adv_eq_type_result === 'TPY' && typeof item.results === 'number' && !isNaN(item.results)) {
+        } else if (item.adv_eq_type === 'TPY' && typeof item.results === 'number' && !isNaN(item.results)) {
+          // Use results only if payment_amount is missing, adv_eq_type is 'TPY', and results is a valid number
           value = item.results;
+          isResult = true;
         }
 
         if (value !== undefined) {
-          yearPaymentsMap.set(year, value);
+          if (yearPaymentsMap.has(year)) {
+            const existingData = yearPaymentsMap.get(year)!;
+            // If we already have a payment_amount, keep it. Otherwise, update if we now have a payment_amount
+            if (!existingData.isResult || !isResult) {
+              existingData.value = value;
+              existingData.isResult = isResult;
+              existingData.rowData = item;
+            }
+          } else {
+            yearPaymentsMap.set(year, { value, isResult, rowData: item });
+          }
         }
       }
     }
@@ -250,22 +269,39 @@ plotData(): void {
   const sortedYears = Array.from(allYears).sort((a, b) => a - b);
 
   const payments: (number | null)[] = [];
+  const results: (number | null)[] = [];
   const revenues: (number | null)[] = [];
   const hoverTexts: string[] = [];
+  const fullRowData: any[] = [];
 
   sortedYears.forEach(year => {
-    const payment = yearPaymentsMap.get(year) ?? null;
+    const paymentData = yearPaymentsMap.get(year);
     const revenue = yearRevenuesMap.get(year) ?? null;
 
-    payments.push(payment);
+    if (paymentData) {
+      if (paymentData.isResult) {
+        payments.push(null);
+        results.push(paymentData.value);
+      } else {
+        payments.push(paymentData.value);
+        results.push(null);
+      }
+      fullRowData.push(paymentData.rowData);
+    } else {
+      payments.push(null);
+      results.push(null);
+    }
     revenues.push(revenue);
 
-    let hoverText = `Year: ${year}`;
-    if (payment !== null) hoverText += `<br>Payment: ${this.formatNumber(payment)}`;
+    let hoverText = `Year: ${year}<br>`;
+    if (paymentData) {
+      hoverText += `${paymentData.isResult ? 'Result' : 'Payment'}: ${this.formatNumber(paymentData.value)}`;
+    }
     if (revenue !== null) hoverText += `<br>Total Revenue: ${this.formatNumber(revenue)}`;
     hoverTexts.push(hoverText);
   });
 
+  console.log('Full Row Data:', fullRowData);
 
   if (sortedYears.length === 0) {
     console.error('No valid data to plot');
@@ -289,22 +325,36 @@ plotData(): void {
     type: 'bar',
     name: 'Payment (TPY)',
     marker: {
-      color: 'rgba(0, 123, 255, 0.8)'  // Blue color for foreground bars
+      color: 'rgba(0, 123, 255, 0.8)'  // Blue color for payment bars
     },
-    text: hoverTexts,
-    hoverinfo: 'text'
+    hoverinfo: 'text',
+    hovertext: hoverTexts,
+    showlegend: true
+  };
+
+  const resultTrace = {
+    x: sortedYears,
+    y: results,
+    type: 'bar',
+    name: 'Result (TPY)',
+    marker: {
+      color: 'rgba(255, 165, 0, 0.8)'  // Orange color for result bars
+    },
+    hoverinfo: 'text',
+    hovertext: hoverTexts,
+    showlegend: true
   };
 
   const layout = {
     height: 600,
     autosize: true,
-    title: 'TPY Payments vs Total Revenue Over Years',
+    title: 'TPY Payments/Results vs Total Revenue Over Years',
     xaxis: {
       title: 'Year',
       type: 'category'  // This ensures all years are shown, even if not consecutive
     },
     yaxis: {
-      title: 'Total payments (in thousands)',
+      title: 'Value',
       tickformat: ',d',
       type: 'linear',
       rangemode: 'tozero'
@@ -313,10 +363,26 @@ plotData(): void {
     legend: {
       orientation: 'h',
       y: 1.1
-    }
+    },
+    hovermode: 'closest'
   };
 
-  Plotly.newPlot('myDiv', [revenueTrace, paymentTrace], layout);
+  Plotly.newPlot('myDiv', [revenueTrace, paymentTrace, resultTrace], layout);
+
+  // After plotting, prepare the table data
+  this.prepareTableData(fullRowData);
+}
+private prepareTableData(data: any[]): void {
+  if (data.length === 0) {
+    console.log('No data to display in the table.');
+    return;
+  }
+
+  this.tableColumns = Object.keys(data[0]);
+  this.tableData = data;
+
+  console.log('Table Columns:', this.tableColumns);
+  console.log('Table Data:', this.tableData);
 }
 
 private formatNumber(value: number): string {
@@ -912,6 +978,16 @@ deleteMPMappingId(id: number): void {
       // Handle error appropriately, e.g., show an error message to the user
     }
   );
+}
+
+getPlotData(): any[] {
+  // Replace this logic with the actual condition for filtering plot-related rows
+  return this.tableData.filter(row => row.isUsedInPlot);
+  // Example condition: 'isUsedInPlot' should be true for rows used in the plot
+}
+isFloatOrDouble(value: any): boolean {
+  // Check if the value is a number and has a decimal point
+  return !isNaN(parseFloat(value)) && isFinite(value) && value % 1 !== 0;
 }
 
 
