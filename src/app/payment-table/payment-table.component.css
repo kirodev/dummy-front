@@ -345,7 +345,7 @@ td {
 }
 
 .details-container {
-  width: 100%;
+  width: auto;
   max-height: 200px; /* Adjust this value as needed */
   overflow-y: auto;
   border: 1px solid #ced4da;
@@ -391,4 +391,26 @@ table {
 
 .details-content {
   margin-top: 10px;
+}
+
+
+.details-content {
+  margin-top: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+td {
+  position: relative;
+}
+
+td .details-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
 }
