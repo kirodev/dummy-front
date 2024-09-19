@@ -34,6 +34,9 @@ export class PaymentTableComponent implements OnInit {
   filteredMappingIds: string[] = [];
   tableData: any[] = [];
   tableColumns: string[] = [];
+  groupedTableData: { [year: string]: { primary: any, secondary: any[] } } = {};
+  expandedYears: Set<string> = new Set();
+  showDetailsMap: Map<string, boolean> = new Map();
 
   constructor(
     private paymentConnection: PaymentConnection,
@@ -54,6 +57,8 @@ export class PaymentTableComponent implements OnInit {
     this.populateUniqueMappingIds();
     this.retrieveFilteredMappingIds();
     this.fetchAnnualRevenues();
+    this.prepareTableData();
+
     this.loadPlotlyScript().then(() => {
       console.log('Plotly.js script loaded successfully');
       this.plotData();
@@ -178,7 +183,6 @@ export class PaymentTableComponent implements OnInit {
   }
 
 
-
   hasDetailsForDynamicTitle(dynamicTitle: string): boolean {
     return this.paymentData.some(item => item.dynamicTitle === dynamicTitle);
   }
@@ -217,42 +221,33 @@ fetchAnnualRevenues(): void {
   );
 }
 plotData(): void {
-  const dataCopy = [...this.filteredDataDefined];
-  console.log('Initial data:', dataCopy);
-
   const yearPaymentsMap = new Map<number, { value: number, isResult: boolean, rowData: any }>();
   const yearRevenuesMap = new Map<number, number>();
 
-  // First pass: Process rows where eq_type is 'TRY' and payment_amount exists
-  dataCopy.forEach(item => {
-    if (item.year != null && item.eq_type === 'TRY' && typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
-      const year = typeof item.year === 'number' ? item.year : parseInt(item.year, 10);
-      if (!isNaN(year)) {
-        yearPaymentsMap.set(year, { value: item.payment_amount, isResult: false, rowData: item });
-      }
-    }
-  });
+  // Process grouped data
+  Object.entries(this.groupedTableData).forEach(([year, data]) => {
+    if (data.primary) {
+      const numericYear = parseInt(year, 10);
+      if (!isNaN(numericYear)) {
+        if (data.primary.eq_type === 'TRY' && typeof data.primary.payment_amount === 'number' && !isNaN(data.primary.payment_amount)) {
+          yearPaymentsMap.set(numericYear, { value: data.primary.payment_amount, isResult: false, rowData: data.primary });
+        } else if ((data.primary.eq_type === 'TPY' || data.primary.adv_eq_type === 'TPY')) {
+          let value: number | undefined;
+          let isResult = false;
 
-  // Second pass: Process TPY rows if not already set in first pass
-  dataCopy.forEach(item => {
-    if (item.year != null && (item.adv_eq_type === 'TPY' || item.eq_type === 'TPY')) {
-      const year = typeof item.year === 'number' ? item.year : parseInt(item.year, 10);
-      if (!isNaN(year) && !yearPaymentsMap.has(year)) {
-        let value: number | undefined;
-        let isResult = false;
+          if (typeof data.primary.payment_amount === 'number' && !isNaN(data.primary.payment_amount)) {
+            value = data.primary.payment_amount;
+          } else if (typeof data.primary.results === 'number' && !isNaN(data.primary.results)) {
+            value = data.primary.results;
+            isResult = true;
+          } else if (typeof data.primary.eq_result === 'number' && !isNaN(data.primary.eq_result)) {
+            value = data.primary.eq_result;
+            isResult = true;
+          }
 
-        if (typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
-          value = item.payment_amount;
-        } else if (typeof item.results === 'number' && !isNaN(item.results)) {
-          value = item.results;
-          isResult = true;
-        } else if (typeof item.eq_result === 'number' && !isNaN(item.eq_result)) {
-          value = item.eq_result;
-          isResult = true;
-        }
-
-        if (value !== undefined) {
-          yearPaymentsMap.set(year, { value, isResult, rowData: item });
+          if (value !== undefined) {
+            yearPaymentsMap.set(numericYear, { value, isResult, rowData: data.primary });
+          }
         }
       }
     }
@@ -273,7 +268,6 @@ plotData(): void {
   const results: (number | null)[] = [];
   const revenues: (number | null)[] = [];
   const hoverTexts: string[] = [];
-  const fullRowData: any[] = [];
 
   sortedYears.forEach(year => {
     const paymentData = yearPaymentsMap.get(year);
@@ -287,7 +281,6 @@ plotData(): void {
         payments.push(paymentData.value);
         results.push(null);
       }
-      fullRowData.push(paymentData.rowData);
 
       let hoverText = `Year: ${year}<br>`;
       hoverText += `${paymentData.isResult ? 'Result' : 'Payment'}: ${this.formatNumber(paymentData.value)}`;
@@ -301,8 +294,6 @@ plotData(): void {
     revenues.push(revenue);
   });
 
-  console.log('Full Row Data:', fullRowData);
-
   if (sortedYears.length === 0) {
     console.error('No valid data to plot');
     return;
@@ -314,7 +305,7 @@ plotData(): void {
     type: 'bar',
     name: 'Total Revenue',
     marker: {
-      color: 'rgba(200, 200, 200, 0.7)'  // Gray color for background bars
+      color: 'rgba(200, 200, 200, 0.7)'
     },
     hoverinfo: 'none'
   };
@@ -325,7 +316,7 @@ plotData(): void {
     type: 'bar',
     name: 'Payment (TRY/TPY)',
     marker: {
-      color: 'rgba(0, 123, 255, 0.8)'  // Blue color for payment bars
+      color: 'rgba(0, 123, 255, 0.8)'
     },
     hoverinfo: 'text',
     hovertext: hoverTexts,
@@ -338,7 +329,7 @@ plotData(): void {
     type: 'bar',
     name: 'Result (TPY)',
     marker: {
-      color: 'rgba(255, 165, 0, 0.8)'  // Orange color for result bars
+      color: 'rgba(255, 165, 0, 0.8)'
     },
     hoverinfo: 'text',
     hovertext: hoverTexts,
@@ -351,7 +342,7 @@ plotData(): void {
     title: 'TRY/TPY Payments/Results vs Total Revenue Over Years',
     xaxis: {
       title: 'Year',
-      type: 'category'  // This ensures all years are shown, even if not consecutive
+      type: 'category'
     },
     yaxis: {
       title: 'Value',
@@ -368,25 +359,6 @@ plotData(): void {
   };
 
   Plotly.newPlot('myDiv', [revenueTrace, paymentTrace, resultTrace], layout);
-
-  // After plotting, prepare the table data
-  this.prepareTableData(fullRowData);
-}
-private prepareTableData(data: any[]): void {
-  if (data.length === 0) {
-    console.log('No data to display in the table.');
-    return;
-  }
-
-  this.tableColumns = Object.keys(data[0]);
-  this.tableData = data;
-
-  console.log('Table Columns:', this.tableColumns);
-  console.log('Table Data:', this.tableData);
-}
-
-private formatNumber(value: number): string {
-  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
   confirmAction(message: string, action: () => void): void {
@@ -600,8 +572,17 @@ private formatNumber(value: number): string {
     item.editing = false;
   }
 
+  toggleDetailVisibility(key: string): void {
+    const currentState = this.showDetailsMap.get(key) || false;
+    this.showDetailsMap.set(key, !currentState);
+
+  }
   toggleDetailsVisibility(item: any): void {
     item.showDetails = !item.showDetails;
+  }
+
+  isDetailsVisible(key: string): boolean {
+    return this.showDetailsMap.get(key) || false;
   }
 
   submitFeedbackToDatabase(item: any, feedback: any): void {
@@ -609,8 +590,15 @@ private formatNumber(value: number): string {
     console.log('Submitting feedback to the database:', feedback);
     // Example: this.paymentConnection.submitFeedback(item.id, feedback).subscribe(...);
   }
-
-
+  getTableColumns(): string[] {
+    if (this.groupedTableData) {
+      const firstYear = Object.keys(this.groupedTableData)[0];
+      if (firstYear && this.groupedTableData[firstYear].primary) {
+        return Object.keys(this.groupedTableData[firstYear].primary).filter(col => col !== 'showDetails');
+      }
+    }
+    return [];
+  }
 
   updateMultiplePayments(item: any, comment: string): void {
     // Check if licenseeName already exists in the licensee string
@@ -991,4 +979,96 @@ isFloatOrDouble(value: any): boolean {
 }
 
 
+groupTableData(): void {
+  this.groupedTableData = {};
+  const usedYears = new Set<string>();
+
+  // First pass: identify TRY rows
+  this.paymentData.forEach(item => {
+    const year = item.year?.toString();
+    if (year && !usedYears.has(year) && this.isRowUsedInPlot(item) && item.eq_type === 'TRY') {
+      this.groupedTableData[year] = { primary: item, secondary: [] };
+      usedYears.add(year);
+    }
+  });
+
+  // Second pass: identify TPY rows and group remaining rows
+  this.paymentData.forEach(item => {
+    const year = item.year?.toString();
+    if (year) {
+      if (!this.groupedTableData[year]) {
+        this.groupedTableData[year] = { primary: null, secondary: [] };
+      }
+      if (!usedYears.has(year) && this.isRowUsedInPlot(item)) {
+        this.groupedTableData[year].primary = item;
+        usedYears.add(year);
+      } else if (item !== this.groupedTableData[year].primary) {
+        this.groupedTableData[year].secondary.push(item);
+      }
+    }
+  });
+
+  console.log('Grouped Table Data:', this.groupedTableData);
+}
+formatNumber(value: number): string {
+  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+prepareTableData(): void {
+  this.paymentConnection.getPayments().subscribe(
+    (data: any[]) => {
+      this.paymentData = data.filter(item => item.licensor === this.licensorName && item.licensee === this.licenseeName);
+      this.groupTableData();
+      this.plotData(); // Call plotData after preparing the table data
+    },
+    (error) => {
+      console.error('Error fetching payments data:', error);
+    }
+  );
+}
+
+isRowUsedInPlot(item: any): boolean {
+  // First, check if this is a 'TRY' row with a valid payment_amount
+  if (item.eq_type === 'TRY' && typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
+    return true;
+  }
+
+  // If not, check if it's a 'TPY' row (either in eq_type or adv_eq_type)
+  if (item.eq_type === 'TPY' || item.adv_eq_type === 'TPY') {
+    // For 'TPY' rows, prioritize payment_amount
+    if (typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
+      return true;
+    }
+    // If no payment_amount, check for valid results
+    if (typeof item.results === 'number' && !isNaN(item.results)) {
+      return true;
+    }
+    // If no results, check for valid eq_result
+    if (typeof item.eq_result === 'number' && !isNaN(item.eq_result)) {
+      return true;
+    }
+  }
+
+  // If none of the above conditions are met, this row was not used in the plot
+  return false;
+}
+
+toggleYearExpansion(year: string): void {
+  if (this.expandedYears.has(year)) {
+    this.expandedYears.delete(year);
+  } else {
+    this.expandedYears.add(year);
+  }
+}
+
+isYearExpanded(year: string): boolean {
+  return this.expandedYears.has(year);
+}
+
+getSecondaryRows(year: string): any[] {
+  return this.groupedTableData[year]?.secondary || [];
+}
+
+objectKeys(obj: any): string[] {
+  return Object.keys(obj);
+}
 }

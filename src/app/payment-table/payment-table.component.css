@@ -331,3 +331,29 @@ td {
   border-radius: 0 0 10px 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
+.year-group-header {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.primary-row {
+  background-color: #e6f3ff;
+}
+
+.table-secondary {
+  background-color: #f8f9fa;
+}
+
+.details-container {
+  width: 100%;
+  max-height: 200px; /* Adjust this value as needed */
+  overflow-y: auto;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.details-content {
+  padding: 8px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

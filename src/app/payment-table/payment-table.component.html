@@ -14,44 +14,82 @@
 <!-- Content will be rendered here based on the active route -->
 
   <div id='myDiv'></div>
-  <div *ngIf="tableData.length > 0">
+  <div *ngIf="groupedTableData">
     <h1>Plot data sources</h1>
-    <div class="table-responsive">
-      <table class="table table-striped table-hover">
-        <thead>
-          <tr>
-            <th *ngFor="let column of tableColumns">{{ column }}</th>
-            <th>Actions</th> <!-- Actions column for buttons -->
-          </tr>
-        </thead>
-        <tbody>
-          <ng-container *ngFor="let item of tableData">
+    <div *ngIf="groupedTableData">
+      <h1>Payment Data</h1>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
             <tr>
-              <td *ngFor="let column of tableColumns">
-                <!-- Check if the value is a float or double and format to one decimal place -->
-                <ng-container *ngIf="isFloatOrDouble(item[column]); else normalValue">
-                  {{ item[column] | number:'1.1-1' }}
-                </ng-container>
-                <ng-template #normalValue>
-                  {{ item[column] }}
-                </ng-template>
-              </td>
-              <td>
-                <!-- Action buttons for each row -->
-                <div *ngIf="!item.editing && item.showDetails">
-                  {{ item.details }}
-                </div>
-                <button (click)="toggleDetailsVisibility(item)">
-                  {{ item.showDetails ? 'Hide' : 'Show' }}
-                </button>
-                <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
-              </td>
+              <th>Additional Rows</th>
+              <th *ngFor="let column of getTableColumns()">{{ column }}</th>
+              <th>Actions</th>
             </tr>
-          </ng-container>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let year of objectKeys(groupedTableData)">
+              <!-- Primary row (used in plot) -->
+              <ng-container *ngIf="groupedTableData[year].primary">
+                <tr>
+                  <td>
+                    <button (click)="toggleYearExpansion(year)" class="btn btn-sm btn-info">
+                      {{ isYearExpanded(year) ? 'Hide' : 'Show' }} Additional
+                    </button>
+                  </td>
+                  <td *ngFor="let column of getTableColumns()">
+                    <ng-container *ngIf="isFloatOrDouble(groupedTableData[year].primary[column]); else normalValue">
+                      {{ groupedTableData[year].primary[column] | number:'1.1-1' }}
+                    </ng-container>
+                    <ng-template #normalValue>
+                      {{ groupedTableData[year].primary[column] }}
+                    </ng-template>
+                  </td>
+                  <td>
+                    <button (click)="toggleDetailVisibility(year + '_primary')" class="btn btn-sm btn-secondary mr-2">
+                      {{ isDetailsVisible(year + '_primary') ? 'Hide' : 'Show' }} Details
+                    </button>
+                    <button (click)="openPDFViewerPopup(groupedTableData[year].primary.directory_path, groupedTableData[year].primary.details)" class="btn btn-sm btn-primary">
+                      Open PDF
+                    </button>
+                    <div *ngIf="isDetailsVisible(year + '_primary')" class="details-content">
+                      {{ groupedTableData[year].primary.details }}
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+              <!-- Secondary rows (not used in plot) -->
+              <ng-container *ngIf="isYearExpanded(year)">
+                <ng-container *ngFor="let item of getSecondaryRows(year); let i = index">
+                  <tr class="table-secondary">
+                    <td></td> <!-- Empty cell for "Additional Rows" column -->
+                    <td *ngFor="let column of getTableColumns()">
+                      <ng-container *ngIf="isFloatOrDouble(item[column]); else normalValue">
+                        {{ item[column] | number:'1.1-1' }}
+                      </ng-container>
+                      <ng-template #normalValue>
+                        {{ item[column] }}
+                      </ng-template>
+                    </td>
+                    <td>
+                      <button (click)="toggleDetailVisibility(year + '_secondary_' + i)" class="btn btn-sm btn-secondary mr-2">
+                        {{ isDetailsVisible(year + '_secondary_' + i) ? 'Hide' : 'Show' }} Details
+                      </button>
+                      <button (click)="openPDFViewerPopup(item.directory_path, item.details)" class="btn btn-sm btn-primary">
+                        Open PDF
+                      </button>
+                      <div *ngIf="isDetailsVisible(year + '_secondary_' + i)" class="details-content">
+                        {{ item.details }}
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
+              </ng-container>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
 
 
