@@ -13,524 +13,548 @@
 
 <!-- Content will be rendered here based on the active route -->
 
-  <div id='myDiv'></div>
-  <div *ngIf="groupedTableData">
-    <h1>Plot data sources</h1>
-    <div *ngIf="groupedTableData">
-      <h1>Payment Data</h1>
-      <div class="table-responsive">
-        <table class="table table-striped table-hover">
-          <thead>
-            <tr>
-              <th>Additional Rows</th>
-              <th *ngFor="let column of getTableColumns()">{{ column }}</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <ng-container *ngFor="let year of objectKeys(groupedTableData)">
-              <!-- Primary row (used in plot) -->
-              <ng-container *ngIf="groupedTableData[year].primary">
-                <tr>
-                  <td>
-                    <button (click)="toggleYearExpansion(year)" class="btn btn-sm btn-info">
-                      {{ isYearExpanded(year) ? 'Hide' : 'Show' }} Additional
-                    </button>
-                  </td>
-                  <td *ngFor="let column of getTableColumns()">
-                    <ng-container *ngIf="isFloatOrDouble(groupedTableData[year].primary[column]); else normalValue">
-                      {{ groupedTableData[year].primary[column] | number:'1.1-1' }}
-                    </ng-container>
-                    <ng-template #normalValue>
-                      {{ groupedTableData[year].primary[column] }}
-                    </ng-template>
-                  </td>
-                  <td>
-                    <button (click)="toggleDetailVisibility(year + '_primary')" class="btn btn-sm btn-secondary mr-2">
-                      {{ isDetailsVisible(year + '_primary') ? 'Hide' : 'Show' }} Details
-                    </button>
-                    <button (click)="openPDFViewerPopup(groupedTableData[year].primary.directory_path, groupedTableData[year].primary.details)" class="btn btn-sm btn-primary">
-                      Open PDF
-                    </button>
-                    <div *ngIf="isDetailsVisible(year + '_primary')" class="details-content">
-                      {{ groupedTableData[year].primary.details }}
-                    </div>
-                  </td>
-                </tr>
-              </ng-container>
-              <!-- Secondary rows (not used in plot) -->
-              <ng-container *ngIf="isYearExpanded(year)">
-                <ng-container *ngFor="let item of getSecondaryRows(year); let i = index">
-                  <tr class="table-secondary">
-                    <td></td> <!-- Empty cell for "Additional Rows" column -->
-                    <td *ngFor="let column of getTableColumns()">
-                      <ng-container *ngIf="isFloatOrDouble(item[column]); else normalValue">
-                        {{ item[column] | number:'1.1-1' }}
-                      </ng-container>
-                      <ng-template #normalValue>
-                        {{ item[column] }}
-                      </ng-template>
-                    </td>
+<div id='myDiv'></div>
+<div class="outer-container">
+  <div class="center-container">
+    <div class="center-content">
+      <div *ngIf="groupedTableData">
+        <h1>Plot data sources</h1>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Additional Informations</th>
+                <th>Snippet ID</th>
+                <th>Licensor</th>
+                <th>Licensee</th>
+                <th>Year</th>
+                <th>Quarter</th>
+                <th>First Known Date </th>
+                <th>Last Known Date</th>
+                <th>Information Type</th>
+                <th>Percentage Value</th>
+                <th>Payment Type</th>
+                <th>Document Name</th>
+                <th>Calculated Payment</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let year of objectKeys(groupedTableData)">
+                <!-- Primary row (used in plot) -->
+                <ng-container *ngIf="groupedTableData[year].primary">
+                  <tr>
                     <td>
-                      <button (click)="toggleDetailVisibility(year + '_secondary_' + i)" class="btn btn-sm btn-secondary mr-2">
-                        {{ isDetailsVisible(year + '_secondary_' + i) ? 'Hide' : 'Show' }} Details
+                      <button (click)="toggleYearExpansion(year)" class="btn btn-sm btn-info">
+                        {{ isYearExpanded(year) ? 'Hide' : 'Show' }} Additional
                       </button>
-                      <button (click)="openPDFViewerPopup(item.directory_path, item.details)" class="btn btn-sm btn-primary">
+                    </td>
+                    <td>{{ groupedTableData[year].primary.snippet_id }}</td>
+                    <td>{{ groupedTableData[year].primary.licensor }}</td>
+                    <td>{{ groupedTableData[year].primary.licensee }}</td>
+                    <td>{{ groupedTableData[year].primary.year }}</td>
+                    <td>{{ groupedTableData[year].primary.quarter }}</td>
+                    <td>{{ groupedTableData[year].primary.period_start }}</td>
+                    <td>{{ groupedTableData[year].primary.period_end }}</td>
+                    <td>{{ groupedTableData[year].primary.information_type }}</td>
+                    <td>{{ groupedTableData[year].primary.percentage_value }}</td>
+                    <td>{{ groupedTableData[year].primary.payment_type }}</td>
+                    <td>{{ groupedTableData[year].primary.document_name }}</td>
+                    <td>{{ groupedTableData[year].primary.results | number:'1.2-2' }}</td>
+                    <td>
+                      <button (click)="toggleDetailVisibility(year + '_primary')" class="btn btn-sm btn-secondary action-button">
+                        {{ isDetailsVisible(year + '_primary') ? 'Hide' : 'Show' }} Details
+                      </button>
+                      <button
+                        (click)="openPDFViewerPopup(groupedTableData[year].primary.directory_path, groupedTableData[year].primary.details)"
+                        class="btn btn-sm btn-primary action-button">
                         Open PDF
                       </button>
-                      <div *ngIf="isDetailsVisible(year + '_secondary_' + i)" class="details-content">
-                        {{ item.details }}
+                      <div *ngIf="isDetailsVisible(year + '_primary')" class="details-content">
+                        {{ groupedTableData[year].primary.details }}
                       </div>
                     </td>
                   </tr>
                 </ng-container>
+                <!-- Secondary rows (including summed TPQ rows) -->
+                <ng-container *ngIf="isYearExpanded(year)">
+                  <ng-container *ngFor="let item of getSecondaryRows(year); let i = index">
+                    <tr [ngClass]="{'table-secondary': !item.summed, 'table-info': item.summed}">
+                      <td></td> <!-- Empty cell for "Additional Rows" column -->
+                      <td>{{ item.snippet_id }}</td>
+                      <td>{{ item.licensor }}</td>
+                      <td>{{ item.licensee }}</td>
+                      <td>{{ item.year }}</td>
+                      <td>{{ item.quarter }}</td>
+                      <td>{{ item.period_start }}</td>
+                      <td>{{ item.period_end }}</td>
+                      <td>{{ item.information_type }}</td>
+                      <td>{{ item.percentage_value }}</td>
+                      <td>{{ item.payment_type }}</td>
+                      <td>{{ item.document_name }}</td>
+                      <td>{{ item.results }}</td>
+                      <td>
+                        <button (click)="toggleDetailVisibility(year + '_secondary_' + i)"
+                          class="btn btn-sm btn-secondary action-button">
+                          {{ isDetailsVisible(year + '_secondary_' + i) ? 'Hide' : 'Show' }} Details
+                        </button>
+                        <button *ngIf="!item.summed" (click)="openPDFViewerPopup(item.directory_path, item.details)"
+                          class="btn btn-sm btn-primary action-button">
+                          Open PDF
+                        </button>
+                        <div *ngIf="isDetailsVisible(year + '_secondary_' + i)" class="details-content">
+                          {{ item.details }}
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-container>
+                </ng-container>
               </ng-container>
-            </ng-container>
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
 
 
 
 
-  <h1>Payment :</h1>
-  <h1>{{ dynamicTitle }} :</h1>
+      <h1>Payment :</h1>
+      <h1>{{ dynamicTitle }} :</h1>
 
-  <table class="terms-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Snippet ID</th>
-        <th>Mapping ID</th>
-        <th>Pair ID</th>
-        <th>Licensor</th>
-        <th>Licensee</th>
-        <th>Licensee Affiliate</th>
-        <th>License Sales</th>
-        <th>Indication</th>
-        <th>Year</th>
-        <th>Yearly Quarters</th>
-        <th>Period start</th>
-        <th>Period end</th>
-        <th>Information Type</th>
-        <th>Payment Amount(in thousands)</th>
-        <th>Payment Amount in Local Currency (in thousands)</th>
-        <th>Local Currency</th>
-        <th>Royalty rate dollar</th>
-        <th>Royalty rate per</th>
-        <th>Royalty min dollar</th>
-        <th>Royalty min per</th>
-        <th>Royalty max dollar</th>
-        <th>Royalty max per;</th>
-        <th>Percentage Value</th>
-        <th>Percentage_indication</th>
-        <th>Payment Type</th>
-        <th>Directory Path</th>
-        <th>Document Name</th>
-        <th>Document Date</th>
-        <th>Actions</th>
+      <table class="terms-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Snippet ID</th>
+            <th>Mapping ID</th>
+            <th>Pair ID</th>
+            <th>Licensor</th>
+            <th>Licensee</th>
+            <th>Licensee Affiliate</th>
+            <th>License Sales</th>
+            <th>Indication</th>
+            <th>Year</th>
+            <th>Yearly Quarters</th>
+            <th>First Known Date </th>
+            <th>Last Known Date</th>
+            <th>Information Type</th>
+            <th>Payment Amount(in thousands)</th>
+            <th>Payment Amount in Local Currency (in thousands)</th>
+            <th>Local Currency</th>
+            <th>Royalty rate dollar</th>
+            <th>Royalty rate per</th>
+            <th>Royalty min dollar</th>
+            <th>Royalty min per</th>
+            <th>Royalty max dollar</th>
+            <th>Royalty max per;</th>
+            <th>Percentage Value</th>
+            <th>Percentage_indication</th>
+            <th>Payment Type</th>
+            <th>Directory Path</th>
+            <th>Document Name</th>
+            <th>Document Date</th>
+            <th>Actions</th>
 
-      </tr>
-    </thead>
-    <tbody>
-      <ng-container *ngFor="let item of filteredDataDefined">
-        <tr>
-          <td>{{ item.id }}</td>
-          <td>{{ item.snippet_id }}</td>
-          <td>{{ item.mapping_id }}</td>
-          <td>{{ item.pair_id }}</td>
-          <td>{{ item.licensor }}</td>
-          <td>{{ item.licensee }}</td>
-          <td>{{ item.licensee_Affiliate }}</td>
-          <td>{{ item.license_sales }}</td>
-          <td>{{ item.indication }}</td>
-          <td>{{ item.year }}</td>
-          <td>{{ item.quarter }}</td>
-          <td>{{ item.period_start }}</td>
-          <td>{{ item.period_end }}</td>
-          <td>{{ item.information_type }}</td>
-          <td>{{ item.payment_amount }}</td>
-          <td>{{ item.payment_amount_in_local_currency }}</td>
-          <td>{{ item.local_currency }}</td>
-          <td>{{ item.royalty_rate_dollar }}</td>
-          <td>{{ item.royalty_rate_per }}</td>
-          <td>{{ item.royalty_min_dollar }}</td>
-          <td>{{ item.royalty_min_per }}</td>
-          <td>{{ item.royalty_max_dollar }}</td>
-          <td>{{ item.royalty_max_per }}</td>
-          <td>{{ item.percentage_value }}</td>
-          <td>{{ item.percentage_indication }}</td>
-          <td>{{ item.payment_type }}</td>
-          <td>{{ item.directory_path }}</td>
-          <td>{{ item.document_name }}</td>
-          <td>{{ item.document_date }}</td>
-          <td>
-            <div *ngIf="!item.editing && item.showDetails; else editingMode">
-              {{ item.details }}
-            </div>
-            <ng-template #editingMode>
-              <span *ngIf="item.editing">
-                <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-                <button (click)="saveDetails(item)">Save</button>
-                <button (click)="cancelEditing(item)">Cancel</button>
-              </span>
-            </ng-template>
-            <br>
-            <button (click)="toggleEditingMode(item)">Edit</button>
-            <button (click)="toggleDetailsVisibility(item)">
-              {{ item.showDetails ? 'Hide' : 'Show' }}
-            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
-          </td>
-          <td>
-            <ng-container *ngIf="uniquePayments.length > 0">
-              <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
-                <option value="" selected>Select Mapping ID to add :</option>
-                <!-- Iterate over the filteredMappingIds array -->
-                <ng-container *ngFor="let mappingId of filterMappingIds(item, 'payments')">
-                  <option [value]="mappingId">{{ mappingId }}</option>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let item of filteredDataDefined">
+            <tr>
+              <td>{{ item.id }}</td>
+              <td>{{ item.snippet_id }}</td>
+              <td>{{ item.mapping_id }}</td>
+              <td>{{ item.pair_id }}</td>
+              <td>{{ item.licensor }}</td>
+              <td>{{ item.licensee }}</td>
+              <td>{{ item.licensee_Affiliate }}</td>
+              <td>{{ item.license_sales }}</td>
+              <td>{{ item.indication }}</td>
+              <td>{{ item.year }}</td>
+              <td>{{ item.quarter }}</td>
+              <td>{{ item.period_start }}</td>
+              <td>{{ item.period_end }}</td>
+              <td>{{ item.information_type }}</td>
+              <td>{{ item.payment_amount }}</td>
+              <td>{{ item.payment_amount_in_local_currency }}</td>
+              <td>{{ item.local_currency }}</td>
+              <td>{{ item.royalty_rate_dollar }}</td>
+              <td>{{ item.royalty_rate_per }}</td>
+              <td>{{ item.royalty_min_dollar }}</td>
+              <td>{{ item.royalty_min_per }}</td>
+              <td>{{ item.royalty_max_dollar }}</td>
+              <td>{{ item.royalty_max_per }}</td>
+              <td>{{ item.percentage_value }}</td>
+              <td>{{ item.percentage_indication }}</td>
+              <td>{{ item.payment_type }}</td>
+              <td>{{ item.directory_path }}</td>
+              <td>{{ item.document_name }}</td>
+              <td>{{ item.document_date }}</td>
+              <td>
+                <div *ngIf="!item.editing && item.showDetails; else editingMode">
+                  {{ item.details }}
+                </div>
+                <ng-template #editingMode>
+                  <span *ngIf="item.editing">
+                    <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
+                    <button (click)="saveDetails(item)">Save</button>
+                    <button (click)="cancelEditing(item)">Cancel</button>
+                  </span>
+                </ng-template>
+                <br>
+                <button (click)="toggleEditingMode(item)">Edit</button>
+                <button (click)="toggleDetailsVisibility(item)">
+                  {{ item.showDetails ? 'Hide' : 'Show' }}
+                </button> <button (click)="openPDFViewerPopup(item.directory_path, item.details)">Open PDF</button>
+              </td>
+              <td>
+                <ng-container *ngIf="uniquePayments.length > 0">
+                  <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
+                    <option value="" selected>Select Mapping ID to add :</option>
+                    <!-- Iterate over the filteredMappingIds array -->
+                    <ng-container *ngFor="let mappingId of filterMappingIds(item, 'payments')">
+                      <option [value]="mappingId">{{ mappingId }}</option>
+                    </ng-container>
+                  </select>
                 </ng-container>
-              </select>
-            </ng-container>
 
 
-            <button (click)="AddMappingId(item.id, item, 'payments')">Mapping</button>
-            <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
+                <button (click)="AddMappingId(item.id, item, 'payments')">Mapping</button>
+                <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
 
-            <button *ngIf="item.modified" (click)="openFeedbackAfterUndoPayment(item)">Undo</button>
-            <button (click)="deletePayment(item.id)">Delete Record</button>
+                <button *ngIf="item.modified" (click)="openFeedbackAfterUndoPayment(item)">Undo</button>
+                <button (click)="deletePayment(item.id)">Delete Record</button>
 
-          </td>
-
-
-          <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
-            <ng-container *ngIf="item.comment !== null && item.comment !== ''">
-              <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
-                alt="Question Mark Icon">
-              <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
-            </ng-container>
-          </td>
-
-        </tr>
-      </ng-container>
-    </tbody>
-  </table>
+              </td>
 
 
-  <h1>Unknown Payments :</h1>
-  <h1>{{ dynamicTitle }} :</h1>
-  <table class="unknown-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Snippet ID</th>
-        <th>Mapping ID</th>
-        <th>Pair ID</th>
-        <th>Licensor</th>
-        <th>Licensee</th>
-        <th>Licensee Affiliate</th>
-        <th>License Sales</th>
-        <th>Indication</th>
-        <th>Year</th>
-        <th>Yearly Quarters</th>
-        <th>Period start</th>
-        <th>Period end</th>
-        <th>Information Type</th>
-        <th>Payment Amount(in thousands)</th>
-        <th>Payment Amount in Local Currency (in thousands)</th>
-        <th>Local Currency</th>
-        <th>Royalty rate dollar</th>
-        <th>Royalty rate per</th>
-        <th>Royalty min dollar</th>
-        <th>Royalty min per</th>
-        <th>Royalty max dollar</th>
-        <th>Royalty max per;</th>
-        <th>Percentage Value</th>
-        <th>Percentage_indication</th>
-        <th>Payment Type</th>
-        <th>Directory Path</th>
-        <th>Document Name</th>
-        <th>Document Date</th>
-        <th>Actions</th>
-
-      </tr>
-    </thead>
-    <tbody>
-      <ng-container *ngFor="let item of filteredDataUnknown">
-        <tr>
-          <td>{{ item.id }}</td>
-          <td>{{ item.snippet_id }}</td>
-          <td>{{ item.mapping_id }}</td>
-          <td>{{ item.pair_id }}</td>
-          <td>{{ item.licensor }}</td>
-          <td>{{ item.licensee }}</td>
-          <td>{{ item.licensee_Affiliate }}</td>
-          <td>{{ item.license_sales }}</td>
-          <td>{{ item.indication }}</td>
-          <td>{{ item.year }}</td>
-          <td>{{ item.quarter }}</td>
-          <td>{{ item.period_start }}</td>
-          <td>{{ item.period_end }}</td>
-          <td>{{ item.information_type }}</td>
-          <td>{{ item.payment_amount }}</td>
-          <td>{{ item.payment_amount_in_local_currency }}</td>
-          <td>{{ item.local_currency }}</td>
-          <td>{{ item.royalty_rate_dollar }}</td>
-          <td>{{ item.royalty_rate_per }}</td>
-          <td>{{ item.royalty_min_dollar }}</td>
-          <td>{{ item.royalty_min_per }}</td>
-          <td>{{ item.royalty_max_dollar }}</td>
-          <td>{{ item.royalty_max_per }}</td>
-          <td>{{ item.percentage_value }}</td>
-          <td>{{ item.percentage_indication }}</td>
-          <td>{{ item.payment_type }}</td>
-          <td>{{ item.directory_path }}</td>
-          <td>{{ item.document_name }}</td>
-          <td>{{ item.document_date }}</td>
-          <td>
-            <div *ngIf="!item.editing && item.showDetails; else editingMode">
-              {{ item.details }}
-            </div>
-            <ng-template #editingMode>
-              <span *ngIf="item.editing">
-                <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-                <button (click)="saveDetails(item)">Save</button>
-                <button (click)="cancelEditing(item)">Cancel</button>
-              </span>
-            </ng-template>
-            <br>
-            <button (click)="toggleEditingMode(item)">Edit</button>
-            <button (click)="toggleDetailsVisibility(item)">
-              {{ item.showDetails ? 'Hide' : 'Show' }}
-            </button>
-              <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
-          </td>
-          <td>
-            <button (click)="openFeedbackAfterUpdate(item)">Add</button>
-            <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
-
-            <button (click)="deletePayment(item.id)">Delete Record</button>
-
-          </td>
-          <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
-            <ng-container *ngIf="item.comment !== null && item.comment !== ''">
-              <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
-                alt="Question Mark Icon">
-              <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
-            </ng-container>
-          </td>
-
-        </tr>
-      </ng-container>
-    </tbody>
-  </table>
-
-
-  <h1>Payment from multiple licensees</h1>
-  <h1>{{ dynamicTitle }} :</h1>
-  <table class="knownMP-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Snippet ID</th>
-        <th>Mapping ID</th>
-        <th>Licensor</th>
-        <th>Licensee</th>
-        <td>indiv licensee</td>
-        <th>Licensee Affiliate</th>
-        <th>Multiplier</th>
-        <th>Qualifiers</th>
-        <th>License Sales</th>
-        <th>Year</th>
-        <th>Yearly Quarters</th>
-        <th>Period start</th>
-        <th>Period end</th>
-        <th>Information Type</th>
-        <th>Payment Amount (in thousands of US dollars)</th>
-        <th>Payment Amount in Local Currency (in thousands)</th>
-        <th>Local Currency</th>
-        <th>Percentage Value</th>
-        <th>Payment Type</th>
-        <th>Directory Path</th>
-        <th>Actions</th>
-
-      </tr>
-    </thead>
-    <tbody>
-      <ng-container *ngFor="let item of filteredMultiplePayments">
-        <tr>
-          <td>{{ item.id }}</td>
-          <td>{{ item.snippet_id }}</td>
-          <td>{{ item.mapping_id }}</td>
-          <td>{{ item.licensor }}</td>
-          <td>{{ item.licensee }}</td>
-          <td>{{ item.indiv_licensee }}</td>
-          <td>{{ item.licensee_Affiliate }}</td>
-          <td>{{ item.multiplier }}</td>
-          <td>{{ item.qualifiers }}</td>
-          <td>{{ item.license_sales }}</td>
-          <td>{{ item.year }}</td>
-          <td>{{ item.yearly_quarters }}</td>
-          <td>{{ item.period_start }}</td>
-          <td>{{ item.period_end }}</td>
-          <td>{{ item.Information_type }}</td>
-          <td>{{ item.payment_amount }}</td>
-          <td>{{ item.payment_amount_in_local_currency }}</td>
-          <td>{{ item.local_currency }}</td>
-          <td>{{ item.percentage_value }}</td>
-          <td>{{ item.payment_type }}</td>
-          <td>{{ item.directory_path }}</td>
-
-          <td>
-            <div *ngIf="!item.editing && item.showDetails; else editingMode">
-              {{ item.details }}
-            </div>
-            <ng-template #editingMode>
-              <span *ngIf="item.editing">
-                <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-                <button (click)="saveMPDetails(item)">Save</button>
-                <button (click)="cancelEditing(item)">Cancel</button>
-              </span>
-            </ng-template>
-            <br>
-            <button (click)="toggleEditingMode(item)">Edit</button>
-            <button (click)="toggleDetailsVisibility(item)">
-              {{ item.showDetails ? 'Hide' : 'Show' }}
-            </button>            <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
-          </td>
-          <td>
-            <ng-container *ngIf="uniquePayments.length > 0">
-              <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
-                <option value="" selected>Select Mapping ID to add :</option>
-                <!-- Iterate over the filteredMappingIds array -->
-                <ng-container *ngFor="let mappingId of filterMappingIds(item, 'multiplePayments')">
-                  <option [value]="mappingId">{{ mappingId }}</option>
+              <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
+                <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+                  <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
+                    alt="Question Mark Icon">
+                  <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
                 </ng-container>
-              </select>
-            </ng-container>
+              </td>
+
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
 
 
-            <button (click)="AddMappingId(item.id, item, 'multiplePayments')">Mapping</button>
-            <button (click)="deleteMPMappingId(item.id)">Delete Mapping ID</button>
+      <h1>Unknown Payments :</h1>
+      <h1>{{ dynamicTitle }} :</h1>
+      <table class="unknown-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Snippet ID</th>
+            <th>Mapping ID</th>
+            <th>Pair ID</th>
+            <th>Licensor</th>
+            <th>Licensee</th>
+            <th>Licensee Affiliate</th>
+            <th>License Sales</th>
+            <th>Indication</th>
+            <th>Year</th>
+            <th>Yearly Quarters</th>
+            <th>First Known Date </th>
+            <th>Last Known Date</th>
+            <th>Information Type</th>
+            <th>Payment Amount(in thousands)</th>
+            <th>Payment Amount in Local Currency (in thousands)</th>
+            <th>Local Currency</th>
+            <th>Royalty rate dollar</th>
+            <th>Royalty rate per</th>
+            <th>Royalty min dollar</th>
+            <th>Royalty min per</th>
+            <th>Royalty max dollar</th>
+            <th>Royalty max per;</th>
+            <th>Percentage Value</th>
+            <th>Percentage_indication</th>
+            <th>Payment Type</th>
+            <th>Directory Path</th>
+            <th>Document Name</th>
+            <th>Document Date</th>
+            <th>Actions</th>
 
-            <button *ngIf="item.modified" (click)="openFeedbackAfterUndoMP(item)">Undo</button>
-            <button (click)="deleteMultiplePayment(item.id)">Delete Record</button>
-          </td>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let item of filteredDataUnknown">
+            <tr>
+              <td>{{ item.id }}</td>
+              <td>{{ item.snippet_id }}</td>
+              <td>{{ item.mapping_id }}</td>
+              <td>{{ item.pair_id }}</td>
+              <td>{{ item.licensor }}</td>
+              <td>{{ item.licensee }}</td>
+              <td>{{ item.licensee_Affiliate }}</td>
+              <td>{{ item.license_sales }}</td>
+              <td>{{ item.indication }}</td>
+              <td>{{ item.year }}</td>
+              <td>{{ item.quarter }}</td>
+              <td>{{ item.period_start }}</td>
+              <td>{{ item.period_end }}</td>
+              <td>{{ item.information_type }}</td>
+              <td>{{ item.payment_amount }}</td>
+              <td>{{ item.payment_amount_in_local_currency }}</td>
+              <td>{{ item.local_currency }}</td>
+              <td>{{ item.royalty_rate_dollar }}</td>
+              <td>{{ item.royalty_rate_per }}</td>
+              <td>{{ item.royalty_min_dollar }}</td>
+              <td>{{ item.royalty_min_per }}</td>
+              <td>{{ item.royalty_max_dollar }}</td>
+              <td>{{ item.royalty_max_per }}</td>
+              <td>{{ item.percentage_value }}</td>
+              <td>{{ item.percentage_indication }}</td>
+              <td>{{ item.payment_type }}</td>
+              <td>{{ item.directory_path }}</td>
+              <td>{{ item.document_name }}</td>
+              <td>{{ item.document_date }}</td>
+              <td>
+                <div *ngIf="!item.editing && item.showDetails; else editingMode">
+                  {{ item.details }}
+                </div>
+                <ng-template #editingMode>
+                  <span *ngIf="item.editing">
+                    <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
+                    <button (click)="saveDetails(item)">Save</button>
+                    <button (click)="cancelEditing(item)">Cancel</button>
+                  </span>
+                </ng-template>
+                <br>
+                <button (click)="toggleEditingMode(item)">Edit</button>
+                <button (click)="toggleDetailsVisibility(item)">
+                  {{ item.showDetails ? 'Hide' : 'Show' }}
+                </button>
+                <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
+              </td>
+              <td>
+                <button (click)="openFeedbackAfterUpdate(item)">Add</button>
+                <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
 
-          <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
-            <ng-container *ngIf="item.comment !== null && item.comment !== ''">
-              <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
-                alt="Question Mark Icon">
-              <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
-            </ng-container>
-          </td>
+                <button (click)="deletePayment(item.id)">Delete Record</button>
+
+              </td>
+              <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
+                <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+                  <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
+                    alt="Question Mark Icon">
+                  <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
+                </ng-container>
+              </td>
+
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
 
 
-        </tr>
-      </ng-container>
-    </tbody>
-  </table>
+      <h1>Payment from multiple licensees</h1>
+      <h1>{{ dynamicTitle }} :</h1>
+      <table class="knownMP-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Snippet ID</th>
+            <th>Mapping ID</th>
+            <th>Licensor</th>
+            <th>Licensee</th>
+            <td>indiv licensee</td>
+            <th>Licensee Affiliate</th>
+            <th>Multiplier</th>
+            <th>Qualifiers</th>
+            <th>License Sales</th>
+            <th>Year</th>
+            <th>Yearly Quarters</th>
+            <th>First Known Date </th>
+            <th>Last Known Date</th>
+            <th>Information Type</th>
+            <th>Payment Amount (in thousands of US dollars)</th>
+            <th>Payment Amount in Local Currency (in thousands)</th>
+            <th>Local Currency</th>
+            <th>Percentage Value</th>
+            <th>Payment Type</th>
+            <th>Directory Path</th>
+            <th>Actions</th>
+
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let item of filteredMultiplePayments">
+            <tr>
+              <td>{{ item.id }}</td>
+              <td>{{ item.snippet_id }}</td>
+              <td>{{ item.mapping_id }}</td>
+              <td>{{ item.licensor }}</td>
+              <td>{{ item.licensee }}</td>
+              <td>{{ item.indiv_licensee }}</td>
+              <td>{{ item.licensee_Affiliate }}</td>
+              <td>{{ item.multiplier }}</td>
+              <td>{{ item.qualifiers }}</td>
+              <td>{{ item.license_sales }}</td>
+              <td>{{ item.year }}</td>
+              <td>{{ item.yearly_quarters }}</td>
+              <td>{{ item.period_start }}</td>
+              <td>{{ item.period_end }}</td>
+              <td>{{ item.Information_type }}</td>
+              <td>{{ item.payment_amount }}</td>
+              <td>{{ item.payment_amount_in_local_currency }}</td>
+              <td>{{ item.local_currency }}</td>
+              <td>{{ item.percentage_value }}</td>
+              <td>{{ item.payment_type }}</td>
+              <td>{{ item.directory_path }}</td>
+
+              <td>
+                <div *ngIf="!item.editing && item.showDetails; else editingMode">
+                  {{ item.details }}
+                </div>
+                <ng-template #editingMode>
+                  <span *ngIf="item.editing">
+                    <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
+                    <button (click)="saveMPDetails(item)">Save</button>
+                    <button (click)="cancelEditing(item)">Cancel</button>
+                  </span>
+                </ng-template>
+                <br>
+                <button (click)="toggleEditingMode(item)">Edit</button>
+                <button (click)="toggleDetailsVisibility(item)">
+                  {{ item.showDetails ? 'Hide' : 'Show' }}
+                </button> <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
+              </td>
+              <td>
+                <ng-container *ngIf="uniquePayments.length > 0">
+                  <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
+                    <option value="" selected>Select Mapping ID to add :</option>
+                    <!-- Iterate over the filteredMappingIds array -->
+                    <ng-container *ngFor="let mappingId of filterMappingIds(item, 'multiplePayments')">
+                      <option [value]="mappingId">{{ mappingId }}</option>
+                    </ng-container>
+                  </select>
+                </ng-container>
 
 
-  <h1>Payments from multiple unknowns :</h1>
-<h1>{{ dynamicTitle }} :</h1>
-<table class="unknownMP-table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Snippet ID</th>
-      <th>Mapping ID</th>
-      <th>Licensor</th>
-      <th>Licensee</th>
-      <td>indiv licensee</td>
-      <th>Licensee Affiliate</th>
-      <th>Multiplier</th>
-      <th>Qualifiers</th>
-      <th>License Sales</th>
-      <th>Year</th>
-      <th>Yearly Quarters</th>
-      <th>Period start</th>
-      <th>Period end</th>
-      <th>Information Type</th>
-      <th>Payment Amount (in thousands of US dollars)</th>
-      <th>Payment Amount in Local Currency (in thousands)</th>
-      <th>Local Currency</th>
-      <th>Percentage Value</th>
-      <th>Payment Type</th>
-      <th>Directory Path</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <ng-container *ngFor="let item of multiplePayments; let i = index">
-        <tr *ngIf="(item.multiplier > 0 &&
+                <button (click)="AddMappingId(item.id, item, 'multiplePayments')">Mapping</button>
+                <button (click)="deleteMPMappingId(item.id)">Delete Mapping ID</button>
+
+                <button *ngIf="item.modified" (click)="openFeedbackAfterUndoMP(item)">Undo</button>
+                <button (click)="deleteMultiplePayment(item.id)">Delete Record</button>
+              </td>
+
+              <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
+                <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+                  <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
+                    alt="Question Mark Icon">
+                  <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
+                </ng-container>
+              </td>
+
+
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+
+
+      <h1>Payments from multiple unknowns :</h1>
+      <h1>{{ dynamicTitle }} :</h1>
+      <table class="unknownMP-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Snippet ID</th>
+            <th>Mapping ID</th>
+            <th>Licensor</th>
+            <th>Licensee</th>
+            <td>indiv licensee</td>
+            <th>Licensee Affiliate</th>
+            <th>Multiplier</th>
+            <th>Qualifiers</th>
+            <th>License Sales</th>
+            <th>Year</th>
+            <th>Yearly Quarters</th>
+            <th>First Known Date </th>
+            <th>Last Known Date</th>
+            <th>Information Type</th>
+            <th>Payment Amount (in thousands of US dollars)</th>
+            <th>Payment Amount in Local Currency (in thousands)</th>
+            <th>Local Currency</th>
+            <th>Percentage Value</th>
+            <th>Payment Type</th>
+            <th>Directory Path</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let item of multiplePayments; let i = index">
+            <tr *ngIf="(item.multiplier > 0 &&
                      item.indiv_licensee === null &&
                      !(item.licensee && item.licensee.includes(licenseeName))) ||
                     (item.multiplier > 0 && item.licensee === null)">
 
-        <td>{{ item.id }}</td>
-        <td>{{ item.snippet_id }}</td>
-        <td>{{ item.mapping_id }}</td>
-        <td>{{ item.licensor }}</td>
-        <td>{{ item.licensee }}</td>
-        <td>{{ item.indiv_licensee }}</td>
-        <td>{{ item.licensee_Affiliate }}</td>
-        <td>{{ item.multiplier }}</td>
-        <td>{{ item.qualifiers }}</td>
-        <td>{{ item.license_sales }}</td>
-        <td>{{ item.year }}</td>
-        <td>{{ item.yearly_quarters }}</td>
-        <td>{{ item.period_start }}</td>
-        <td>{{ item.period_end }}</td>
-        <td>{{ item.information_type }}</td>
-        <td>{{ item.payment_amount }}</td>
-        <td>{{ item.payment_amount_in_local_currency }}</td>
-        <td>{{ item.local_currency }}</td>
-        <td>{{ item.percentage_value }}</td>
-        <td>{{ item.payment_type }}</td>
-        <td>{{ item.directory_path }}</td>
-        <td>
-          <div *ngIf="!item.editing && item.showDetails; else editingMode">
-            {{ item.details }}
-          </div>
-          <ng-template #editingMode>
-            <span *ngIf="item.editing">
-              <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-              <button (click)="saveMPDetails(item)">Save</button>
-              <button (click)="cancelEditing(item)">Cancel</button>
-            </span>
-          </ng-template>
-          <br>
-          <button (click)="toggleEditingMode(item)">Edit</button>
-          <button (click)="toggleDetailsVisibility(item)">
-            {{ item.showDetails ? 'Hide' : 'Show' }}
-          </button>
-          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
-        </td>
-        <td>
-          <button (click)="openFeedbackAfterUpdateMultiplePayments(item)">Add</button>
-          <button (click)="deleteMPMappingId(item.id)">Delete Mapping ID</button>
-          <button (click)="deleteMultiplePayment(item.id)">Delete Record</button>
-        </td>
-        <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
-          <ng-container *ngIf="item.comment !== null && item.comment !== ''">
-            <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
-              alt="Question Mark Icon">
-            <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
+              <td>{{ item.id }}</td>
+              <td>{{ item.snippet_id }}</td>
+              <td>{{ item.mapping_id }}</td>
+              <td>{{ item.licensor }}</td>
+              <td>{{ item.licensee }}</td>
+              <td>{{ item.indiv_licensee }}</td>
+              <td>{{ item.licensee_Affiliate }}</td>
+              <td>{{ item.multiplier }}</td>
+              <td>{{ item.qualifiers }}</td>
+              <td>{{ item.license_sales }}</td>
+              <td>{{ item.year }}</td>
+              <td>{{ item.yearly_quarters }}</td>
+              <td>{{ item.period_start }}</td>
+              <td>{{ item.period_end }}</td>
+              <td>{{ item.information_type }}</td>
+              <td>{{ item.payment_amount }}</td>
+              <td>{{ item.payment_amount_in_local_currency }}</td>
+              <td>{{ item.local_currency }}</td>
+              <td>{{ item.percentage_value }}</td>
+              <td>{{ item.payment_type }}</td>
+              <td>{{ item.directory_path }}</td>
+              <td>
+                <div *ngIf="!item.editing && item.showDetails; else editingMode">
+                  {{ item.details }}
+                </div>
+                <ng-template #editingMode>
+                  <span *ngIf="item.editing">
+                    <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
+                    <button (click)="saveMPDetails(item)">Save</button>
+                    <button (click)="cancelEditing(item)">Cancel</button>
+                  </span>
+                </ng-template>
+                <br>
+                <button (click)="toggleEditingMode(item)">Edit</button>
+                <button (click)="toggleDetailsVisibility(item)">
+                  {{ item.showDetails ? 'Hide' : 'Show' }}
+                </button>
+                <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
+              </td>
+              <td>
+                <button (click)="openFeedbackAfterUpdateMultiplePayments(item)">Add</button>
+                <button (click)="deleteMPMappingId(item.id)">Delete Mapping ID</button>
+                <button (click)="deleteMultiplePayment(item.id)">Delete Record</button>
+              </td>
+              <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
+                <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+                  <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
+                    alt="Question Mark Icon">
+                  <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
+                </ng-container>
+              </td>
+            </tr>
           </ng-container>
-        </td>
-      </tr>
-    </ng-container>
-  </tbody>
-</table>
+        </tbody>
+      </table>
 
 
-<div class="popup-overlay" *ngIf="showPopup">
-  <div class="popup-content">
-    <app-example-pdf-viewer [pdfSrc]="selectedPDF"></app-example-pdf-viewer>
-    <div class="button-container">
-      <button (click)="closePopup()">Close</button>
-    </div>
-  </div>
-</div>
+      <div class="popup-overlay" *ngIf="showPopup">
+        <div class="popup-content">
+          <app-example-pdf-viewer [pdfSrc]="selectedPDF"></app-example-pdf-viewer>
+          <div class="button-container">
+            <button (click)="closePopup()">Close</button>
+          </div>
+        </div>
+      </div>

@@ -357,3 +357,38 @@ td {
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+.outer-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.center-container {
+  display: flex;
+  justify-content: center;
+  min-width: 100%;
+}
+
+.center-content {
+  max-width: 100%;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  white-space: nowrap;
+}
+.action-button {
+  margin-right: 10px;
+}
+
+.details-content {
+  margin-top: 10px;
+}

@@ -314,7 +314,7 @@ plotData(): void {
     x: sortedYears,
     y: payments,
     type: 'bar',
-    name: 'Payment (TRY/TPY)',
+    name: 'Payment (TPY)',
     marker: {
       color: 'rgba(0, 123, 255, 0.8)'
     },
@@ -327,7 +327,7 @@ plotData(): void {
     x: sortedYears,
     y: results,
     type: 'bar',
-    name: 'Result (TPY)',
+    name: 'Calculated Payment (TPY)',
     marker: {
       color: 'rgba(255, 165, 0, 0.8)'
     },
@@ -339,13 +339,13 @@ plotData(): void {
   const layout = {
     height: 600,
     autosize: true,
-    title: 'TRY/TPY Payments/Results vs Total Revenue Over Years',
+    title: 'TPY Payments vs Total Revenue Over Years',
     xaxis: {
       title: 'Year',
       type: 'category'
     },
     yaxis: {
-      title: 'Value',
+      title: 'Payment Amount',
       tickformat: ',d',
       type: 'linear',
       rangemode: 'tozero'
@@ -983,26 +983,32 @@ groupTableData(): void {
   this.groupedTableData = {};
   const usedYears = new Set<string>();
 
-  // First pass: identify TRY rows
+  // First pass: identify TPY rows with payment_amount
   this.paymentData.forEach(item => {
     const year = item.year?.toString();
-    if (year && !usedYears.has(year) && this.isRowUsedInPlot(item) && item.eq_type === 'TRY') {
+    if (year && !usedYears.has(year) && this.isRowUsedInPlot(item) && typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
       this.groupedTableData[year] = { primary: item, secondary: [] };
       usedYears.add(year);
     }
   });
 
-  // Second pass: identify TPY rows and group remaining rows
+  // Second pass: identify TPY rows with results if no payment_amount was found
+  this.paymentData.forEach(item => {
+    const year = item.year?.toString();
+    if (year && !usedYears.has(year) && this.isRowUsedInPlot(item)) {
+      this.groupedTableData[year] = { primary: item, secondary: [] };
+      usedYears.add(year);
+    }
+  });
+
+  // Third pass: group remaining rows
   this.paymentData.forEach(item => {
     const year = item.year?.toString();
     if (year) {
       if (!this.groupedTableData[year]) {
         this.groupedTableData[year] = { primary: null, secondary: [] };
       }
-      if (!usedYears.has(year) && this.isRowUsedInPlot(item)) {
-        this.groupedTableData[year].primary = item;
-        usedYears.add(year);
-      } else if (item !== this.groupedTableData[year].primary) {
+      if (item !== this.groupedTableData[year].primary) {
         this.groupedTableData[year].secondary.push(item);
       }
     }
@@ -1010,6 +1016,7 @@ groupTableData(): void {
 
   console.log('Grouped Table Data:', this.groupedTableData);
 }
+
 formatNumber(value: number): string {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
@@ -1027,14 +1034,9 @@ prepareTableData(): void {
 }
 
 isRowUsedInPlot(item: any): boolean {
-  // First, check if this is a 'TRY' row with a valid payment_amount
-  if (item.eq_type === 'TRY' && typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
-    return true;
-  }
-
-  // If not, check if it's a 'TPY' row (either in eq_type or adv_eq_type)
+  // Check if it's a 'TPY' row (either in eq_type or adv_eq_type)
   if (item.eq_type === 'TPY' || item.adv_eq_type === 'TPY') {
-    // For 'TPY' rows, prioritize payment_amount
+    // Prioritize payment_amount for TPY rows
     if (typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
       return true;
     }
