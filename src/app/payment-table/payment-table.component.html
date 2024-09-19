@@ -35,6 +35,7 @@
                 <th>Percentage Value</th>
                 <th>Payment Type</th>
                 <th>Document Name</th>
+                <th>Payment Amount</th>
                 <th>Calculated Payment</th>
                 <th>Actions</th>
               </tr>
@@ -60,6 +61,7 @@
                     <td>{{ groupedTableData[year].primary.percentage_value }}</td>
                     <td>{{ groupedTableData[year].primary.payment_type }}</td>
                     <td>{{ groupedTableData[year].primary.document_name }}</td>
+                    <td>{{ groupedTableData[year].primary.payment_amount | number:'1.2-2' }}</td>
                     <td>{{ groupedTableData[year].primary.results | number:'1.2-2' }}</td>
                     <td>
                       <button (click)="toggleDetailVisibility(year + '_primary')" class="btn btn-sm btn-secondary action-button">
@@ -92,7 +94,8 @@
                       <td>{{ item.percentage_value }}</td>
                       <td>{{ item.payment_type }}</td>
                       <td>{{ item.document_name }}</td>
-                      <td>{{ item.results }}</td>
+                      <td>{{ item.payment_amount | number:'1.2-2' }}</td>
+                      <td>{{ item.results | number:'1.2-2' }}</td>
                       <td>
                         <button (click)="toggleDetailVisibility(year + '_secondary_' + i)"
                           class="btn btn-sm btn-secondary action-button">
@@ -114,7 +117,9 @@
           </table>
         </div>
       </div>
-
+    </div>
+  </div>
+</div>
 
 
 
