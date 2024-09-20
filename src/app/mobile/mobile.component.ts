@@ -25,6 +25,7 @@ export class MobileComponent implements OnInit {
   sortOrder: 'alphabetical' | 'count' = 'alphabetical';
   startDate: string = '';
   endDate: string = '';
+  dateFilterType: 'exactDate' | 'fullPeriod' | 'startDateInside' | 'endDateInside' | 'anyDateInside' = 'exactDate';
 
   // Snapshot of original data
   private originalLicensees: string[] = [];
@@ -55,8 +56,7 @@ export class MobileComponent implements OnInit {
   fetchLicenseData(): void {
     this.connectionService.getData().subscribe(
       (data: any[]) => {
-        // Filter the data based on the date range
-        this.fetchedData = this.filterDataByDateRange(data);
+        this.fetchedData = data;
         this.licensors = [...new Set(this.fetchedData.map((item: any) => item.licensor))].filter(licensor => licensor !== null);
         this.licensees = [...new Set(this.fetchedData.map((item: any) => item.licensee))].filter(licensee => licensee !== 'Unknown' && licensee !== null);
 
@@ -77,7 +77,7 @@ export class MobileComponent implements OnInit {
                   (multipleLicenses: any[]) => {
                     this.multipleLicenses = multipleLicenses;
                     this.initializeTableData();
-                    this.updateTableData(); // Update the table based on filtered data
+                    this.updateTableData();
                   },
                   (error) => {
                     console.error('Error fetching multiple licenses data:', error);
@@ -100,12 +100,9 @@ export class MobileComponent implements OnInit {
     );
   }
 
-  filterDataByDateRange(data: any[]): any[] {
-    return data.filter(item => this.isWithinDateRange(item.signed_date, item.expiration_date));
-  }
-
   updateTableData(): void {
-    this.updateCellColors(); // Update cell colors based on the filtered data
+    this.updateCellColors();
+    this.applyDateFilter();
     this.filterTableData(this.searchTerm$.getValue());
   }
 
@@ -128,14 +125,11 @@ export class MobileComponent implements OnInit {
       const licenseeIndex = this.licensees.indexOf(dataItem.licensee);
 
       if (licensorIndex !== -1 && licenseeIndex !== -1 && dataItem.licensee !== 'Unknown') {
-        if (this.isWithinDateRange(dataItem.signed_date, dataItem.expiration_date)) {
-          this.tableData[licensorIndex][licenseeIndex] = 'green';
-          console.log(`Cell marked green: Licensor "${dataItem.licensor}", Licensee "${dataItem.licensee}"`);
-        }
+        this.tableData[licensorIndex][licenseeIndex] = 'green';
+        console.log(`Cell marked green: Licensor "${dataItem.licensor}", Licensee "${dataItem.licensee}"`);
       }
     }
   }
-
 
   initializeTableData(): void {
     this.tableData = Array(this.licensors.length).fill(null).map(() =>
@@ -150,22 +144,87 @@ export class MobileComponent implements OnInit {
     this.filteredTableData = this.tableData.map(row => [...row]);
   }
 
-
-
-
-  parseDate(date: string): Date | null {
+  parseDate(date: string): number | null {
     if (!date) return null;
 
-    // Try parsing as "yyyy-mm-dd"
-    let parsed = new Date(date);
-    if (!isNaN(parsed.getTime())) return parsed;
-
-    // Try parsing as "yyyy"
+    // If the date is in "YYYY" format
     if (/^\d{4}$/.test(date)) {
-      return new Date(parseInt(date), 0, 1);
+      return parseInt(date);
+    }
+
+    // If the date is in "YYYY-MM-DD" format
+    const parsed = new Date(date);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.getFullYear();
     }
 
     return null;
+  }
+
+  isWithinDateRange(signedDate: string, expirationDate: string): boolean {
+    const start = this.parseDate(this.startDate);
+    const end = this.parseDate(this.endDate);
+    const signed = this.parseDate(signedDate);
+    const expiration = this.parseDate(expirationDate);
+
+    if (!signed || !expiration) return false;
+
+    switch (this.dateFilterType) {
+      case 'exactDate':
+        if (start && !end) {
+          return signed === start;
+        } else if (!start && end) {
+          return expiration === end;
+        } else if (start && end) {
+          return signed === start && expiration === end;
+        }
+        return false;
+      case 'fullPeriod':
+        return (start ? signed >= start : true) && (end ? expiration <= end : true);
+      case 'startDateInside':
+        return start ? signed >= start && (end ? signed <= end : true) : false;
+      case 'endDateInside':
+        return end ? expiration <= end && (start ? expiration >= start : true) : false;
+      case 'anyDateInside':
+        return (start ? expiration >= start : true) && (end ? signed <= end : true);
+      default:
+        return false;
+    }
+  }
+
+  applyDateFilter(): void {
+    if (!this.startDate && !this.endDate) {
+      this.filteredTableData = this.tableData.map(row => [...row]);
+      return;
+    }
+
+    this.filteredTableData = this.tableData.map((row, rowIndex) =>
+      row.map((cell, colIndex) => {
+        if (cell === 'green') {
+          const licensor = this.licensors[rowIndex];
+          const licensee = this.licensees[colIndex];
+
+          const isValid =
+            this.checkDateInData(this.fetchedData, licensor, licensee) ||
+            this.checkDateInData(this.paymentsData, licensor, licensee) ||
+            this.checkDateInData(this.multiplePayments, licensor, licensee) ||
+            this.checkDateInData(this.multipleLicenses, licensor, licensee);
+
+          return isValid ? 'green' : 'white';
+        }
+        return cell;
+      })
+    );
+
+    console.log('Table data after applying date filter:', this.filteredTableData);
+  }
+
+  checkDateInData(data: any[], licensor: string, licensee: string): boolean {
+    return data.some(item =>
+      item.licensor === licensor &&
+      item.licensee === licensee &&
+      this.isWithinDateRange(item.signed_date, item.expiration_date)
+    );
   }
 
   sortLicenseesAlphabetically(): void {
@@ -180,7 +239,6 @@ export class MobileComponent implements OnInit {
     this.updateTableData();
   }
 
-
   getLicenseeCount(licensee: string): number {
     return this.tableData.map(row => row[this.licensees.indexOf(licensee)]).filter(color => color === 'green').length;
   }
@@ -190,6 +248,7 @@ export class MobileComponent implements OnInit {
     this.searchTerm$.next('');
     this.startDate = '';
     this.endDate = '';
+    this.dateFilterType = 'exactDate';
 
     // Reset licensees to the original order
     this.licensees = [...this.originalLicensees];
@@ -275,13 +334,11 @@ export class MobileComponent implements OnInit {
     this.filteredTableData = reorderedTableData[0].map((_, rowIndex) =>
       reorderedTableData.map(column => column[rowIndex])
     ).map((row, rowIndex) =>
-      row.map((cell, colIndex) => colIndex < matchingColumnIndices.length && this.licensees[colIndex] !== 'Unknown' ? cell : 'transparent')
+      row.map((cell, colIndex) => colIndex < matchingColumnIndices.length && this.licensees[colIndex] !== 'Unknown' ? cell : 'white')
     );
 
     console.log('Filtered table data after applying search term:', this.filteredTableData);
   }
-
-
 
   onSearchInput(event: KeyboardEvent): void {
     if (event.key === 'Enter') {
@@ -294,29 +351,7 @@ export class MobileComponent implements OnInit {
     this.sortLicensees();
   }
 
-
-
-  applyDateFilter(): void {
-    this.updateTableData();
-
-    console.log('Table data after applying date filter:', this.tableData);
+  onDateFilterTypeChange(event: any): void {
+    this.dateFilterType = event.target.value;
   }
-
-
-  isWithinDateRange(signedDate: string, expirationDate: string): boolean {
-    if (!this.startDate && !this.endDate) return true; // If no date range is set, consider all dates valid
-
-    const start = this.parseDate(this.startDate);
-    const end = this.parseDate(this.endDate);
-    const signed = this.parseDate(signedDate);
-    const expiration = this.parseDate(expirationDate);
-
-    // If either date is null, consider it within range
-    if (signed === null || expiration === null) return true;
-
-    // Check if the record's period overlaps with the selected period
-    return (start === null || expiration >= start) && (end === null || signed <= end);
-  }
-
-
 }

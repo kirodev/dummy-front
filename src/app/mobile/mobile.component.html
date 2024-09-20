@@ -7,9 +7,18 @@
     <input type="text" [(ngModel)]="searchTerm" (keyup)="onSearchInput($event)" placeholder="Search Licensees (Enter)" />
     <button (click)="resetFilters()">Reset Filters</button>
     <div>
+      <label for="dateFilterType">Date Filter Type:</label>
+      <select id="dateFilterType" [(ngModel)]="dateFilterType" (change)="onDateFilterTypeChange($event)">
+        <option value="exactDate">Exact Date</option>
+        <option value="fullPeriod">Full Period</option>
+        <option value="startDateInside">Start Date Inside</option>
+        <option value="endDateInside">End Date Inside</option>
+        <option value="anyDateInside">Any Date Inside</option>
+      </select>
+
       <label for="startDate">Start Date:</label>
       <input type="date" id="startDate" [(ngModel)]="startDate">
-      
+
       <label for="endDate">End Date:</label>
       <input type="date" id="endDate" [(ngModel)]="endDate">
 
