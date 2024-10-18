@@ -39,6 +39,7 @@ import { KeysPipe } from './keys.pipe';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { EquationsPaymentsComponent } from './equations-payments/equations-payments.component';
 import { KnownlicensesComponent } from './knownlicenses/knownlicenses.component';
+import {CloudinaryModule} from '@cloudinary/ng';
 
 
 
@@ -86,7 +87,8 @@ import { KnownlicensesComponent } from './knownlicenses/knownlicenses.component'
     FormsModule, 
     HttpClientModule, 
     NgxExtendedPdfViewerModule,
-    
+    CloudinaryModule
+
   
   ],
   providers: [ DataSharingService ,    LicenseTableComponent 

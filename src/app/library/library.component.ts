@@ -2,6 +2,10 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { PdfLibraryService } from '../pdf-library-service.service';
 import { ExamplePdfViewerComponent } from '../example-pdf-viewer/example-pdf-viewer.component';
 import { environment } from 'env/environment';
+import { CloudinaryModule } from '@cloudinary/ng';
+
+// Import the Cloudinary classes.
+import { Cloudinary } from '@cloudinary/url-gen';
 
 interface PdfFile {
   path: string;
@@ -11,8 +15,11 @@ interface PdfFile {
   details?: string;
   directory_path?: string;
   showDetails?: boolean;
-  highlightedDetails?: string[]; // Change this to string[]
+  highlightedDetails?: string[];
+  cloudinaryPublicId?: string; // Cloudinary Public ID for PDF
+  cloudinaryUrl?: string; // Constructed Cloudinary URL
 }
+
 @Component({
   selector: 'app-library',
   templateUrl: './library.component.html',
@@ -45,34 +52,51 @@ export class LibraryComponent implements OnInit {
   loadPdfFiles(): void {
     this.pdfLibraryService.getPdfFilesFromAllTables().subscribe({
       next: (files: PdfFile[]) => {
+        const cld = new Cloudinary({
+          cloud: { cloudName: 'himbuyrbv' } // Replace with your actual Cloudinary cloud name
+        });
+
         this.pdfFiles = files.map((file: PdfFile) => {
           let title = 'Unknown Title';
           let date = 'Unknown Year';
 
           if (file.directory_path) {
             const normalizedPath = file.directory_path.replace(/\\/g, '/');
-            const lastSlashIndex = normalizedPath.lastIndexOf('/');
-            if (lastSlashIndex !== -1) {
-              title = normalizedPath.substring(lastSlashIndex + 1).replace('.pdf', '') || 'Unknown Title';
-              // Remove the year in brackets from the title
-              title = title.replace(/\s*\[\d{4}\]\s*/, '');
-            }
+
+            // Extract the original file name and format it
+            const originalFileName = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
+
+            // Format the file name to match Cloudinary conventions
+            let formattedFileName = originalFileName
+              .replace(/\[(\d{4})\]/, '$1')          // Remove square brackets around the year
+              .replace(/\s+/g, '_')                  // Replace spaces with underscores
+              .replace(/\(|\)/g, '')                 // Remove parentheses
+              .replace('.pdf', '');                  // Remove the '.pdf' extension
+
+            // Construct the public ID for Cloudinary, preserving slashes
+            const cloudinaryPublicId = `Data Library/${normalizedPath.replace(originalFileName, formattedFileName)}`;
+
+            // Build the Cloudinary URL (encode only the file/folder names, not slashes)
+            const cloudinaryUrl = `https://res.cloudinary.com/himbuyrbv/image/upload/${encodeURI(cloudinaryPublicId)}.pdf`;
+
             const dateMatch = normalizedPath.match(/\b\d{4}\b/);
             if (dateMatch) {
               date = dateMatch[0];
             }
+
             return {
               ...file,
               directory_path: normalizedPath,
-              title: title,
+              title: formattedFileName,
               date: date,
+              cloudinaryPublicId: cloudinaryPublicId,
+              cloudinaryUrl: cloudinaryUrl, // Store Cloudinary URL in each file object
               showDetails: false
             };
           } else {
             return file;
           }
         });
-
 
         this.uniqueDates = Array.from(new Set(
           this.pdfFiles.map(file => file.date).filter((date): date is string => date !== 'Unknown Year')
@@ -118,6 +142,7 @@ export class LibraryComponent implements OnInit {
     });
   }
 
+
   searchFiles(): void {
     const query = this.searchQuery.toLowerCase().trim();
     const { terms, operators } = this.parseQuery(query);
@@ -126,37 +151,31 @@ export class LibraryComponent implements OnInit {
     const isAndOperation = operators.includes('AND') && !operators.includes('OR');
 
     this.filteredPdfFiles = this.pdfFiles.filter(file => {
-      // Filter by report type
       if (this.selectedReportType && (!file.directory_path || !file.directory_path.includes(this.selectedReportType))) {
         return false;
       }
 
-      // Filter by date
       if (this.selectedDate && file.date !== this.selectedDate) {
         return false;
       }
 
-      // If no search terms and not filtering by title or details, keep the file
       if (filteredTerms.length === 0 && !this.searchByTitle && !this.searchByDetails) {
-        file.highlightedDetails = [file.details || '']; // Show all details if no filter
-        file.showDetails = false; // Ensure details are not shown by default
+        file.highlightedDetails = [file.details || ''];
+        file.showDetails = false;
         return true;
       }
 
       let matchesTitle = false;
       let matchesDetails = false;
 
-      // Only process title search if "Search by Title" is checked
       if (this.searchByTitle && file.title) {
-        file.showDetails = false; // Ensure details are not shown by default
-
+        file.showDetails = false;
         const titleLower = file.title!.toLowerCase();
         matchesTitle = isAndOperation
           ? filteredTerms.every(term => this.isTermMatch(titleLower, term))
           : filteredTerms.some(term => this.isTermMatch(titleLower, term));
       }
 
-      // Only process details search if "Search by Details" is checked
       if (this.searchByDetails && file.details) {
         const detailRows = file.details.split('\n---\n');
         const matchingRows = detailRows.filter(row => {
@@ -172,67 +191,32 @@ export class LibraryComponent implements OnInit {
           file.highlightedDetails = matchingRows.map(row =>
             this.highlightMatchingDetails(row, filteredTerms)
           );
-          file.showDetails = true; // Ensure details are shown when filtered
+          file.showDetails = true;
         } else {
           file.highlightedDetails = [];
           file.showDetails = false;
         }
       }
 
-      // Return true only if the conditions for title or details search are satisfied
       return (this.searchByTitle && matchesTitle) || (this.searchByDetails && matchesDetails);
     });
   }
 
-
-
-
   isTermMatch(text: string, term: string): boolean {
-    // Use regex to ensure term is matched as a whole word and not preceded by a hyphen or letters
     const regex = new RegExp(`(^|[^\\w-])${term}([^\\w-]|$)`, 'i');
     return regex.test(text);
   }
 
-
-
-
-
-  matchWholeWord(text: string, terms: string[], isAndOperation: boolean): boolean {
-    const termPatterns = terms.map(term => `\\b${this.escapeRegExp(term)}\\b`);
-    const regexPattern = isAndOperation
-      ? termPatterns.join(')(?=.*?')
-      : termPatterns.join('|');
-
-    const regex = new RegExp(regexPattern, 'i');
-
-    return isAndOperation
-      ? terms.every(term => new RegExp(`\\b${this.escapeRegExp(term)}\\b`, 'i').test(text))
-      : regex.test(text);
+  highlightMatchingDetails(details: string, terms: string[]): string {
+    const escapedTerms = terms.map(term => this.escapeRegExp(term));
+    const regexPattern = `(${escapedTerms.join('|')})`;
+    const regex = new RegExp(regexPattern, 'gi');
+    return details.replace(regex, match => `<mark>${match}</mark>`);
   }
-
 
   escapeRegExp(term: string): string {
     return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
-
-
-
-
-  highlightMatchingDetails(details: string, terms: string[]): string {
-    // Escape special characters in the search terms
-    const escapedTerms = terms.map(term => this.escapeRegExp(term));
-    // Create regex pattern to match terms
-    const regexPattern = `(${escapedTerms.join('|')})`;
-    const regex = new RegExp(regexPattern, 'gi');
-
-    // Highlight matching terms
-    return details.replace(regex, match => `<mark>${match}</mark>`);
-  }
-
-
-
-
-
 
   parseQuery(query: string): { terms: string[], operators: string[] } {
     const terms: string[] = [];
@@ -254,32 +238,19 @@ export class LibraryComponent implements OnInit {
     return { terms, operators };
   }
 
-
-
-
   openPDFViewer(file: PdfFile, event: Event): void {
     event.stopPropagation();
-    if (!file.directory_path) {
-      console.error('File path is undefined for file:', file);
+
+    if (!file.cloudinaryUrl) {
+      console.error('Cloudinary URL is undefined for file:', file);
       return;
     }
 
-    const filePath = file.directory_path;
+    const cloudinaryPdfUrl = file.cloudinaryUrl;
+    console.log('Opening PDF from Cloudinary:', cloudinaryPdfUrl);
 
-    this.pdfLibraryService.checkFileExistsInAssets(filePath).subscribe(existsInAssets => {
-      if (existsInAssets) {
-        const url = `${this.url}/assets/${filePath}`;
-        console.log('Constructed PDF URL:', url);
-
-        const windowFeatures = 'width=800,height=600,resizable=yes,scrollbars=yes,status=yes';
-        window.open(url, '_blank', windowFeatures);
-      } else {
-        alert('The selected file is not available in local storage.');
-      }
-    }, error => {
-      console.error('Error checking file existence:', error);
-      alert('There was an error checking the file availability.');
-    });
+    const windowFeatures = 'width=800,height=600,resizable=yes,scrollbars=yes,status=yes';
+    window.open(cloudinaryPdfUrl, '_blank', windowFeatures);
   }
 
   closePopup(): void {
@@ -291,16 +262,13 @@ export class LibraryComponent implements OnInit {
     this.showPDFViewer = true;
     this.showPopup = true;
   }
+
   toggleDetails(file: PdfFile, event: Event): void {
     event.stopPropagation();
-
-    // Toggle details visibility
     file.showDetails = !file.showDetails;
 
     if (file.showDetails) {
-      // If details are shown, prepare them for table display
       if (!this.searchByDetails || !file.highlightedDetails || file.highlightedDetails.length === 0) {
-        // Split details by the delimiter and format them for table display
         const detailRows = (file.details || '').split('\n---\n');
         file.highlightedDetails = detailRows.map(row =>
           this.highlightMatchingDetails(row, this.searchQuery.toLowerCase().split(/\s+/))
@@ -309,11 +277,5 @@ export class LibraryComponent implements OnInit {
     } else {
       file.highlightedDetails = [];
     }
-
-    console.log('Toggling details for file:', file);
-    console.log('Highlighted Details:', file.highlightedDetails); // Check contents
   }
-
-
-
 }

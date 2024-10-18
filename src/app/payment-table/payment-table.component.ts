@@ -172,13 +172,60 @@ export class PaymentTableComponent implements OnInit {
   selectedPDF: string = '';
   showPopup: boolean = false;
 
+  generateCloudinaryUrl(directory_path: string): string {
+    // Step 1: Ensure the base folder "Data Library" is included
+    let normalizedPath = directory_path.replace(/\\/g, '/');
+
+    // Add "Data Library" base folder if it's not present
+    if (!normalizedPath.startsWith('Data Library/')) {
+      normalizedPath = `Data Library/${normalizedPath}`;
+    }
+
+    // Step 2: Split the path into folder paths and filename
+    const pathParts = normalizedPath.split('/');
+    const filename = pathParts.pop(); // Extract the filename
+
+    // Check if the filename exists
+    if (!filename) {
+      console.error('Invalid directory path, no filename provided.');
+      return ''; // Return empty string or handle the error as needed
+    }
+
+    // Step 3: Format the filename
+    // 3a: Replace [YYYY] with YYYY_
+    // 3b: Remove parentheses
+    // 3c: Replace spaces with underscores only if there are no adjacent underscores
+    const formattedFilename = filename
+      .replace(/\[([0-9]{4})\]/g, '$1_')  // Replace [YYYY] with YYYY_
+      .replace(/[()]/g, '')               // Remove parentheses
+      .replace(/\s+/g, '_')               // Replace spaces with underscores
+
+      // Remove any double underscores that may have been added by accident
+      .replace(/_+/g, '_');               // Replace multiple underscores with a single underscore
+
+    // Step 4: Reconstruct the path with the formatted filename
+    normalizedPath = [...pathParts, formattedFilename].join('/');
+
+    // Step 5: Encode the folder path to handle spaces correctly (excluding "/")
+    normalizedPath = pathParts.map(encodeURIComponent).join('/') + '/' + formattedFilename;
+
+    // Step 6: Construct the Cloudinary URL
+    return `https://res.cloudinary.com/himbuyrbv/image/upload/${normalizedPath}`;
+  }
+
+
+
+
   openPDFViewerPopup(directory_path: string, details: string): void {
-    const url = `/assets/${directory_path}`;
+    const cloudinaryUrl = this.generateCloudinaryUrl(directory_path);
+    const url = cloudinaryUrl;  // This now points to the Cloudinary URL
+
     this.selectedPDF = url;
     this.showPDFViewer = true;
     this.showPopup = true;
+
     setTimeout(() => {
-      this.pdfViewer.searchPDF(details);
+      this.pdfViewer.searchPDF(details); // Keep the existing functionality for the popup
     }, 1000);
   }
 
