@@ -40,6 +40,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
 import { EquationsPaymentsComponent } from './equations-payments/equations-payments.component';
 import { KnownlicensesComponent } from './knownlicenses/knownlicenses.component';
 import {CloudinaryModule} from '@cloudinary/ng';
+import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-revenues.component';
 
 
 
@@ -74,7 +75,8 @@ import {CloudinaryModule} from '@cloudinary/ng';
     KeysPipe,
     NotFoundComponent,
     EquationsPaymentsComponent,
-      KnownlicensesComponent
+      KnownlicensesComponent,
+      QuarterlyRevenuesComponent
    ],
   
   imports: [

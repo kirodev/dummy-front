@@ -1,0 +1,20 @@
+
+<!-- Tab Navigation -->
+<ul class="nav nav-tabs custom-tabs">
+  <li class="nav-item">
+    <a class="nav-link" routerLink="/revenues" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      Revenues
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" routerLink="/quarterly-revenues" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      Quarterly Revenues
+    </a>
+  </li>
+</ul>
+<!-- End of Tab Navigation -->
+
+<!-- Content Container -->
+<div class="tab-content">
+  <div id="quarterlyRevenuesChart" style="width: 100%; height: 600px;"></div>
+</div>

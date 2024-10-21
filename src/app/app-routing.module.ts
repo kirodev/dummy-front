@@ -30,6 +30,7 @@ import { RevenuesComponent } from './revenues/revenues.component';
 import { LibraryComponent } from './library/library.component';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { EquationsPaymentsComponent } from './equations-payments/equations-payments.component';
+import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-revenues.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent },
@@ -68,6 +69,8 @@ const routes: Routes = [
   { path: 'admin', component: BoardAdminComponent },
   { path: 'sales', component: SalesComponent },
   { path: 'revenues', component: RevenuesComponent },
+  { path: 'quarterly-revenues', component: QuarterlyRevenuesComponent },
+
   { path: 'library', component: LibraryComponent },
   { path: 'equations', component: EquationsPaymentsComponent },
 

@@ -151,7 +151,6 @@ export class RevenuesComponent implements OnInit {
     const chartHeight = 100 + uniqueYears.length * 50;
 
     const layout: Partial<Plotly.Layout> = {
-        height: chartHeight,
         autosize: true,
         title: 'Licensing Revenues by Year',
         xaxis: {
@@ -170,7 +169,7 @@ export class RevenuesComponent implements OnInit {
         barmode: 'stack',
     };
 
-    Plotly.newPlot('myDiv', traces, layout).catch((error: any) => {
+    Plotly.newPlot('annualRevenuesChart', traces, layout).catch((error: any) => {
         console.error('Error plotting graph:', error);
     });
 }
