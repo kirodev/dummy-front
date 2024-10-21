@@ -106,7 +106,7 @@ export class QuarterlyRevenuesComponent implements OnInit {
 
     // Aggregate revenue per company per quarter-year
     filteredRevenues.forEach(item => {
-      const yearQuarter = `Q${item.quarter} ${item.year}`;
+      const yearQuarter = `${item.quarter} ${item.year}`;
       const company = item.licensor;
       const revenue = item.revenue;
 
