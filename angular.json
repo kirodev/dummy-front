@@ -75,7 +75,9 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
+              "outputHashing": "all",
               "browserTarget": "frandly_project_v1:build:production"
+
             },
             "development": {
               "browserTarget": "frandly_project_v1:build:development"
