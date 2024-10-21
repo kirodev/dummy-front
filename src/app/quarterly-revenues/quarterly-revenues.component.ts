@@ -144,12 +144,12 @@ export class QuarterlyRevenuesComponent implements OnInit {
       title: 'Quarterly Revenues by Year',
       barmode: 'stack',
       xaxis: {
-        title: 'Year & Quarter',
+        title: 'Quarters',
         tickangle: -45,
         automargin: true
       },
       yaxis: {
-        title: 'Revenue (in thousands)',
+        title: 'Revenue',
         rangemode: 'tozero',
         automargin: true
       },
