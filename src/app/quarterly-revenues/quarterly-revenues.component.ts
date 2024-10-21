@@ -117,7 +117,7 @@ export class QuarterlyRevenuesComponent implements OnInit {
     });
 
     // Get unique quarter-year labels sorted chronologically
-    const uniqueYearQuarters = Array.from(new Set(filteredRevenues.map(item => `Q${item.quarter} ${item.year}`)))
+    const uniqueYearQuarters = Array.from(new Set(filteredRevenues.map(item => `${item.quarter} ${item.year}`)))
                                      .sort(this.sortQuarterYear);
 
     // Create traces for each company
