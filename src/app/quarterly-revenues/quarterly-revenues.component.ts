@@ -149,7 +149,7 @@ export class QuarterlyRevenuesComponent implements OnInit {
         automargin: true
       },
       yaxis: {
-        title: 'Revenue',
+        title: 'Revenue (in thousands)',
         rangemode: 'tozero',
         automargin: true
       },

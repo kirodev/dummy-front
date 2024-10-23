@@ -58,11 +58,49 @@ export interface Payment {
   royalty_rates?: string;
 }
 
+
+export interface MultiplePayments {
+  ID: number;
+  snippet_ID?: string;
+  Licensee?: string;
+  indiv_licensee?: string;
+  Licensor?: string;
+  licensee_Affiliate?: string;
+  multiplier?: number;
+  qualifiers?: string;
+  year?: number;
+  yearly_quarters?: string;
+  license_sales?: string;
+  period_start?: string;
+  period_end?: string;
+  information_type?: string;
+  payment_amount?: number;
+  payment_amount_in_local_currency?: number;
+  local_currency?: string;
+  percentage_value?: number;
+  payment_type?: string;
+  details?: string;
+  directory_path?: string;
+  comment?: string;
+  mapping_id?: string;
+  modified?: string;
+  eq?: string;
+  result?: number;
+  adv_eq?: string;
+  coef?: string;
+  adv_eq_result?: string;
+  nested_eq?: string;
+  nested_eq_result?: string;
+  reasoning?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class EquationsPaymentsService {
   private baseUrl = `${environment.baseUrl}payments`;
+  private baseMPUrl = `${environment.baseUrl}multiple-payments`;
+
   private quarterlyRevenuesUrl = `${environment.baseUrl}quarterly_revenues`;
   private annualRevenuesUrl = `${environment.baseUrl}annual-revenues`;
 
@@ -177,27 +215,9 @@ export class EquationsPaymentsService {
     return { licensee, licensor, year, quarter };
   }
 
-  private parseEquations(advEquation: string, advEqResult: string): { licensee: string, licensor: string, year?: number, quarter?: string }[] {
-    const equationEntries = advEquation.split('\n');
-    return equationEntries.map((entry) => this.parseEquationEntry(entry));
-  }
 
-  private buildParams(query: { licensee: string, licensor: string, year?: number, quarter?: string }): { [key: string]: string } {
-    const params: { [key: string]: string } = {
-      licensee: query.licensee,
-      licensor: query.licensor
-    };
 
-    if (query.year) {
-      params['year'] = query.year.toString();
-    }
 
-    if (query.quarter) {
-      params['quarter'] = query.quarter;
-    }
-
-    return params;
-  }
 
   generateEquation(equationTemplate: string, data: {
     licensee: string;
@@ -218,6 +238,85 @@ export class EquationsPaymentsService {
       catchError(this.handleError)
     );
   }
+
+
+
+  getMultiplePayments(): Observable<MultiplePayments[]> {
+    return this.http.get<MultiplePayments[]>(this.baseMPUrl, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getMultiplePayment(id: number): Observable<MultiplePayments> {
+    return this.http.get<MultiplePayments>(`${this.baseMPUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  createMultiplePayment(payment: MultiplePayments): Observable<MultiplePayments> {
+    return this.http.post<MultiplePayments>(this.baseMPUrl, payment, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  updateMultiplePayment(id: number, payment: MultiplePayments): Observable<MultiplePayments> {
+    return this.http.put<MultiplePayments>(`${this.baseMPUrl}/${id}`, payment, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  deleteMultiplePayment(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseMPUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getQuarterlyRevenueForMultiplePayments(licensor: string, year: number, quarter: string): Observable<any> {
+    return this.http.get<any>(`${this.quarterlyRevenuesUrl}?licensor=${licensor}&year=${year}&quarter=${quarter}`, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getMultiplePaymentsWithRevenueReplacement(): Observable<MultiplePayments[]> {
+    return this.getMultiplePayments().pipe(
+      switchMap(payments => {
+        const annualRevenueRequests = payments
+          .filter(payment => payment.adv_eq_result === 'TRY')
+          .map(payment => this.getAnnualRevenue(payment.Licensor!, payment.year!));
+
+        return forkJoin(annualRevenueRequests).pipe(
+          map(revenues => {
+            return payments.map(payment => {
+              if (payment.adv_eq_result === 'TRY') {
+                const matchingRevenue = revenues.find(rev =>
+                  rev.licensor === payment.Licensor &&
+                  rev.year === payment.year
+                );
+                if (matchingRevenue) {
+                  return {
+                    ...payment,
+                    adv_eq_result: matchingRevenue.total_revenue.toString()
+                  };
+                }
+              }
+              return payment;
+            });
+          })
+        );
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  updateMultiplePaymentResults(multiplePayments: MultiplePayments[]): Observable<void> {
+    const url = `${this.baseMPUrl}/update-results`;
+    return this.http.put<void>(url, multiplePayments, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+
+
 
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An error occurred';
