@@ -393,7 +393,7 @@ plotData(): void {
     x: sortedYears,
     y: filteredMultiplePayments,
     type: 'bar',
-    name: 'Filtered Multiple Payment (TPY)',
+    name: 'Multiple Payment (TPY)',
     marker: {
       color: 'rgba(0, 255, 0, 0.8)' // Green color for filtered multiple payments
     },
