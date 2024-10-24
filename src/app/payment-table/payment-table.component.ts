@@ -262,7 +262,8 @@ fetchAnnualRevenues(): void {
 
 plotData(): void {
   const yearPaymentsMap = new Map<number, { value: number, isResult: boolean, rowData: any }>();
-  const yearFilteredMultiplePaymentsMap = new Map<number, { value: number }>(); // Map for filtered multiple payments
+  const yearFilteredMultiplePaymentsGreenMap = new Map<number, number>(); // Map for actual multiple payments (green)
+  const yearFilteredMultiplePaymentsYellowMap = new Map<number, number>(); // Map for calculated multiple payments (yellow)
   const yearRevenuesMap = new Map<number, number>();
 
   // Process grouped data (Primary Payments - TPY)
@@ -296,10 +297,19 @@ plotData(): void {
   this.filteredMultiplePayments.forEach(item => {
     const numericYear = parseInt(item.year, 10);
     if (!isNaN(numericYear) && item.eq_type === 'TPY' && item.licensor === this.licensorName && (item.indiv_licensee === this.licenseeName || item.licensee?.includes(this.licenseeName))) {
-      if (typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
-        // Only set filtered multiple payment if no other payment or result exists for this year
-        if (!yearPaymentsMap.has(numericYear)) {
-          yearFilteredMultiplePaymentsMap.set(numericYear, { value: item.payment_amount });
+      // Use results value if payment_amount is null or empty
+      const value = (item.payment_amount !== null && !isNaN(item.payment_amount)) ? item.payment_amount : item.results;
+      const isResult = (item.payment_amount === null || isNaN(item.payment_amount)); // Check if it's using the calculated result
+
+      // Only add multiple payments if no primary payment exists for this year
+      if (!yearPaymentsMap.has(numericYear)) {
+        if (typeof value === 'number' && !isNaN(value)) {
+          // Separate actual multiple payments (green) from calculated multiple payments (yellow)
+          if (isResult) {
+            yearFilteredMultiplePaymentsYellowMap.set(numericYear, value); // Calculated result
+          } else {
+            yearFilteredMultiplePaymentsGreenMap.set(numericYear, value); // Actual payment
+          }
         }
       }
     }
@@ -313,21 +323,29 @@ plotData(): void {
   });
 
   // Combine years from all datasets
-  const allYears = new Set([...yearPaymentsMap.keys(), ...yearRevenuesMap.keys(), ...yearFilteredMultiplePaymentsMap.keys()]);
+  const allYears = new Set([
+    ...yearPaymentsMap.keys(),
+    ...yearRevenuesMap.keys(),
+    ...yearFilteredMultiplePaymentsGreenMap.keys(),
+    ...yearFilteredMultiplePaymentsYellowMap.keys(),
+  ]);
   const sortedYears = Array.from(allYears).sort((a, b) => a - b);
 
   const payments: (number | null)[] = [];
   const results: (number | null)[] = [];
-  const filteredMultiplePayments: (number | null)[] = [];
+  const filteredMultiplePaymentsGreen: (number | null)[] = [];
+  const filteredMultiplePaymentsYellow: (number | null)[] = [];
   const revenues: (number | null)[] = [];
   const hoverTextsPayments: string[] = [];
   const hoverTextsResults: string[] = [];
-  const hoverTextsFilteredMultiplePayments: string[] = [];
+  const hoverTextsFilteredMultiplePaymentsGreen: string[] = [];
+  const hoverTextsFilteredMultiplePaymentsYellow: string[] = [];
   const hoverTextsRevenues: string[] = [];
 
   sortedYears.forEach(year => {
     const paymentData = yearPaymentsMap.get(year);
-    const filteredMultiplePaymentData = yearFilteredMultiplePaymentsMap.get(year);
+    const greenPayment = yearFilteredMultiplePaymentsGreenMap.get(year);
+    const yellowPayment = yearFilteredMultiplePaymentsYellowMap.get(year);
     const revenue = yearRevenuesMap.get(year) ?? null;
 
     // Payment and result hover texts
@@ -350,13 +368,22 @@ plotData(): void {
       hoverTextsResults.push(`Year: ${year}`);
     }
 
-    // Filtered multiple payments hover text
-    if (filteredMultiplePaymentData) {
-      filteredMultiplePayments.push(filteredMultiplePaymentData.value);
-      hoverTextsFilteredMultiplePayments.push(`Year: ${year}<br>Filtered Multiple Payment: ${this.formatNumber(filteredMultiplePaymentData.value)}`);
+    // Green hover text (Actual Multiple Payments)
+    if (greenPayment !== undefined) {
+      filteredMultiplePaymentsGreen.push(greenPayment);
+      hoverTextsFilteredMultiplePaymentsGreen.push(`Year: ${year}<br>Actual Multiple Payment: ${this.formatNumber(greenPayment)}`);
     } else {
-      filteredMultiplePayments.push(null);
-      hoverTextsFilteredMultiplePayments.push(`Year: ${year}`);
+      filteredMultiplePaymentsGreen.push(null);
+      hoverTextsFilteredMultiplePaymentsGreen.push(`Year: ${year}`);
+    }
+
+    // Yellow hover text (Calculated Multiple Payments)
+    if (yellowPayment !== undefined) {
+      filteredMultiplePaymentsYellow.push(yellowPayment);
+      hoverTextsFilteredMultiplePaymentsYellow.push(`Year: ${year}<br>Calculated Multiple Payment: ${this.formatNumber(yellowPayment)}`);
+    } else {
+      filteredMultiplePaymentsYellow.push(null);
+      hoverTextsFilteredMultiplePaymentsYellow.push(`Year: ${year}`);
     }
 
     // Revenue hover text
@@ -388,21 +415,35 @@ plotData(): void {
     offsetgroup: 0 // Offset group for proper alignment
   };
 
-  // Filtered Multiple Payments trace (overlay second)
-  const filteredMultiplePaymentTrace = {
+  // Green trace (Actual Multiple Payments)
+  const filteredMultiplePaymentsGreenTrace = {
     x: sortedYears,
-    y: filteredMultiplePayments,
+    y: filteredMultiplePaymentsGreen,
     type: 'bar',
-    name: 'Multiple Payment (TPY)',
+    name: 'Actual Multiple Payment (TPY)',
     marker: {
-      color: 'rgba(0, 255, 0, 0.8)' // Green color for filtered multiple payments
+      color: 'rgba(0, 255, 0, 0.8)' // Green color for actual payments
     },
     hoverinfo: 'text',
-    hovertext: hoverTextsFilteredMultiplePayments,
+    hovertext: hoverTextsFilteredMultiplePaymentsGreen,
     offsetgroup: 1 // To align with revenue and payment bars
   };
 
-  // Payment trace (overlay last)
+  // Yellow trace (Calculated Multiple Payments)
+  const filteredMultiplePaymentsYellowTrace = {
+    x: sortedYears,
+    y: filteredMultiplePaymentsYellow,
+    type: 'bar',
+    name: 'Calculated Multiple Payment (TPY)',
+    marker: {
+      color: 'rgba(255, 255, 0, 0.8)' // Yellow color for calculated results
+    },
+    hoverinfo: 'text',
+    hovertext: hoverTextsFilteredMultiplePaymentsYellow,
+    offsetgroup: 1 // To align with revenue and payment bars
+  };
+
+  // Payment trace (blue)
   const paymentTrace = {
     x: sortedYears,
     y: payments,
@@ -416,7 +457,7 @@ plotData(): void {
     offsetgroup: 1 // To align with revenue and filtered multiple payments bars
   };
 
-  // Result trace (overlay third)
+  // Result trace (orange)
   const resultTrace = {
     x: sortedYears,
     y: results,
@@ -453,8 +494,10 @@ plotData(): void {
   };
 
   // Plot the data with correct stacking order
-  Plotly.newPlot('myDiv', [revenueTrace, filteredMultiplePaymentTrace, paymentTrace, resultTrace], layout);
+  Plotly.newPlot('myDiv', [revenueTrace, filteredMultiplePaymentsGreenTrace, filteredMultiplePaymentsYellowTrace, paymentTrace, resultTrace], layout);
 }
+
+
 
 
 
@@ -508,21 +551,53 @@ plotData(): void {
           return meetsLicensorCondition && meetsLicenseeCondition;
         });
 
-
         // Filtered based on licensor only
         const confirmedTableRows = this.filteredMultiplePayments.map(item => item.id);
         this.multiplePayments = data.filter(item => !confirmedTableRows.includes(item.id) && item.licensor === this.licensorName);
 
-
         // Filter for licenseeName only
         const matchingRowsLicenseeOnly = data.filter(item => item.indiv_licensee === this.licenseeName);
 
+        // Initialize unique payments
         this.initializeUniquePayments();
+
+        // Call performRevenueCalculations to calculate results for adv_eq_type 'TRY'
+        this.performRevenueCalculations();  // <-- This is where we add the calculation for `TRY`
       },
       (error) => {
         console.error('Error fetching data for multiple licensees:', error);
       }
     );
+  }
+
+  performRevenueCalculations(): void {
+    if (!this.annualRevenues || this.annualRevenues.length === 0) {
+      console.error('No annual revenues data available.');
+      return;
+    }
+
+    this.filteredMultiplePayments.forEach(payment => {
+      // Check if adv_eq_type is 'TRY'
+      if (payment.adv_eq_type === 'TRY') {
+        const matchingRevenue = this.annualRevenues.find(revenue =>
+          revenue.licensor === payment.licensor && revenue.year === payment.year
+        );
+
+        if (matchingRevenue && payment.coef) {
+          const totalRevenue = matchingRevenue.total_revenue;
+          const coef = parseFloat(payment.coef);
+
+          // Perform the calculation: coef * total_revenue
+          payment.results = coef * totalRevenue;
+
+          console.log(`Payment for ${payment.licensor} (${payment.year}): Calculated result is ${payment.results}`);
+        } else {
+          console.log(`No matching revenue found for ${payment.licensor} (${payment.year}) or coefficient is missing.`);
+        }
+      }
+    });
+
+    this.plotData();  // Re-plot the data to include the new results
   }
 
   initializeUniquePayments(): void {
