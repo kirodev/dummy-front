@@ -11,18 +11,27 @@ export class ExamplePdfViewerComponent implements AfterViewInit {
   @Input() documentName: string = '';
   @Input() pdfSrc: string = '';
 
+  searchText: string = '';  // To store the search term
+
   constructor(private pdfViewerService: NgxExtendedPdfViewerService) { }
 
-  ngAfterViewInit(): void {
-
-  }
+  ngAfterViewInit(): void {}
 
   searchPDF(text: string): void {
-    // Check if pdfViewer and pdfViewerService are available
-    if (this.pdfViewer && this.pdfViewerService && this.pdfViewerService.find) {
-      this.pdfViewerService.find(text);
+    // Store the search term in a variable to use it once the PDF is loaded
+    this.searchText = text;
+
+    // Wait for the PDF to load, then trigger the search
+    if (this.pdfViewer) {
+      this.pdfViewer.pdfLoaded.subscribe(() => {
+        if (this.pdfViewerService && this.pdfViewerService.find) {
+          this.pdfViewerService.find(this.searchText);
+        } else {
+          console.error('PDF search functionality is not available.');
+        }
+      });
     } else {
-      console.error('PDF viewer is not initialized or search functionality is not available.');
+      console.error('PDF viewer is not initialized.');
     }
   }
 }

@@ -218,7 +218,7 @@ export class PaymentTableComponent implements OnInit {
 
     setTimeout(() => {
       this.pdfViewer.searchPDF(details); // Keep the existing functionality for the popup
-    }, 1000);
+    }, 100);
   }
 
 
@@ -260,65 +260,183 @@ fetchAnnualRevenues(): void {
   );
 }
 
+aggregateQuarterlyToYearly(): void {
+  const yearlyAggregatedData = new Map<number, { value: number, isComplete: boolean }>();
+
+  // Aggregate quarterly payments from multiple payments
+  this.filteredMultiplePayments.forEach(item => {
+    const numericYear = parseInt(item.year, 10);
+
+    if (!isNaN(numericYear) && item.eq_type === 'TPQ' && item.licensor === this.licensorName &&
+        (item.indiv_licensee === this.licenseeName || item.licensee?.includes(this.licenseeName))) {
+
+      // Initialize yearly entry if it does not exist
+      if (!yearlyAggregatedData.has(numericYear)) {
+        yearlyAggregatedData.set(numericYear, { value: 0, isComplete: true });
+      }
+
+      // Aggregate the quarterly values and check for completeness
+      const yearData = yearlyAggregatedData.get(numericYear)!;
+      if (typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
+        yearData.value += item.payment_amount;
+      } else if (typeof item.results === 'number' && !isNaN(item.results)) {
+        yearData.value += item.results;
+      } else {
+        yearData.isComplete = false; // Mark as incomplete if any data is missing
+      }
+
+      // Update the yearly data entry
+      yearlyAggregatedData.set(numericYear, yearData);
+    }
+  });
+
+  // Perform similar aggregation on the payments data (with 'licensee' field)
+  this.paymentData.forEach(item => {
+    const numericYear = parseInt(item.year, 10);
+
+    if (!isNaN(numericYear) && item.eq_type === 'TPQ' && item.licensor === this.licensorName &&
+        item.licensee === this.licenseeName) {
+
+      // Initialize yearly entry if it does not exist
+      if (!yearlyAggregatedData.has(numericYear)) {
+        yearlyAggregatedData.set(numericYear, { value: 0, isComplete: true });
+      }
+
+      // Aggregate the quarterly values and check for completeness
+      const yearData = yearlyAggregatedData.get(numericYear)!;
+      if (typeof item.payment_amount === 'number' && !isNaN(item.payment_amount)) {
+        yearData.value += item.payment_amount;
+      } else if (typeof item.results === 'number' && !isNaN(item.results)) {
+        yearData.value += item.results;
+      } else {
+        yearData.isComplete = false; // Mark as incomplete if any data is missing
+      }
+
+      // Update the yearly data entry
+      yearlyAggregatedData.set(numericYear, yearData);
+    }
+  });
+
+  // Transform the results to TPY and minTPY formats
+  this.filteredMultiplePayments = this.filteredMultiplePayments.map(item => {
+    const numericYear = parseInt(item.year, 10);
+    const yearData = yearlyAggregatedData.get(numericYear);
+
+    if (yearData) {
+      // If all quarters are present, assign as TPY; otherwise, assign as minTPY
+      item.payment_amount = yearData.value;
+      item.eq_type = yearData.isComplete ? 'TPY' : 'minTPY';
+    }
+
+    return item;
+  });
+
+  // Update the same in payments data
+  this.paymentData = this.paymentData.map(item => {
+    const numericYear = parseInt(item.year, 10);
+    const yearData = yearlyAggregatedData.get(numericYear);
+
+    if (yearData) {
+      // If all quarters are present, assign as TPY; otherwise, assign as minTPY
+      item.payment_amount = yearData.value;
+      item.eq_type = yearData.isComplete ? 'TPY' : 'minTPY';
+    }
+
+    return item;
+  });
+}
+
+
 plotData(): void {
   const yearPaymentsMap = new Map<number, { value: number, isResult: boolean, rowData: any }>();
-  const yearFilteredMultiplePaymentsGreenMap = new Map<number, number>(); // Map for actual multiple payments (green)
-  const yearFilteredMultiplePaymentsYellowMap = new Map<number, number>(); // Map for calculated multiple payments (yellow)
+  const yearFilteredMultiplePaymentsGreenMap = new Map<number, number>();
+  const yearFilteredMultiplePaymentsYellowMap = new Map<number, number>();
+  const yearMinTPYMap = new Map<number, number>();
+  const yearPaymentsMinTPYMap = new Map<number, number>();
   const yearRevenuesMap = new Map<number, number>();
 
   // Process grouped data (Primary Payments - TPY)
   Object.entries(this.groupedTableData).forEach(([year, data]) => {
     const numericYear = parseInt(year, 10);
     if (!isNaN(numericYear) && data.primary) {
-      if (data.primary.eq_type === 'TPY' && typeof data.primary.payment_amount === 'number' && !isNaN(data.primary.payment_amount)) {
-        yearPaymentsMap.set(numericYear, { value: data.primary.payment_amount, isResult: false, rowData: data.primary });
-      } else if ((data.primary.eq_type === 'TPY' || data.primary.adv_eq_type === 'TPY')) {
-        let value: number | undefined;
-        let isResult = false;
+      let value: number | undefined;
+      let isResult = false;
 
-        if (typeof data.primary.payment_amount === 'number' && !isNaN(data.primary.payment_amount)) {
-          value = data.primary.payment_amount;
-        } else if (typeof data.primary.results === 'number' && !isNaN(data.primary.results)) {
+      if (data.primary.eq_type === 'TPY' && typeof data.primary.payment_amount === 'number') {
+        value = data.primary.payment_amount;
+      } else if ((data.primary.eq_type === 'TPY' || data.primary.adv_eq_type === 'TPY')) {
+        if (typeof data.primary.payment_amount === 'number') value = data.primary.payment_amount;
+        else if (typeof data.primary.results === 'number') {
           value = data.primary.results;
           isResult = true;
-        } else if (typeof data.primary.eq_result === 'number' && !isNaN(data.primary.eq_result)) {
+        } else if (typeof data.primary.eq_result === 'number') {
           value = data.primary.eq_result;
           isResult = true;
         }
+      }
 
-        if (value !== undefined) {
-          yearPaymentsMap.set(numericYear, { value, isResult, rowData: data.primary });
+      if (value !== undefined) {
+        yearPaymentsMap.set(numericYear, { value, isResult, rowData: data.primary });
+      }
+    }
+  });
+
+  // Process filtered multiple payments (TPY and minTPY)
+  const quarterlyPaymentsMap = new Map<number, { sum: number, count: number }>();
+
+  this.filteredMultiplePayments.forEach(item => {
+    const numericYear = parseInt(item.year, 10);
+    if (!isNaN(numericYear) && item.licensor === this.licensorName &&
+        (item.indiv_licensee === this.licenseeName || item.licensee?.includes(this.licenseeName))) {
+      const isQuarterly = item.eq_type === 'TPQ';
+
+      if (isQuarterly) {
+        if (!quarterlyPaymentsMap.has(numericYear)) {
+          quarterlyPaymentsMap.set(numericYear, { sum: 0, count: 0 });
+        }
+        const quarterlyData = quarterlyPaymentsMap.get(numericYear)!;
+        const quarterlyValue = item.payment_amount ?? item.results;
+        if (typeof quarterlyValue === 'number') {
+          quarterlyData.sum += quarterlyValue;
+          quarterlyData.count += 1;
+        }
+      } else if (item.eq_type === 'TPY' && !yearPaymentsMap.has(numericYear)) {
+        const value = item.payment_amount ?? item.results;
+        if (typeof value === 'number') {
+          yearFilteredMultiplePaymentsGreenMap.set(numericYear, value);
         }
       }
     }
   });
 
-  // Process filtered multiple payments (TPY only)
-  this.filteredMultiplePayments.forEach(item => {
-    const numericYear = parseInt(item.year, 10);
-    if (!isNaN(numericYear) && item.eq_type === 'TPY' && item.licensor === this.licensorName && (item.indiv_licensee === this.licenseeName || item.licensee?.includes(this.licenseeName))) {
-      // Use results value if payment_amount is null or empty
-      const value = (item.payment_amount !== null && !isNaN(item.payment_amount)) ? item.payment_amount : item.results;
-      const isResult = (item.payment_amount === null || isNaN(item.payment_amount)); // Check if it's using the calculated result
-
-      // Only add multiple payments if no primary payment exists for this year
-      if (!yearPaymentsMap.has(numericYear)) {
-        if (typeof value === 'number' && !isNaN(value)) {
-          // Separate actual multiple payments (green) from calculated multiple payments (yellow)
-          if (isResult) {
-            yearFilteredMultiplePaymentsYellowMap.set(numericYear, value); // Calculated result
-          } else {
-            yearFilteredMultiplePaymentsGreenMap.set(numericYear, value); // Actual payment
-          }
-        }
-      }
+  quarterlyPaymentsMap.forEach((data, year) => {
+    if (data.count < 4 &&
+        !yearPaymentsMap.has(year) &&
+        !yearFilteredMultiplePaymentsGreenMap.has(year) &&
+        !yearFilteredMultiplePaymentsYellowMap.has(year)) {
+      yearMinTPYMap.set(year, data.sum);
     }
   });
 
   // Process annual revenue data
   this.annualRevenues.forEach(revenue => {
-    if (revenue.year && typeof revenue.total_revenue === 'number' && !isNaN(revenue.total_revenue)) {
+    if (revenue.year && typeof revenue.total_revenue === 'number') {
       yearRevenuesMap.set(revenue.year, revenue.total_revenue);
+    }
+  });
+
+  // Additional processing for payments minTPY
+  this.paymentData.forEach(item => {
+    const numericYear = parseInt(item.year, 10);
+    if (!isNaN(numericYear) && item.licensor === this.licensorName && item.licensee === this.licenseeName) {
+      if (item.eq_type === 'TPQ') {
+        if (!yearPaymentsMinTPYMap.has(numericYear)) {
+          yearPaymentsMinTPYMap.set(numericYear, item.payment_amount ?? item.results);
+        } else {
+          const currentSum = yearPaymentsMinTPYMap.get(numericYear)!;
+          yearPaymentsMinTPYMap.set(numericYear, currentSum + (item.payment_amount ?? item.results ?? 0));
+        }
+      }
     }
   });
 
@@ -328,6 +446,8 @@ plotData(): void {
     ...yearRevenuesMap.keys(),
     ...yearFilteredMultiplePaymentsGreenMap.keys(),
     ...yearFilteredMultiplePaymentsYellowMap.keys(),
+    ...yearMinTPYMap.keys(),
+    ...yearPaymentsMinTPYMap.keys(),
   ]);
   const sortedYears = Array.from(allYears).sort((a, b) => a - b);
 
@@ -335,166 +455,139 @@ plotData(): void {
   const results: (number | null)[] = [];
   const filteredMultiplePaymentsGreen: (number | null)[] = [];
   const filteredMultiplePaymentsYellow: (number | null)[] = [];
+  const minTPY: (number | null)[] = [];
+  const paymentsMinTPY: (number | null)[] = [];
   const revenues: (number | null)[] = [];
+
+  // Define hover text arrays for each trace
   const hoverTextsPayments: string[] = [];
   const hoverTextsResults: string[] = [];
   const hoverTextsFilteredMultiplePaymentsGreen: string[] = [];
   const hoverTextsFilteredMultiplePaymentsYellow: string[] = [];
+  const hoverTextsMinTPY: string[] = [];
+  const hoverTextsPaymentsMinTPY: string[] = [];
   const hoverTextsRevenues: string[] = [];
 
   sortedYears.forEach(year => {
     const paymentData = yearPaymentsMap.get(year);
     const greenPayment = yearFilteredMultiplePaymentsGreenMap.get(year);
     const yellowPayment = yearFilteredMultiplePaymentsYellowMap.get(year);
+    const minTPYValue = yearMinTPYMap.get(year);
+    const paymentsMinTPYValue = yearPaymentsMinTPYMap.get(year);
     const revenue = yearRevenuesMap.get(year) ?? null;
 
-    // Payment and result hover texts
-    if (paymentData) {
-      if (paymentData.isResult) {
-        payments.push(null);
-        results.push(paymentData.value);
-        hoverTextsResults.push(`Year: ${year}<br>Calculated Payment: ${this.formatNumber(paymentData.value)}`);
-        hoverTextsPayments.push(`Year: ${year}`); // Empty hover text for payments when it's a result
-      } else {
-        payments.push(paymentData.value);
-        results.push(null);
-        hoverTextsPayments.push(`Year: ${year}<br>Payment: ${this.formatNumber(paymentData.value)}`);
-        hoverTextsResults.push(`Year: ${year}`); // Empty hover text for results when it's a payment
-      }
-    } else {
-      payments.push(null);
-      results.push(null);
-      hoverTextsPayments.push(`Year: ${year}`);
-      hoverTextsResults.push(`Year: ${year}`);
-    }
+    // Populate data arrays
+    payments.push(paymentData ? paymentData.value : null);
+    results.push(paymentData && paymentData.isResult ? paymentData.value : null);
+    filteredMultiplePaymentsGreen.push(greenPayment ?? null);
+    filteredMultiplePaymentsYellow.push(yellowPayment ?? null);
+    minTPY.push(minTPYValue ?? null);
+    paymentsMinTPY.push(paymentsMinTPYValue ?? null);
+    revenues.push(revenue);
 
-    // Green hover text (Actual Multiple Payments)
-    if (greenPayment !== undefined) {
-      filteredMultiplePaymentsGreen.push(greenPayment);
-      hoverTextsFilteredMultiplePaymentsGreen.push(`Year: ${year}<br>Actual Multiple Payment: ${this.formatNumber(greenPayment)}`);
-    } else {
-      filteredMultiplePaymentsGreen.push(null);
-      hoverTextsFilteredMultiplePaymentsGreen.push(`Year: ${year}`);
-    }
-
-    // Yellow hover text (Calculated Multiple Payments)
-    if (yellowPayment !== undefined) {
-      filteredMultiplePaymentsYellow.push(yellowPayment);
-      hoverTextsFilteredMultiplePaymentsYellow.push(`Year: ${year}<br>Calculated Multiple Payment: ${this.formatNumber(yellowPayment)}`);
-    } else {
-      filteredMultiplePaymentsYellow.push(null);
-      hoverTextsFilteredMultiplePaymentsYellow.push(`Year: ${year}`);
-    }
-
-    // Revenue hover text
-    if (revenue !== null) {
-      revenues.push(revenue);
-      hoverTextsRevenues.push(`Year: ${year}<br>Total Revenue: ${this.formatNumber(revenue)}`);
-    } else {
-      revenues.push(null);
-      hoverTextsRevenues.push(`Year: ${year}`);
-    }
+    // Populate hover text arrays
+    hoverTextsPayments.push(paymentData ? `Year: ${year}<br>Payment: ${this.formatNumber(paymentData.value)}` : `Year: ${year}`);
+    hoverTextsResults.push(paymentData && paymentData.isResult ? `Year: ${year}<br>Calculated Payment: ${this.formatNumber(paymentData.value)}` : `Year: ${year}`);
+    hoverTextsFilteredMultiplePaymentsGreen.push(greenPayment !== undefined ? `Year: ${year}<br>Actual Multiple Payment: ${this.formatNumber(greenPayment)}` : `Year: ${year}`);
+    hoverTextsFilteredMultiplePaymentsYellow.push(yellowPayment !== undefined ? `Year: ${year}<br>Calculated Multiple Payment: ${this.formatNumber(yellowPayment)}` : `Year: ${year}`);
+    hoverTextsMinTPY.push(minTPYValue !== undefined ? `Year: ${year}<br>Min TPY (Multiple Payments): ${this.formatNumber(minTPYValue)}` : `Year: ${year}`);
+    hoverTextsPaymentsMinTPY.push(paymentsMinTPYValue !== undefined ? `Year: ${year}<br>Min TPY (Payments): ${this.formatNumber(paymentsMinTPYValue)}` : `Year: ${year}`);
+    hoverTextsRevenues.push(revenue !== null ? `Year: ${year}<br>Total Revenue: ${this.formatNumber(revenue)}` : `Year: ${year}`);
   });
 
-  if (sortedYears.length === 0) {
-    console.error('No valid data to plot');
-    return;
-  }
-
-  // Revenue trace (background)
+  // Define traces with color configurations
   const revenueTrace = {
     x: sortedYears,
     y: revenues,
     type: 'bar',
     name: 'Total Revenue',
-    marker: {
-      color: 'rgba(200, 200, 200, 0.7)' // Gray color for the background revenue bar
-    },
+    marker: { color: 'rgba(200, 200, 200, 0.7)' },
     hoverinfo: 'text',
     hovertext: hoverTextsRevenues,
-    offsetgroup: 0 // Offset group for proper alignment
+    offsetgroup: 0,
   };
 
-  // Green trace (Actual Multiple Payments)
   const filteredMultiplePaymentsGreenTrace = {
     x: sortedYears,
     y: filteredMultiplePaymentsGreen,
     type: 'bar',
-    name: 'Actual Multiple Payment (TPY)',
-    marker: {
-      color: 'rgba(0, 255, 0, 0.8)' // Green color for actual payments
-    },
+    name: 'Multiple Payment (TPY)',
+    marker: { color: 'rgba(0, 255, 0, 0.8)' },
     hoverinfo: 'text',
     hovertext: hoverTextsFilteredMultiplePaymentsGreen,
-    offsetgroup: 1 // To align with revenue and payment bars
+    offsetgroup: 1,
   };
 
-  // Yellow trace (Calculated Multiple Payments)
   const filteredMultiplePaymentsYellowTrace = {
     x: sortedYears,
     y: filteredMultiplePaymentsYellow,
     type: 'bar',
     name: 'Calculated Multiple Payment (TPY)',
-    marker: {
-      color: 'rgba(255, 255, 0, 0.8)' // Yellow color for calculated results
-    },
+    marker: { color: 'rgba(255, 255, 0, 0.8)' },
     hoverinfo: 'text',
     hovertext: hoverTextsFilteredMultiplePaymentsYellow,
-    offsetgroup: 1 // To align with revenue and payment bars
+    offsetgroup: 1,
   };
 
-  // Payment trace (blue)
+  const minTPYTrace = {
+    x: sortedYears,
+    y: minTPY,
+    type: 'bar',
+    name: 'Multiple Payments (MinTPY)',
+    marker: { color: 'rgba(255, 0, 0, 0.8)' },
+    hoverinfo: 'text',
+    hovertext: hoverTextsMinTPY,
+    offsetgroup: 1,
+  };
+
+  const paymentsMinTPYTrace = {
+    x: sortedYears,
+    y: paymentsMinTPY,
+    type: 'bar',
+    name: 'Payments (MinTPY)',
+    marker: { color: 'rgba(165, 42, 42, 0.8)' },
+    hoverinfo: 'text',
+    hovertext: hoverTextsPaymentsMinTPY,
+    offsetgroup: 1,
+  };
+
   const paymentTrace = {
     x: sortedYears,
     y: payments,
     type: 'bar',
     name: 'Payment (TPY)',
-    marker: {
-      color: 'rgba(0, 123, 255, 0.8)' // Blue color for payments
-    },
+    marker: { color: 'rgba(0, 123, 255, 0.8)' },
     hoverinfo: 'text',
     hovertext: hoverTextsPayments,
-    offsetgroup: 1 // To align with revenue and filtered multiple payments bars
+    offsetgroup: 1,
   };
 
-  // Result trace (orange)
   const resultTrace = {
     x: sortedYears,
     y: results,
     type: 'bar',
     name: 'Calculated Payment (TPY)',
-    marker: {
-      color: 'rgba(255, 165, 0, 0.8)' // Orange color for calculated payments
-    },
+    marker: { color: 'rgba(255, 165, 0, 0.8)' },
     hoverinfo: 'text',
     hovertext: hoverTextsResults,
-    offsetgroup: 1 // To align with other bars
+    offsetgroup: 1,
   };
 
   const layout = {
     height: 600,
     autosize: true,
     title: 'TPY Payments, Filtered Multiple Payments, and Total Revenue Over Years',
-    xaxis: {
-      title: 'Year',
-      type: 'category'
-    },
-    yaxis: {
-      title: 'Payment Amount',
-      tickformat: ',d',
-      type: 'linear',
-      rangemode: 'tozero'
-    },
-    barmode: 'overlay', // Overlay mode for bars
-    legend: {
-      orientation: 'h',
-      y: 1.1
-    },
-    hovermode: 'closest'
+    xaxis: { title: 'Year', type: 'category' },
+    yaxis: { title: 'Payment Amount', tickformat: ',d', type: 'linear', rangemode: 'tozero' },
+    barmode: 'overlay',
+    legend: { orientation: 'h', y: 1.1 },
+    hovermode: 'closest',
   };
 
-  // Plot the data with correct stacking order
-  Plotly.newPlot('myDiv', [revenueTrace, filteredMultiplePaymentsGreenTrace, filteredMultiplePaymentsYellowTrace, paymentTrace, resultTrace], layout);
+  Plotly.newPlot('myDiv', [
+    revenueTrace, filteredMultiplePaymentsGreenTrace, filteredMultiplePaymentsYellowTrace,
+    minTPYTrace, paymentsMinTPYTrace, paymentTrace, resultTrace
+  ], layout);
 }
 
 
