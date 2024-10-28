@@ -1,5 +1,5 @@
 <!-- Table for rows with defined licensee -->
-
+<h1>{{ dynamicTitle }}</h1>
 <!-- Tab Navigation -->
 <ul class="nav nav-tabs custom-tabs">
   <li class="nav-item">
@@ -14,11 +14,14 @@
 <!-- Content will be rendered here based on the active route -->
 
 <div id='myDiv'></div>
+
+
 <div class="outer-container">
   <div class="center-container">
     <div class="center-content">
       <div *ngIf="groupedTableData">
         <h1>Plot data sources</h1>
+        <br>
         <div class="table-responsive">
           <table class="table table-striped table-hover">
             <thead>
@@ -126,7 +129,7 @@
 
       <h1>Payment :</h1>
       <h1>{{ dynamicTitle }} :</h1>
-
+      <br>
       <table class="terms-table">
         <thead>
           <tr>
@@ -249,6 +252,7 @@
 
       <h1>Unknown Payments :</h1>
       <h1>{{ dynamicTitle }} :</h1>
+      <br>
       <table class="unknown-table">
         <thead>
           <tr>
@@ -358,6 +362,7 @@
 
       <h1>Payment from multiple licensees</h1>
       <h1>{{ dynamicTitle }} :</h1>
+      <br>
       <table class="knownMP-table">
         <thead>
           <tr>
@@ -464,6 +469,7 @@
 
       <h1>Payments from multiple unknowns :</h1>
       <h1>{{ dynamicTitle }} :</h1>
+      <br>
       <table class="unknownMP-table">
         <thead>
           <tr>

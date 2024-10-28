@@ -142,9 +142,10 @@ h1 {
   font-size: 20px;
   font-style: normal;
   line-height: normal;
-  margin-left:100px; /* Reset margin for h1 */
-  margin-top: 50px;
+  margin: 50px auto 0 auto; /* Centers the h1 element */
+  text-align: center;        /* Centers the text inside h1 */
 }
+
 
 
 .modified-row {

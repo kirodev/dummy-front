@@ -348,21 +348,27 @@ aggregateQuarterlyToYearly(): void {
 
 
 plotData(): void {
-  const yearPaymentsMap = new Map<number, { value: number, isResult: boolean, rowData: any }>();
+  const yearPaymentsMap = new Map<number, { value: number; isResult: boolean; rowData: any }>();
   const yearFilteredMultiplePaymentsGreenMap = new Map<number, number>();
   const yearFilteredMultiplePaymentsYellowMap = new Map<number, number>();
   const yearMinTPYMap = new Map<number, number>();
   const yearPaymentsMinTPYMap = new Map<number, number>();
+  const yearOthersMinTPYMap = new Map<number, number>();
+  const yearMPOthersMinTPYMap = new Map<number, number>();
   const yearRevenuesMap = new Map<number, number>();
 
-  // Process grouped data for primary payments (original logic for Payment and Calculated Payment)
+  // Process grouped data for primary payments (Payment and Calculated Payment)
   Object.entries(this.groupedTableData).forEach(([year, data]) => {
     const numericYear = parseInt(year, 10);
     if (!isNaN(numericYear) && data.primary) {
       let value: number | undefined;
       let isResult = false;
 
-      if (data.primary.eq_type === 'TPY' && typeof data.primary.payment_amount === 'number' && !isNaN(data.primary.payment_amount)) {
+      if (
+        data.primary.eq_type === 'TPY' &&
+        typeof data.primary.payment_amount === 'number' &&
+        !isNaN(data.primary.payment_amount)
+      ) {
         value = data.primary.payment_amount;
       } else if (data.primary.eq_type === 'TPY' || data.primary.adv_eq_type === 'TPY') {
         if (typeof data.primary.results === 'number' && !isNaN(data.primary.results)) {
@@ -380,16 +386,24 @@ plotData(): void {
     }
   });
 
-  // Process filtered multiple payments (unchanged logic for green/yellow multiple payments and minTPY)
-  const quarterlyPaymentsMap = new Map<number, { sum: number, count: number }>();
+  // Process filtered multiple payments and calculate MP Others MinTPY
+  const quarterlyPaymentsMap = new Map<number, { sum: number; count: number }>();
 
-  this.filteredMultiplePayments.forEach(item => {
+  this.filteredMultiplePayments.forEach((item) => {
     const numericYear = parseInt(item.year, 10);
-    if (!isNaN(numericYear) && item.licensor === this.licensorName &&
-        (item.indiv_licensee === this.licenseeName || item.licensee?.includes(this.licenseeName))) {
-      if (item.eq_type === 'TPY') {
-        const value = (item.payment_amount !== null && !isNaN(item.payment_amount)) ? item.payment_amount : item.results;
-        const isResult = (item.payment_amount === null || isNaN(item.payment_amount));
+    const eqType = item.eq_type?.toUpperCase();
+
+    if (
+      !isNaN(numericYear) &&
+      item.licensor === this.licensorName &&
+      (item.indiv_licensee === this.licenseeName || item.licensee?.includes(this.licenseeName))
+    ) {
+      if (eqType === 'TPY') {
+        const value =
+          item.payment_amount !== null && !isNaN(item.payment_amount)
+            ? item.payment_amount
+            : item.results;
+        const isResult = item.payment_amount === null || isNaN(item.payment_amount);
 
         if (!yearPaymentsMap.has(numericYear)) {
           if (typeof value === 'number' && !isNaN(value)) {
@@ -400,7 +414,7 @@ plotData(): void {
             }
           }
         }
-      } else if (item.eq_type === 'TPQ') {
+      } else if (eqType === 'TPQ') {
         if (!quarterlyPaymentsMap.has(numericYear)) {
           quarterlyPaymentsMap.set(numericYear, { sum: 0, count: 0 });
         }
@@ -411,124 +425,282 @@ plotData(): void {
           quarterlyData.count += 1;
         }
       }
-    }
-  });
 
-  // Calculate minTPY for incomplete multiple payment years
-  quarterlyPaymentsMap.forEach((data, year) => {
-    if (data.count < 4 && !yearPaymentsMap.has(year) && !yearFilteredMultiplePaymentsGreenMap.has(year) && !yearFilteredMultiplePaymentsYellowMap.has(year)) {
-      yearMinTPYMap.set(year, data.sum);
-    }
-  });
-
-  // Process annual revenue data
-  this.annualRevenues.forEach(revenue => {
-    if (revenue.year && typeof revenue.total_revenue === 'number' && !isNaN(revenue.total_revenue)) {
-      yearRevenuesMap.set(revenue.year, revenue.total_revenue);
-    }
-  });
-
-  // Process payments minTPY data
-  this.paymentData.forEach(item => {
-    const numericYear = parseInt(item.year, 10);
-    if (!isNaN(numericYear) && item.licensor === this.licensorName && item.licensee === this.licenseeName) {
-      if (item.eq_type === 'TPQ') {
-        if (!yearPaymentsMinTPYMap.has(numericYear)) {
-          yearPaymentsMinTPYMap.set(numericYear, item.payment_amount ?? item.results);
-        } else {
-          const currentSum = yearPaymentsMinTPYMap.get(numericYear)!;
-          yearPaymentsMinTPYMap.set(numericYear, currentSum + (item.payment_amount ?? item.results ?? 0));
+      // Process MP Others MinTPY
+      if (['PSPY', 'FFPY', 'RPY', 'LSPY'].some((type) => eqType?.endsWith(type))) {
+        const value = item.payment_amount ?? item.results ?? 0;
+        if (typeof value === 'number' && !isNaN(value)) {
+          yearMPOthersMinTPYMap.set(numericYear, (yearMPOthersMinTPYMap.get(numericYear) || 0) + value);
         }
       }
     }
   });
 
-  // Prepare data arrays for each trace
-  const sortedYears = Array.from(new Set([
-    ...yearPaymentsMap.keys(),
-    ...yearRevenuesMap.keys(),
-    ...yearFilteredMultiplePaymentsGreenMap.keys(),
-    ...yearFilteredMultiplePaymentsYellowMap.keys(),
-    ...yearMinTPYMap.keys(),
-    ...yearPaymentsMinTPYMap.keys()
-  ])).sort((a, b) => a - b);
+  // Calculate minTPY for incomplete multiple payment years
+  quarterlyPaymentsMap.forEach((data, year) => {
+    if (
+      data.count < 4 &&
+      !yearPaymentsMap.has(year) &&
+      !yearFilteredMultiplePaymentsGreenMap.has(year) &&
+      !yearFilteredMultiplePaymentsYellowMap.has(year)
+    ) {
+      yearMinTPYMap.set(year, data.sum);
+    }
+  });
+
+  // Process annual revenue data
+  this.annualRevenues.forEach((revenue) => {
+    if (revenue.year && typeof revenue.total_revenue === 'number' && !isNaN(revenue.total_revenue)) {
+      yearRevenuesMap.set(revenue.year, revenue.total_revenue);
+    }
+  });
+
+  // Process payments minTPY data and sum for "Others MinTPY"
+  this.paymentData.forEach((item) => {
+    const numericYear = parseInt(item.year, 10);
+    const eqType = item.eq_type?.toUpperCase();
+    if (
+      !isNaN(numericYear) &&
+      item.licensor === this.licensorName &&
+      item.licensee === this.licenseeName
+    ) {
+      // Check if eq_type matches PSPY, FFPY, RPY, LSPY or their prefixed versions
+      if (['PSPY', 'FFPY', 'RPY', 'LSPY'].some((type) => eqType?.endsWith(type))) {
+        const value = item.payment_amount ?? item.results ?? 0;
+        if (typeof value === 'number' && !isNaN(value)) {
+          yearOthersMinTPYMap.set(numericYear, (yearOthersMinTPYMap.get(numericYear) || 0) + value);
+        }
+      } else if (eqType === 'TPQ') {
+        // For payments minTPY data
+        if (!yearPaymentsMinTPYMap.has(numericYear)) {
+          yearPaymentsMinTPYMap.set(numericYear, item.payment_amount ?? item.results);
+        } else {
+          const currentSum = yearPaymentsMinTPYMap.get(numericYear)!;
+          yearPaymentsMinTPYMap.set(
+            numericYear,
+            currentSum + (item.payment_amount ?? item.results ?? 0)
+          );
+        }
+      }
+    }
+  });
+
+  // Prepare data arrays for each trace with priority
+  const sortedYears = Array.from(
+    new Set([
+      ...yearPaymentsMap.keys(),
+      ...yearRevenuesMap.keys(),
+      ...yearFilteredMultiplePaymentsGreenMap.keys(),
+      ...yearFilteredMultiplePaymentsYellowMap.keys(),
+      ...yearMinTPYMap.keys(),
+      ...yearPaymentsMinTPYMap.keys(),
+      ...yearOthersMinTPYMap.keys(),
+      ...yearMPOthersMinTPYMap.keys(),
+    ])
+  ).sort((a, b) => a - b);
 
   const payments: (number | null)[] = [];
   const results: (number | null)[] = [];
+  const paymentsMinTPY: (number | null)[] = [];
+  const othersMinTPY: (number | null)[] = [];
   const filteredMultiplePaymentsGreen: (number | null)[] = [];
   const filteredMultiplePaymentsYellow: (number | null)[] = [];
   const minTPY: (number | null)[] = [];
-  const paymentsMinTPY: (number | null)[] = [];
+  const mpOthersMinTPY: (number | null)[] = [];
   const revenues: (number | null)[] = [];
-  const hoverTextsPayments: string[] = [];
-  const hoverTextsResults: string[] = [];
-  const hoverTextsFilteredMultiplePaymentsGreen: string[] = [];
-  const hoverTextsFilteredMultiplePaymentsYellow: string[] = [];
-  const hoverTextsMinTPY: string[] = [];
-  const hoverTextsPaymentsMinTPY: string[] = [];
-  const hoverTextsRevenues: string[] = [];
 
-  sortedYears.forEach(year => {
+  sortedYears.forEach((year) => {
     const paymentData = yearPaymentsMap.get(year);
-    const greenPayment = yearFilteredMultiplePaymentsGreenMap.get(year);
-    const yellowPayment = yearFilteredMultiplePaymentsYellowMap.get(year);
-    const minTPYValue = yearMinTPYMap.get(year);
-    const paymentsMinTPYValue = yearPaymentsMinTPYMap.get(year);
+    const paymentsMinTPYValue = yearPaymentsMinTPYMap.get(year) ?? null;
+    const othersMinTPYValue = yearOthersMinTPYMap.get(year) ?? null;
+    const greenPayment = yearFilteredMultiplePaymentsGreenMap.get(year) ?? null;
+    const yellowPayment = yearFilteredMultiplePaymentsYellowMap.get(year) ?? null;
+    const minTPYValue = yearMinTPYMap.get(year) ?? null;
+    const mpOthersMinTPYValue = yearMPOthersMinTPYMap.get(year) ?? null;
     const revenue = yearRevenuesMap.get(year) ?? null;
 
-    payments.push(paymentData && !paymentData.isResult ? paymentData.value : null);
-    results.push(paymentData && paymentData.isResult ? paymentData.value : null);
-    filteredMultiplePaymentsGreen.push(greenPayment ?? null);
-    filteredMultiplePaymentsYellow.push(yellowPayment ?? null);
+    let payment: number | null = null;
+    let result: number | null = null;
+    let paymentsMinTPYVal: number | null = null;
+    let othersMinTPYVal: number | null = null;
+    let filteredMultiplePaymentsGreenVal: number | null = null;
+    let filteredMultiplePaymentsYellowVal: number | null = null;
+    let minTPYVal: number | null = null;
+    let mpOthersMinTPYVal: number | null = null;
 
-    // Conditionally add minTPY and paymentsMinTPY based on the availability of higher-priority bars
-    if (paymentData || results.includes(year)) {
-      paymentsMinTPY.push(null);
-    } else {
-      paymentsMinTPY.push(paymentsMinTPYValue ?? null);
+    // Apply priority logic
+    if (paymentData) {
+      // Payment data exists
+      if (paymentData.isResult) {
+        result = paymentData.value;
+      } else {
+        payment = paymentData.value;
+      }
+    } else if (paymentsMinTPYValue !== null) {
+      paymentsMinTPYVal = paymentsMinTPYValue;
+    } else if (othersMinTPYValue !== null) {
+      othersMinTPYVal = othersMinTPYValue;
+    } else if (greenPayment !== null || yellowPayment !== null) {
+      if (greenPayment !== null) {
+        filteredMultiplePaymentsGreenVal = greenPayment;
+      } else if (yellowPayment !== null) {
+        filteredMultiplePaymentsYellowVal = yellowPayment;
+      }
+    } else if (minTPYValue !== null) {
+      minTPYVal = minTPYValue;
+    } else if (mpOthersMinTPYValue !== null) {
+      mpOthersMinTPYVal = mpOthersMinTPYValue;
     }
 
-    if (!paymentData && !yearPaymentsMinTPYMap.has(year)) {
-      minTPY.push(minTPYValue ?? null);
-    } else {
-      minTPY.push(null);
-    }
-
+    payments.push(payment);
+    results.push(result);
+    paymentsMinTPY.push(paymentsMinTPYVal);
+    othersMinTPY.push(othersMinTPYVal);
+    filteredMultiplePaymentsGreen.push(filteredMultiplePaymentsGreenVal);
+    filteredMultiplePaymentsYellow.push(filteredMultiplePaymentsYellowVal);
+    minTPY.push(minTPYVal);
+    mpOthersMinTPY.push(mpOthersMinTPYVal);
     revenues.push(revenue);
-
-    // Populate hover texts
-    hoverTextsPayments.push(paymentData && !paymentData.isResult ? `Year: ${year}<br>Payment: ${this.formatNumber(paymentData.value)}` : `Year: ${year}`);
-    hoverTextsResults.push(paymentData && paymentData.isResult ? `Year: ${year}<br>Calculated Payment: ${this.formatNumber(paymentData.value)}` : `Year: ${year}`);
-    hoverTextsFilteredMultiplePaymentsGreen.push(greenPayment !== undefined ? `Year: ${year}<br>Actual Multiple Payment: ${this.formatNumber(greenPayment)}` : `Year: ${year}`);
-    hoverTextsFilteredMultiplePaymentsYellow.push(yellowPayment !== undefined ? `Year: ${year}<br>Calculated Multiple Payment: ${this.formatNumber(yellowPayment)}` : `Year: ${year}`);
-    hoverTextsMinTPY.push(minTPYValue !== undefined ? `Year: ${year}<br>Multiple Payments (MinTPY): ${this.formatNumber(minTPYValue)}` : `Year: ${year}`);
-    hoverTextsPaymentsMinTPY.push(paymentsMinTPYValue !== undefined ? `Year: ${year}<br>Payments (MinTPY): ${this.formatNumber(paymentsMinTPYValue)}` : `Year: ${year}`);
-    hoverTextsRevenues.push(revenue !== null ? `Year: ${year}<br>Total Revenue: ${this.formatNumber(revenue)}` : `Year: ${year}`);
   });
 
   // Define Plotly traces
-  const revenueTrace = { x: sortedYears, y: revenues, type: 'bar', name: 'Total Revenue', marker: { color: 'rgba(200, 200, 200, 0.7)' }, hoverinfo: 'text', hovertext: hoverTextsRevenues, offsetgroup: 0 };
-  const filteredMultiplePaymentsGreenTrace = { x: sortedYears, y: filteredMultiplePaymentsGreen, type: 'bar', name: 'Multiple Payment (TPY)', marker: { color: 'rgba(0, 255, 0, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsFilteredMultiplePaymentsGreen, offsetgroup: 1 };
-  const filteredMultiplePaymentsYellowTrace = { x: sortedYears, y: filteredMultiplePaymentsYellow, type: 'bar', name: 'Calculated Multiple Payment (TPY)', marker: { color: 'rgba(255, 255, 0, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsFilteredMultiplePaymentsYellow, offsetgroup: 1 };
-  const minTPYTrace = { x: sortedYears, y: minTPY, type: 'bar', name: 'Multiple Payments (MinTPY)', marker: { color: 'rgba(255, 0, 0, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsMinTPY, offsetgroup: 1 };
-  const paymentsMinTPYTrace = { x: sortedYears, y: paymentsMinTPY, type: 'bar', name: 'Payments (MinTPY)', marker: { color: 'rgba(165, 42, 42, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsPaymentsMinTPY, offsetgroup: 1 };
-  const paymentTrace = { x: sortedYears, y: payments, type: 'bar', name: 'Payment (TPY)', marker: { color: 'rgba(0, 123, 255, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsPayments, offsetgroup: 1 };
-  const resultTrace = { x: sortedYears, y: results, type: 'bar', name: 'Calculated Payment (TPY)', marker: { color: 'rgba(255, 165, 0, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsResults, offsetgroup: 1 };
+  const revenueTrace = {
+    x: sortedYears,
+    y: revenues,
+    type: 'bar',
+    name: 'Total Revenue',
+    marker: { color: 'rgba(200, 200, 200, 0.7)' },
+    hoverinfo: 'text',
+    hovertext: revenues.map((rev, i) =>
+      rev !== null ? `Year: ${sortedYears[i]}<br>Total Revenue: ${this.formatNumber(rev)}` : ''
+    ),
+    offsetgroup: 0,
+  };
+  const paymentTrace = {
+    x: sortedYears,
+    y: payments,
+    type: 'bar',
+    name: 'Payment (TPY)',
+    marker: { color: 'rgba(0, 123, 255, 0.8)' },
+    hoverinfo: 'text',
+    hovertext: payments.map((val, i) =>
+      val !== null ? `Year: ${sortedYears[i]}<br>Payment: ${this.formatNumber(val)}` : ''
+    ),
+    offsetgroup: 1,
+  };
+  const resultTrace = {
+    x: sortedYears,
+    y: results,
+    type: 'bar',
+    name: 'Calculated Payment (TPY)',
+    marker: { color: 'rgba(255, 165, 0, 0.8)' },
+    hoverinfo: 'text',
+    hovertext: results.map((val, i) =>
+      val !== null ? `Year: ${sortedYears[i]}<br>Calculated Payment: ${this.formatNumber(val)}` : ''
+    ),
+    offsetgroup: 1,
+  };
+  const paymentsMinTPYTrace = {
+    x: sortedYears,
+    y: paymentsMinTPY,
+    type: 'bar',
+    name: 'Payments (MinTPY)',
+    marker: { color: 'rgba(165, 42, 42, 0.8)' },
+    hoverinfo: 'text',
+    hovertext: paymentsMinTPY.map((val, i) =>
+      val !== null ? `Year: ${sortedYears[i]}<br>Payments (MinTPY): ${this.formatNumber(val)}` : ''
+    ),
+    offsetgroup: 1,
+  };
+  const othersMinTPYTrace = {
+    x: sortedYears,
+    y: othersMinTPY,
+    type: 'bar',
+    name: 'Others (MinTPY)',
+    marker: { color: 'rgba(0, 0, 0, 0.8)' },
+    hoverinfo: 'text',
+    hovertext: othersMinTPY.map((val, i) =>
+      val !== null ? `Year: ${sortedYears[i]}<br>Payments "Others" (MinTPY): ${this.formatNumber(val)}` : ''
+    ),
+    offsetgroup: 1,
+  };
+  const filteredMultiplePaymentsGreenTrace = {
+    x: sortedYears,
+    y: filteredMultiplePaymentsGreen,
+    type: 'bar',
+    name: 'Multiple Payment (TPY)',
+    marker: { color: 'rgba(0, 255, 0, 0.8)' },
+    hoverinfo: 'text',
+    hovertext: filteredMultiplePaymentsGreen.map((val, i) =>
+      val !== null ? `Year: ${sortedYears[i]}<br>Multiple Payment: ${this.formatNumber(val)}` : ''
+    ),
+    offsetgroup: 1,
+  };
+  const filteredMultiplePaymentsYellowTrace = {
+    x: sortedYears,
+    y: filteredMultiplePaymentsYellow,
+    type: 'bar',
+    name: 'Calculated Multiple Payment (TPY)',
+    marker: { color: 'rgba(255, 255, 0, 0.8)' },
+    hoverinfo: 'text',
+    hovertext: filteredMultiplePaymentsYellow.map((val, i) =>
+      val !== null
+        ? `Year: ${sortedYears[i]}<br>Calculated Multiple Payment: ${this.formatNumber(val)}`
+        : ''
+    ),
+    offsetgroup: 1,
+  };
+  const minTPYTrace = {
+    x: sortedYears,
+    y: minTPY,
+    type: 'bar',
+    name: 'Multiple Payments (MinTPY)',
+    marker: { color: 'rgba(255, 0, 0, 0.8)' },
+    hoverinfo: 'text',
+    hovertext: minTPY.map((val, i) =>
+      val !== null ? `Year: ${sortedYears[i]}<br>Multiple Payments (MinTPY): ${this.formatNumber(val)}` : ''
+    ),
+    offsetgroup: 1,
+  };
+  const mpOthersMinTPYTrace = {
+    x: sortedYears,
+    y: mpOthersMinTPY,
+    type: 'bar',
+    name: 'MP Others MinTPY',
+    marker: { color: 'rgba(128, 0, 128, 0.8)' }, // Purple color
+    hoverinfo: 'text',
+    hovertext: mpOthersMinTPY.map((val, i) =>
+      val !== null ? `Year: ${sortedYears[i]}<br>MP "Others" (MinTPY): ${this.formatNumber(val)}` : ''
+    ),
+    offsetgroup: 1,
+  };
 
   const layout = {
     height: 600,
     autosize: true,
-    title: 'TPY Payments, Filtered Multiple Payments, and Total Revenue Over Years',
+    title: 'Payments and Revenues Over Years',
     xaxis: { title: 'Year', type: 'category' },
-    yaxis: { title: 'Payment Amount', tickformat: ',d', type: 'linear', rangemode: 'tozero' },
+    yaxis: {
+      title: 'Payment Amount',
+      tickformat: ',d',
+      type: 'linear',
+      rangemode: 'tozero',
+    },
     barmode: 'overlay',
     legend: { orientation: 'h', y: 1.1 },
     hovermode: 'closest',
   };
 
   Plotly.newPlot('myDiv', [
-    revenueTrace, filteredMultiplePaymentsGreenTrace, filteredMultiplePaymentsYellowTrace,
-    minTPYTrace, paymentsMinTPYTrace, paymentTrace, resultTrace
+    revenueTrace,
+    paymentTrace,
+    resultTrace,
+    paymentsMinTPYTrace,
+    othersMinTPYTrace,
+    filteredMultiplePaymentsGreenTrace,
+    filteredMultiplePaymentsYellowTrace,
+    minTPYTrace,
+    mpOthersMinTPYTrace,
   ], layout);
 }
 
