@@ -355,21 +355,20 @@ plotData(): void {
   const yearPaymentsMinTPYMap = new Map<number, number>();
   const yearRevenuesMap = new Map<number, number>();
 
-  // Process grouped data (Primary Payments - TPY)
+  // Process grouped data for primary payments (original logic for Payment and Calculated Payment)
   Object.entries(this.groupedTableData).forEach(([year, data]) => {
     const numericYear = parseInt(year, 10);
     if (!isNaN(numericYear) && data.primary) {
       let value: number | undefined;
       let isResult = false;
 
-      if (data.primary.eq_type === 'TPY' && typeof data.primary.payment_amount === 'number') {
+      if (data.primary.eq_type === 'TPY' && typeof data.primary.payment_amount === 'number' && !isNaN(data.primary.payment_amount)) {
         value = data.primary.payment_amount;
-      } else if ((data.primary.eq_type === 'TPY' || data.primary.adv_eq_type === 'TPY')) {
-        if (typeof data.primary.payment_amount === 'number') value = data.primary.payment_amount;
-        else if (typeof data.primary.results === 'number') {
+      } else if (data.primary.eq_type === 'TPY' || data.primary.adv_eq_type === 'TPY') {
+        if (typeof data.primary.results === 'number' && !isNaN(data.primary.results)) {
           value = data.primary.results;
           isResult = true;
-        } else if (typeof data.primary.eq_result === 'number') {
+        } else if (typeof data.primary.eq_result === 'number' && !isNaN(data.primary.eq_result)) {
           value = data.primary.eq_result;
           isResult = true;
         }
@@ -381,51 +380,55 @@ plotData(): void {
     }
   });
 
-  // Process filtered multiple payments (TPY and minTPY)
+  // Process filtered multiple payments (unchanged logic for green/yellow multiple payments and minTPY)
   const quarterlyPaymentsMap = new Map<number, { sum: number, count: number }>();
 
   this.filteredMultiplePayments.forEach(item => {
     const numericYear = parseInt(item.year, 10);
     if (!isNaN(numericYear) && item.licensor === this.licensorName &&
         (item.indiv_licensee === this.licenseeName || item.licensee?.includes(this.licenseeName))) {
-      const isQuarterly = item.eq_type === 'TPQ';
+      if (item.eq_type === 'TPY') {
+        const value = (item.payment_amount !== null && !isNaN(item.payment_amount)) ? item.payment_amount : item.results;
+        const isResult = (item.payment_amount === null || isNaN(item.payment_amount));
 
-      if (isQuarterly) {
+        if (!yearPaymentsMap.has(numericYear)) {
+          if (typeof value === 'number' && !isNaN(value)) {
+            if (isResult) {
+              yearFilteredMultiplePaymentsYellowMap.set(numericYear, value);
+            } else {
+              yearFilteredMultiplePaymentsGreenMap.set(numericYear, value);
+            }
+          }
+        }
+      } else if (item.eq_type === 'TPQ') {
         if (!quarterlyPaymentsMap.has(numericYear)) {
           quarterlyPaymentsMap.set(numericYear, { sum: 0, count: 0 });
         }
         const quarterlyData = quarterlyPaymentsMap.get(numericYear)!;
         const quarterlyValue = item.payment_amount ?? item.results;
-        if (typeof quarterlyValue === 'number') {
+        if (typeof quarterlyValue === 'number' && !isNaN(quarterlyValue)) {
           quarterlyData.sum += quarterlyValue;
           quarterlyData.count += 1;
-        }
-      } else if (item.eq_type === 'TPY' && !yearPaymentsMap.has(numericYear)) {
-        const value = item.payment_amount ?? item.results;
-        if (typeof value === 'number') {
-          yearFilteredMultiplePaymentsGreenMap.set(numericYear, value);
         }
       }
     }
   });
 
+  // Calculate minTPY for incomplete multiple payment years
   quarterlyPaymentsMap.forEach((data, year) => {
-    if (data.count < 4 &&
-        !yearPaymentsMap.has(year) &&
-        !yearFilteredMultiplePaymentsGreenMap.has(year) &&
-        !yearFilteredMultiplePaymentsYellowMap.has(year)) {
+    if (data.count < 4 && !yearPaymentsMap.has(year) && !yearFilteredMultiplePaymentsGreenMap.has(year) && !yearFilteredMultiplePaymentsYellowMap.has(year)) {
       yearMinTPYMap.set(year, data.sum);
     }
   });
 
   // Process annual revenue data
   this.annualRevenues.forEach(revenue => {
-    if (revenue.year && typeof revenue.total_revenue === 'number') {
+    if (revenue.year && typeof revenue.total_revenue === 'number' && !isNaN(revenue.total_revenue)) {
       yearRevenuesMap.set(revenue.year, revenue.total_revenue);
     }
   });
 
-  // Additional processing for payments minTPY
+  // Process payments minTPY data
   this.paymentData.forEach(item => {
     const numericYear = parseInt(item.year, 10);
     if (!isNaN(numericYear) && item.licensor === this.licensorName && item.licensee === this.licenseeName) {
@@ -440,16 +443,15 @@ plotData(): void {
     }
   });
 
-  // Combine years from all datasets
-  const allYears = new Set([
+  // Prepare data arrays for each trace
+  const sortedYears = Array.from(new Set([
     ...yearPaymentsMap.keys(),
     ...yearRevenuesMap.keys(),
     ...yearFilteredMultiplePaymentsGreenMap.keys(),
     ...yearFilteredMultiplePaymentsYellowMap.keys(),
     ...yearMinTPYMap.keys(),
-    ...yearPaymentsMinTPYMap.keys(),
-  ]);
-  const sortedYears = Array.from(allYears).sort((a, b) => a - b);
+    ...yearPaymentsMinTPYMap.keys()
+  ])).sort((a, b) => a - b);
 
   const payments: (number | null)[] = [];
   const results: (number | null)[] = [];
@@ -458,8 +460,6 @@ plotData(): void {
   const minTPY: (number | null)[] = [];
   const paymentsMinTPY: (number | null)[] = [];
   const revenues: (number | null)[] = [];
-
-  // Define hover text arrays for each trace
   const hoverTextsPayments: string[] = [];
   const hoverTextsResults: string[] = [];
   const hoverTextsFilteredMultiplePaymentsGreen: string[] = [];
@@ -476,102 +476,44 @@ plotData(): void {
     const paymentsMinTPYValue = yearPaymentsMinTPYMap.get(year);
     const revenue = yearRevenuesMap.get(year) ?? null;
 
-    // Populate data arrays
-    payments.push(paymentData ? paymentData.value : null);
+    payments.push(paymentData && !paymentData.isResult ? paymentData.value : null);
     results.push(paymentData && paymentData.isResult ? paymentData.value : null);
     filteredMultiplePaymentsGreen.push(greenPayment ?? null);
     filteredMultiplePaymentsYellow.push(yellowPayment ?? null);
-    minTPY.push(minTPYValue ?? null);
-    paymentsMinTPY.push(paymentsMinTPYValue ?? null);
+
+    // Conditionally add minTPY and paymentsMinTPY based on the availability of higher-priority bars
+    if (paymentData || results.includes(year)) {
+      paymentsMinTPY.push(null);
+    } else {
+      paymentsMinTPY.push(paymentsMinTPYValue ?? null);
+    }
+
+    if (!paymentData && !yearPaymentsMinTPYMap.has(year)) {
+      minTPY.push(minTPYValue ?? null);
+    } else {
+      minTPY.push(null);
+    }
+
     revenues.push(revenue);
 
-    // Populate hover text arrays
-    hoverTextsPayments.push(paymentData ? `Year: ${year}<br>Payment: ${this.formatNumber(paymentData.value)}` : `Year: ${year}`);
+    // Populate hover texts
+    hoverTextsPayments.push(paymentData && !paymentData.isResult ? `Year: ${year}<br>Payment: ${this.formatNumber(paymentData.value)}` : `Year: ${year}`);
     hoverTextsResults.push(paymentData && paymentData.isResult ? `Year: ${year}<br>Calculated Payment: ${this.formatNumber(paymentData.value)}` : `Year: ${year}`);
     hoverTextsFilteredMultiplePaymentsGreen.push(greenPayment !== undefined ? `Year: ${year}<br>Actual Multiple Payment: ${this.formatNumber(greenPayment)}` : `Year: ${year}`);
     hoverTextsFilteredMultiplePaymentsYellow.push(yellowPayment !== undefined ? `Year: ${year}<br>Calculated Multiple Payment: ${this.formatNumber(yellowPayment)}` : `Year: ${year}`);
-    hoverTextsMinTPY.push(minTPYValue !== undefined ? `Year: ${year}<br>Min TPY (Multiple Payments): ${this.formatNumber(minTPYValue)}` : `Year: ${year}`);
-    hoverTextsPaymentsMinTPY.push(paymentsMinTPYValue !== undefined ? `Year: ${year}<br>Min TPY (Payments): ${this.formatNumber(paymentsMinTPYValue)}` : `Year: ${year}`);
+    hoverTextsMinTPY.push(minTPYValue !== undefined ? `Year: ${year}<br>Multiple Payments (MinTPY): ${this.formatNumber(minTPYValue)}` : `Year: ${year}`);
+    hoverTextsPaymentsMinTPY.push(paymentsMinTPYValue !== undefined ? `Year: ${year}<br>Payments (MinTPY): ${this.formatNumber(paymentsMinTPYValue)}` : `Year: ${year}`);
     hoverTextsRevenues.push(revenue !== null ? `Year: ${year}<br>Total Revenue: ${this.formatNumber(revenue)}` : `Year: ${year}`);
   });
 
-  // Define traces with color configurations
-  const revenueTrace = {
-    x: sortedYears,
-    y: revenues,
-    type: 'bar',
-    name: 'Total Revenue',
-    marker: { color: 'rgba(200, 200, 200, 0.7)' },
-    hoverinfo: 'text',
-    hovertext: hoverTextsRevenues,
-    offsetgroup: 0,
-  };
-
-  const filteredMultiplePaymentsGreenTrace = {
-    x: sortedYears,
-    y: filteredMultiplePaymentsGreen,
-    type: 'bar',
-    name: 'Multiple Payment (TPY)',
-    marker: { color: 'rgba(0, 255, 0, 0.8)' },
-    hoverinfo: 'text',
-    hovertext: hoverTextsFilteredMultiplePaymentsGreen,
-    offsetgroup: 1,
-  };
-
-  const filteredMultiplePaymentsYellowTrace = {
-    x: sortedYears,
-    y: filteredMultiplePaymentsYellow,
-    type: 'bar',
-    name: 'Calculated Multiple Payment (TPY)',
-    marker: { color: 'rgba(255, 255, 0, 0.8)' },
-    hoverinfo: 'text',
-    hovertext: hoverTextsFilteredMultiplePaymentsYellow,
-    offsetgroup: 1,
-  };
-
-  const minTPYTrace = {
-    x: sortedYears,
-    y: minTPY,
-    type: 'bar',
-    name: 'Multiple Payments (MinTPY)',
-    marker: { color: 'rgba(255, 0, 0, 0.8)' },
-    hoverinfo: 'text',
-    hovertext: hoverTextsMinTPY,
-    offsetgroup: 1,
-  };
-
-  const paymentsMinTPYTrace = {
-    x: sortedYears,
-    y: paymentsMinTPY,
-    type: 'bar',
-    name: 'Payments (MinTPY)',
-    marker: { color: 'rgba(165, 42, 42, 0.8)' },
-    hoverinfo: 'text',
-    hovertext: hoverTextsPaymentsMinTPY,
-    offsetgroup: 1,
-  };
-
-  const paymentTrace = {
-    x: sortedYears,
-    y: payments,
-    type: 'bar',
-    name: 'Payment (TPY)',
-    marker: { color: 'rgba(0, 123, 255, 0.8)' },
-    hoverinfo: 'text',
-    hovertext: hoverTextsPayments,
-    offsetgroup: 1,
-  };
-
-  const resultTrace = {
-    x: sortedYears,
-    y: results,
-    type: 'bar',
-    name: 'Calculated Payment (TPY)',
-    marker: { color: 'rgba(255, 165, 0, 0.8)' },
-    hoverinfo: 'text',
-    hovertext: hoverTextsResults,
-    offsetgroup: 1,
-  };
+  // Define Plotly traces
+  const revenueTrace = { x: sortedYears, y: revenues, type: 'bar', name: 'Total Revenue', marker: { color: 'rgba(200, 200, 200, 0.7)' }, hoverinfo: 'text', hovertext: hoverTextsRevenues, offsetgroup: 0 };
+  const filteredMultiplePaymentsGreenTrace = { x: sortedYears, y: filteredMultiplePaymentsGreen, type: 'bar', name: 'Multiple Payment (TPY)', marker: { color: 'rgba(0, 255, 0, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsFilteredMultiplePaymentsGreen, offsetgroup: 1 };
+  const filteredMultiplePaymentsYellowTrace = { x: sortedYears, y: filteredMultiplePaymentsYellow, type: 'bar', name: 'Calculated Multiple Payment (TPY)', marker: { color: 'rgba(255, 255, 0, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsFilteredMultiplePaymentsYellow, offsetgroup: 1 };
+  const minTPYTrace = { x: sortedYears, y: minTPY, type: 'bar', name: 'Multiple Payments (MinTPY)', marker: { color: 'rgba(255, 0, 0, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsMinTPY, offsetgroup: 1 };
+  const paymentsMinTPYTrace = { x: sortedYears, y: paymentsMinTPY, type: 'bar', name: 'Payments (MinTPY)', marker: { color: 'rgba(165, 42, 42, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsPaymentsMinTPY, offsetgroup: 1 };
+  const paymentTrace = { x: sortedYears, y: payments, type: 'bar', name: 'Payment (TPY)', marker: { color: 'rgba(0, 123, 255, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsPayments, offsetgroup: 1 };
+  const resultTrace = { x: sortedYears, y: results, type: 'bar', name: 'Calculated Payment (TPY)', marker: { color: 'rgba(255, 165, 0, 0.8)' }, hoverinfo: 'text', hovertext: hoverTextsResults, offsetgroup: 1 };
 
   const layout = {
     height: 600,
@@ -589,8 +531,6 @@ plotData(): void {
     minTPYTrace, paymentsMinTPYTrace, paymentTrace, resultTrace
   ], layout);
 }
-
-
 
 
 
