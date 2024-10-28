@@ -580,7 +580,7 @@ plotData(): void {
     x: sortedYears,
     y: payments,
     type: 'bar',
-    name: 'Payment (TPY)',
+    name: 'Payments (TPY)',
     marker: { color: 'rgba(0, 123, 255, 0.8)' },
     hoverinfo: 'text',
     hovertext: payments.map((val, i) =>
@@ -592,7 +592,7 @@ plotData(): void {
     x: sortedYears,
     y: results,
     type: 'bar',
-    name: 'Calculated Payment (TPY)',
+    name: 'Calculated Payments (TPY)',
     marker: { color: 'rgba(255, 165, 0, 0.8)' },
     hoverinfo: 'text',
     hovertext: results.map((val, i) =>
@@ -616,7 +616,7 @@ plotData(): void {
     x: sortedYears,
     y: othersMinTPY,
     type: 'bar',
-    name: 'Others (MinTPY)',
+    name: 'Payments "Others" (MinTPY)',
     marker: { color: 'rgba(0, 0, 0, 0.8)' },
     hoverinfo: 'text',
     hovertext: othersMinTPY.map((val, i) =>
@@ -628,7 +628,7 @@ plotData(): void {
     x: sortedYears,
     y: filteredMultiplePaymentsGreen,
     type: 'bar',
-    name: 'Multiple Payment (TPY)',
+    name: 'Multiple Payments (TPY)',
     marker: { color: 'rgba(0, 255, 0, 0.8)' },
     hoverinfo: 'text',
     hovertext: filteredMultiplePaymentsGreen.map((val, i) =>
@@ -640,12 +640,12 @@ plotData(): void {
     x: sortedYears,
     y: filteredMultiplePaymentsYellow,
     type: 'bar',
-    name: 'Calculated Multiple Payment (TPY)',
+    name: 'Calculated Multiple Payments (TPY)',
     marker: { color: 'rgba(255, 255, 0, 0.8)' },
     hoverinfo: 'text',
     hovertext: filteredMultiplePaymentsYellow.map((val, i) =>
       val !== null
-        ? `Year: ${sortedYears[i]}<br>Calculated Multiple Payment: ${this.formatNumber(val)}`
+        ? `Year: ${sortedYears[i]}<br>Calculated Multiple Payments: ${this.formatNumber(val)}`
         : ''
     ),
     offsetgroup: 1,
@@ -666,7 +666,7 @@ plotData(): void {
     x: sortedYears,
     y: mpOthersMinTPY,
     type: 'bar',
-    name: 'MP Others MinTPY',
+    name: 'MP "Others" (MinTPY)',
     marker: { color: 'rgba(128, 0, 128, 0.8)' }, // Purple color
     hoverinfo: 'text',
     hovertext: mpOthersMinTPY.map((val, i) =>
@@ -678,7 +678,7 @@ plotData(): void {
   const layout = {
     height: 600,
     autosize: true,
-    title: 'Payments and Revenues Over Years',
+    title: 'Payments By Revenues Over Years',
     xaxis: { title: 'Year', type: 'category' },
     yaxis: {
       title: 'Payment Amount',
