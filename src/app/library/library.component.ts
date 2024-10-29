@@ -53,7 +53,7 @@ export class LibraryComponent implements OnInit {
     this.pdfLibraryService.getPdfFilesFromAllTables().subscribe({
       next: (files: PdfFile[]) => {
         const cld = new Cloudinary({
-          cloud: { cloudName: 'himbuyrbv' } // Replace with your actual Cloudinary cloud name
+          cloud: { cloudName: 'himbuyrbv' }
         });
 
         this.pdfFiles = files.map((file: PdfFile) => {
@@ -63,22 +63,26 @@ export class LibraryComponent implements OnInit {
           if (file.directory_path) {
             const normalizedPath = file.directory_path.replace(/\\/g, '/');
 
-            // Extract the original file name and format it
+            // Use original file name with specific formatting for Cloudinary URL
             const originalFileName = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
 
-            // Format the file name to match Cloudinary conventions
-            let formattedFileName = originalFileName
-              .replace(/\[(\d{4})\]/, '$1')          // Remove square brackets around the year
-              .replace(/\s+/g, '_')                  // Replace spaces with underscores
-              .replace(/\(|\)/g, '')                 // Remove parentheses
-              .replace('.pdf', '');                  // Remove the '.pdf' extension
+            // Format the file name for Cloudinary by removing brackets and ensuring underscores
+            const formattedFileNameForCloudinary = originalFileName
+              .replace(/\[(\d{4})\]/, '$1')   // Remove square brackets around the year
+              .replace(/\s+/g, '_')           // Replace spaces with underscores
+              .replace('.pdf', '');           // Remove '.pdf' extension
 
-            // Construct the public ID for Cloudinary, preserving slashes
-            const cloudinaryPublicId = `Data Library/${normalizedPath.replace(originalFileName, formattedFileName)}`;
+            // Display title: Remove the year and format for readability
+            const displayTitle = formattedFileNameForCloudinary
+              .replace(/^\d{4}_/, '')         // Remove the year and underscore at the beginning
+              .replace(/_/g, ' ')             // Replace underscores with spaces for display
+              .trim();
 
-            // Build the Cloudinary URL (encode only the file/folder names, not slashes)
-            const cloudinaryUrl = `https://res.cloudinary.com/himbuyrbv/image/upload/${encodeURI(cloudinaryPublicId)}.pdf`;
+            // Construct Cloudinary URL using the exact format with year and underscores
+            const cloudinaryPublicId = `Data Library/${normalizedPath.replace(originalFileName, formattedFileNameForCloudinary)}`;
+            const cloudinaryUrl = `https://res.cloudinary.com/himbuyrbv/image/upload/${cloudinaryPublicId}.pdf`;
 
+            // Extract the date (year) from the path
             const dateMatch = normalizedPath.match(/\b\d{4}\b/);
             if (dateMatch) {
               date = dateMatch[0];
@@ -87,10 +91,10 @@ export class LibraryComponent implements OnInit {
             return {
               ...file,
               directory_path: normalizedPath,
-              title: formattedFileName,
+              title: displayTitle,            // Display title without year
               date: date,
               cloudinaryPublicId: cloudinaryPublicId,
-              cloudinaryUrl: cloudinaryUrl, // Store Cloudinary URL in each file object
+              cloudinaryUrl: cloudinaryUrl,    // URL with year and underscores for Cloudinary
               showDetails: false
             };
           } else {
@@ -98,11 +102,13 @@ export class LibraryComponent implements OnInit {
           }
         });
 
+        // Unique dates and sorting logic
         this.uniqueDates = Array.from(new Set(
           this.pdfFiles.map(file => file.date).filter((date): date is string => date !== 'Unknown Year')
         ));
         this.uniqueDates.sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
 
+        // Filter unique files
         const uniqueFilesMap = new Map<string, PdfFile[]>();
         this.pdfFiles.forEach((file: PdfFile) => {
           const key = `${file.title}_${file.date}`;
@@ -113,6 +119,7 @@ export class LibraryComponent implements OnInit {
           }
         });
 
+        // Combine details and sort files by date
         this.pdfFiles = Array.from(uniqueFilesMap.values()).map(groupedFiles => {
           const baseFile = groupedFiles[0];
           const combinedDetails = groupedFiles
@@ -141,6 +148,7 @@ export class LibraryComponent implements OnInit {
       }
     });
   }
+
 
 
   searchFiles(): void {
