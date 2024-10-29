@@ -681,7 +681,7 @@ plotData(): void {
     title: 'Payments By Revenues Over Years',
     xaxis: { title: 'Year', type: 'category' },
     yaxis: {
-      title: 'Payment Amount',
+      title: 'Payment Amount (in thousands)',
       tickformat: ',d',
       type: 'linear',
       rangemode: 'tozero',
