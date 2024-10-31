@@ -186,7 +186,7 @@ export class SalesComponent implements OnInit {
         ticktext: uniqueXValues
       },
       yaxis: {
-        title: 'Sales Amount',
+        title: 'Sales Amount (in thousands)',
         tickformat: ',d',
         type: 'linear',
         rangemode: 'tozero',
@@ -221,7 +221,6 @@ export class SalesComponent implements OnInit {
     infoText += `<strong>Quarter:</strong> ${this.sanitizeHtml(customData.quarter)}<br>`;
     infoText += `<strong>Sales:</strong> ${customData.sales ? customData.sales.toFixed(2) : 'N/A'}<br><br>`;
 
-    // Function to extract and format domain from URL
     const extractDomain = (url: string): string => {
       try {
         const { hostname } = new URL(url);
@@ -232,38 +231,30 @@ export class SalesComponent implements OnInit {
       }
     };
 
-    // Function to create safe link
     const createSafeLink = (url: string): string => {
       const sanitizedUrl = this.sanitizeUrl(url);
       const domain = extractDomain(url);
       return `<a href="${sanitizedUrl}" target="_blank" rel="noopener noreferrer">${this.sanitizeHtml(domain)}</a>`;
     };
 
-    // Handling sources
+    // Display sources
     infoText += '<strong>Source:</strong><br>';
     customData.source.forEach((source: any) => {
-      if (source.source !== source.discarded) {
-        const links = source.link.split(';')
-          .filter((link: string) => link.trim() !== '')
-          .map(createSafeLink)
-          .join(', ');
-        if (links) {
-          infoText += `${this.sanitizeHtml(source.source)}: ${source.sales} (${links})<br>`;
-        }
-      }
+      const links = source.link
+        ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
+        : '';
+
+      infoText += `${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}<br>`;
     });
 
-    // Handling used
+    // Display Used
     const usedSet = new Set<string>();
     customData.source.forEach((source: any) => {
       if (source.used && source.used.trim() !== '') {
-        const links = source.link.split(';')
-          .filter((link: string) => link.trim() !== '')
-          .map(createSafeLink)
-          .join(', ');
-        if (links) {
-          usedSet.add(`${this.sanitizeHtml(source.used)} (${links})`);
-        }
+        const links = source.link
+          ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
+          : '';
+        usedSet.add(`${this.sanitizeHtml(source.used)} ${links ? `(${links})` : ''}`);
       }
     });
     if (usedSet.size > 0) {
@@ -273,17 +264,14 @@ export class SalesComponent implements OnInit {
       });
     }
 
-    // Handling discarded
+    // Display Discarded
     const discardedSet = new Set<string>();
     customData.source.forEach((source: any) => {
       if (source.source === source.discarded) {
-        const links = source.link.split(';')
-          .filter((link: string) => link.trim() !== '')
-          .map(createSafeLink)
-          .join(', ');
-        if (links) {
-          discardedSet.add(`${this.sanitizeHtml(source.source)}: ${source.sales} (${links})`);
-        }
+        const links = source.link
+          ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
+          : '';
+        discardedSet.add(`${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}`);
       }
     });
     if (discardedSet.size > 0) {
@@ -295,6 +283,7 @@ export class SalesComponent implements OnInit {
 
     this.showPopup(infoText);
   }
+
 
   // Add these helper methods to your component if not already present
   private sanitizeHtml(input: string): string {
@@ -406,7 +395,7 @@ export class SalesComponent implements OnInit {
         ticktext: xValues
       },
       yaxis: {
-        title: 'Sales Amount',
+        title: 'Sales Amount (in thousands)',
         type: 'linear',
         rangemode: 'tozero'
       },
