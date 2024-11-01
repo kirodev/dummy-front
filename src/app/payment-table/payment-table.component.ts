@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ExamplePdfViewerComponent } from '../example-pdf-viewer/example-pdf-viewer.component';
 import { PaymentConnection } from '../payment-connection.service';
 import { FeedbackPopupComponent } from '../feedback-popup/feedback-popup.component';
@@ -13,7 +13,7 @@ declare var Plotly: any;
   templateUrl: './payment-table.component.html',
   styleUrls: ['./payment-table.component.css']
 })
-export class PaymentTableComponent implements OnInit {
+export class PaymentTableComponent  implements OnInit, AfterViewInit {
   @ViewChild(ExamplePdfViewerComponent, { static: false }) pdfViewer!: ExamplePdfViewerComponent;
   @Input() pdfSrc: string = '';
   paymentData: any[] = [];
@@ -62,7 +62,21 @@ export class PaymentTableComponent implements OnInit {
       console.error('Error loading Plotly.js script:', error);
     });
   }
+  ngAfterViewInit(): void {
+    if (this.pdfViewer) {
+      // Subscribe to the pdfLoaded event
+      this.pdfViewer.pdfLoaded.subscribe(() => {
+        this.onPdfLoaded();
+      });
 
+      // Subscribe to the pageChange event
+      this.pdfViewer.pageChange.subscribe((pageNumber: number) => {
+        this.onPageChange(pageNumber);
+      });
+    } else {
+      console.error('PDF viewer is not initialized.');
+    }
+  }
   toggleDetails(item: any): void {
     item.showDetails = !item.showDetails;
   }
@@ -206,7 +220,26 @@ export class PaymentTableComponent implements OnInit {
   }
 
 
+  isPopupLoading: boolean = false;
 
+
+  onPdfLoaded(): void {
+    this.isPopupLoading = false; // Stop loading
+    console.log('PDF fully loaded!');
+    if (this.pdfViewer.searchText) {
+      this.pdfViewer.triggerSearch();
+    }
+  }
+
+  onPageChange(pageNumber: number): void {
+    console.log(`Current page number: ${pageNumber}`);
+    this.isPopupLoading = true; // Show loading GIF
+
+    // Optionally, hide the loading GIF after a short delay
+    setTimeout(() => {
+      this.isPopupLoading = false;
+    }, 500); // Adjust the delay as needed
+  }
 
   openPDFViewerPopup(directory_path: string, details: string): void {
     const cloudinaryUrl = this.generateCloudinaryUrl(directory_path);
@@ -215,12 +248,14 @@ export class PaymentTableComponent implements OnInit {
     this.selectedPDF = url;
     this.showPDFViewer = true;
     this.showPopup = true;
+    this.isPopupLoading = true; // Start loading
 
     setTimeout(() => {
-      this.pdfViewer.searchPDF(details); // Keep the existing functionality for the popup
-    }, 100);
+      if (this.pdfViewer) {
+        this.pdfViewer.searchPDF(details); // Keep the existing functionality for the popup
+      }
+    }, 500); // Adjust the delay as needed
   }
-
 
   hasDetailsForDynamicTitle(dynamicTitle: string): boolean {
     return this.paymentData.some(item => item.dynamicTitle === dynamicTitle);
@@ -795,7 +830,6 @@ plotData(): void {
           // Perform the calculation: coef * total_revenue
           payment.results = coef * totalRevenue;
 
-          console.log(`Payment for ${payment.licensor} (${payment.year}): Calculated result is ${payment.results}`);
         } else {
           console.log(`No matching revenue found for ${payment.licensor} (${payment.year}) or coefficient is missing.`);
         }

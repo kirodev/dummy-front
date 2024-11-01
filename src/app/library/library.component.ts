@@ -68,9 +68,10 @@ export class LibraryComponent implements OnInit {
 
             // Format the file name for Cloudinary by removing brackets and ensuring underscores
             const formattedFileNameForCloudinary = originalFileName
-              .replace(/\[(\d{4})\]/, '$1')   // Remove square brackets around the year
-              .replace(/\s+/g, '_')           // Replace spaces with underscores
-              .replace('.pdf', '');           // Remove '.pdf' extension
+            .replace(/\[(\d{4})\]/, '$1')     // Remove square brackets around the year
+            .replace(/\s+/g, '_')             // Replace spaces with underscores
+            .replace(/[()]/g, '')            // Replace parentheses with underscores
+            .replace('.pdf', '');             // Remove '.pdf' extension
 
             // Display title: Remove the year and format for readability
             const displayTitle = formattedFileNameForCloudinary

@@ -1,10 +1,22 @@
-<ngx-extended-pdf-viewer
-  #pdfViewer
-  [src]="pdfSrc"
-  [textLayer]="true"
-  [showTextEditor]="true"
-  [findbarVisible]="true"
-  [showHandToolButton]="true"
-  [showPresentationModeButton]="true"
-  [handTool]="false">
-</ngx-extended-pdf-viewer>
+<!-- example-pdf-viewer.component.html -->
+
+<div class="pdf-container">
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <img src="assets/1.gif" alt="Loading..." class="loading-gif" />
+  </div>
+
+  <!-- PDF Viewer -->
+  <ngx-extended-pdf-viewer
+    #pdfViewer
+    [src]="pdfSrc"
+    [textLayer]="true"
+    [showTextEditor]="true"
+    [findbarVisible]="true"
+    [showHandToolButton]="true"
+    [showPresentationModeButton]="true"
+    [handTool]="false"
+    (pdfLoaded)="onPdfLoaded()"
+    (pageChange)="onPageChange($event)">
+  </ngx-extended-pdf-viewer>
+</div>

@@ -117,7 +117,21 @@ export class LicenseTableComponent implements OnInit {
       console.error('Error loading Plotly.js script:', error);
     });
   }
+  ngAfterViewInit(): void {
+    if (this.pdfViewer) {
+      // Subscribe to the pdfLoaded event
+      this.pdfViewer.pdfLoaded.subscribe(() => {
+        this.onPdfLoaded();
+      });
 
+      // Subscribe to the pageChange event
+      this.pdfViewer.pageChange.subscribe((pageNumber: number) => {
+        this.onPageChange(pageNumber);
+      });
+    } else {
+      console.error('PDF viewer is not initialized.');
+    }
+  }
   toggleDetails(item: any): void {
     item.showDetails = !item.showDetails;
   }
@@ -206,19 +220,46 @@ export class LicenseTableComponent implements OnInit {
 
 
 
+isPopupLoading: boolean = false;
 
-  openPDFViewerPopup(directory_path: string, details: string): void {
-    const cloudinaryUrl = this.generateCloudinaryUrl(directory_path);
-    const url = cloudinaryUrl;  // This now points to the Cloudinary URL
+// license-table-component.component.ts
 
-    this.selectedPDF = url;
-    this.showPDFViewer = true;
-    this.showPopup = true;
-
-    setTimeout(() => {
-      this.pdfViewer.searchPDF(details); // Keep the existing functionality for the popup
-    }, 1000);
+onPdfLoaded(): void {
+  this.isPopupLoading = false; // Stop loading
+  console.log('PDF fully loaded!');
+  if (this.pdfViewer.searchText) {
+    this.pdfViewer.triggerSearch();
   }
+}
+
+onPageChange(pageNumber: number): void {
+  console.log(`Current page number: ${pageNumber}`);
+  this.isPopupLoading = true; // Show loading GIF
+
+  // Optionally, hide the loading GIF after a short delay
+  setTimeout(() => {
+    this.isPopupLoading = false;
+  }, 500); // Adjust the delay as needed
+}
+
+
+openPDFViewerPopup(directory_path: string, details: string): void {
+  const cloudinaryUrl = this.generateCloudinaryUrl(directory_path);
+  const url = cloudinaryUrl;
+
+  this.selectedPDF = url;
+  this.showPDFViewer = true;
+  this.showPopup = true;
+  this.isPopupLoading = true; // Start loading
+
+  // Trigger search immediately without delay
+  setTimeout(() => {
+    if (this.pdfViewer) {
+      this.pdfViewer.searchPDF(details); // Keep the existing functionality for the popup
+    }
+  }, 500);
+}
+
 
   closePopup() {
     this.showPopup = false;

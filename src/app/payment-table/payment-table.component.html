@@ -560,12 +560,16 @@
         </tbody>
       </table>
 
-
       <div class="popup-overlay" *ngIf="showPopup">
         <div class="popup-content">
-          <app-example-pdf-viewer [pdfSrc]="selectedPDF"></app-example-pdf-viewer>
+          <!-- PDF Viewer -->
+          <app-example-pdf-viewer
+            [pdfSrc]="selectedPDF">
+          </app-example-pdf-viewer>
+
           <div class="button-container">
             <button (click)="closePopup()">Close</button>
           </div>
         </div>
       </div>
+      
