@@ -24,7 +24,7 @@
 .loading-gif {
   width: 100px; /* Original size */
   height: 100px;
-  transform: scale(5); /* Scale the GIF by 20 times */
+  transform: scale(3); /* Scale the GIF by 20 times */
   /* Optionally, adjust transform origin if needed */
   transform-origin: center center;
 }

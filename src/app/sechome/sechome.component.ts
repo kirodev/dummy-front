@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, NgZone } from '@angular/core';
+import { Component, AfterViewInit, NgZone, Renderer2, ElementRef } from '@angular/core';
 
 @Component({
   selector: 'app-sechome',
@@ -6,7 +6,12 @@ import { Component, AfterViewInit, NgZone } from '@angular/core';
   styleUrls: ['./sechome.component.css']
 })
 export class SechomeComponent implements AfterViewInit {
-  constructor(private ngZone: NgZone) {}
+
+  constructor(
+    private ngZone: NgZone,
+    private renderer: Renderer2,
+    private elRef: ElementRef
+  ) {}
 
   ngAfterViewInit(): void {
     // Use NgZone to ensure the background is initialized after the view is fully rendered
@@ -18,24 +23,37 @@ export class SechomeComponent implements AfterViewInit {
   }
 
   initializeBackground(): void {
-    const square = document.querySelector(".Square") as HTMLElement;
-    const background = document.getElementById("Background");
+    const square = this.elRef.nativeElement.querySelector('.Square') as HTMLElement;
+    const background = this.elRef.nativeElement.querySelector('#Background') as HTMLElement;
+
     if (square && background) {
       const windowWidth = window.innerWidth || document.documentElement.clientWidth;
       const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-      const squareLen = Math.ceil((windowWidth / square.clientWidth) * (windowHeight / square.clientHeight));
+      const squareCount = Math.ceil((windowWidth / square.clientWidth) * (windowHeight / square.clientHeight));
 
-      let squares = '';
-      for (let i = 0; i < squareLen; i++) {
-        squares += square.outerHTML;
+      // Clear previous squares to prevent duplicate content on reinitialization
+      while (background.firstChild) {
+        background.removeChild(background.firstChild);
       }
-      background.innerHTML = squares;
+
+      // Create squares and append to background using Renderer2
+      for (let i = 0; i < squareCount; i++) {
+        const newSquare = this.renderer.createElement('div');
+        this.renderer.addClass(newSquare, 'Square');
+        this.renderer.appendChild(background, newSquare);
+      }
     }
   }
 
   activeSquare(event: MouseEvent): void {
-    if (event.target instanceof HTMLElement) {
-      event.target.classList.toggle("active");
+    const target = event.target as HTMLElement;
+    if (target && target.classList.contains('Square')) {
+      // Toggle class using Renderer2 for better security
+      if (target.classList.contains('active')) {
+        this.renderer.removeClass(target, 'active');
+      } else {
+        this.renderer.addClass(target, 'active');
+      }
     }
   }
 }

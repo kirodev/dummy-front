@@ -1,9 +1,8 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild ,SecurityContext} from '@angular/core';
 import { PdfLibraryService } from '../pdf-library-service.service';
 import { ExamplePdfViewerComponent } from '../example-pdf-viewer/example-pdf-viewer.component';
 import { environment } from 'env/environment';
-import { CloudinaryModule } from '@cloudinary/ng';
-
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 // Import the Cloudinary classes.
 import { Cloudinary } from '@cloudinary/url-gen';
 
@@ -43,12 +42,15 @@ export class LibraryComponent implements OnInit {
 
   uniqueDates: string[] = [];
 
-  constructor(private pdfLibraryService: PdfLibraryService) {}
+  constructor(private pdfLibraryService: PdfLibraryService,private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
     this.loadPdfFiles();
   }
-
+  sanitizeContent(content: string): SafeHtml {
+    return this.sanitizer.sanitize(SecurityContext.HTML, content) || '';
+  }
+  
   loadPdfFiles(): void {
     this.pdfLibraryService.getPdfFilesFromAllTables().subscribe({
       next: (files: PdfFile[]) => {

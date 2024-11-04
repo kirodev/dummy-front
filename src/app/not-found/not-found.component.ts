@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, Renderer2 } from '@angular/core';
 
 @Component({
   selector: 'app-not-found',
@@ -7,7 +7,7 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 })
 export class NotFoundComponent implements OnInit, AfterViewInit {
 
-  constructor() { }
+  constructor(private renderer: Renderer2) { }
 
   ngOnInit(): void {
   }
@@ -21,8 +21,12 @@ export class NotFoundComponent implements OnInit, AfterViewInit {
     const background = document.getElementById("Background");
     if (square && background) {
       const squareLen = (window.outerWidth / square.clientWidth) * (window.outerHeight / square.clientHeight);
+
       for (let i = 0; i <= squareLen; i++) {
-        background.innerHTML += square.outerHTML;
+        // Clone the square element
+        const squareClone = square.cloneNode(true) as HTMLElement;
+        // Append the cloned element to the background using Renderer2
+        this.renderer.appendChild(background, squareClone);
       }
     }
   }
@@ -30,9 +34,9 @@ export class NotFoundComponent implements OnInit, AfterViewInit {
   activeSquare(event: MouseEvent): void {
     if (event.target instanceof HTMLElement) {
       if (event.target.classList.contains('active')) {
-        event.target.classList.remove("active");
+        this.renderer.removeClass(event.target, 'active');
       } else {
-        event.target.classList.add("active");
+        this.renderer.addClass(event.target, 'active');
       }
     }
   }

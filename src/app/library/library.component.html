@@ -55,22 +55,25 @@
       <h3>{{ file.title || 'Unknown Title' }}</h3>
       <p>Year: {{ file.date || 'Unknown Date' }}</p>
       <button (click)="openPDFViewer(file, $event)">View</button>
-<!-- Example HTML snippet for toggle button -->
-<button *ngIf="!searchByTitle && !searchByDetails && file.details" (click)="toggleDetails(file, $event)">
-  Toggle Details
-</button>
+
+      <!-- Toggle Button for Details -->
+      <button *ngIf="!searchByTitle && !searchByDetails && file.details" (click)="toggleDetails(file, $event)">
+        Toggle Details
+      </button>
 
       <!-- Display matching details in a table format if showDetails is true -->
       <div *ngIf="file.showDetails">
         <table class="details-table">
           <tr *ngFor="let detail of file.highlightedDetails">
-            <td [innerHTML]="detail"></td>
+            <!-- Use sanitized content for rendering -->
+            <td [innerHTML]="sanitizeContent(detail)"></td>
           </tr>
         </table>
       </div>
     </div>
   </div>
 </div>
+
 
 
 <!-- PDF Viewer -->
