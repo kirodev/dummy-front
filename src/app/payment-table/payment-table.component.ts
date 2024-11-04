@@ -851,7 +851,21 @@ plotData(): void {
 
 
 
+  filterDataByLicensee() {
+    // Assuming filteredDataDefined and filteredMultiplePayments are arrays of objects
 
+    // Filter the data
+    const filteredData = this.filteredDataDefined.filter(item =>
+      item.licensee && item.licensee.includes(this.licenseeName)
+    );
+
+    const filteredPayments = this.filteredMultiplePayments.filter(item =>
+      item.licensee && item.licensee.includes(this.licenseeName)
+    );
+
+    // Combine both datasets or handle them as needed
+    return [...filteredData, ...filteredPayments]; // You can modify how you want to return or display them
+  }
 
 
 
@@ -1450,6 +1464,11 @@ prepareTableData(): void {
     }
   );
 }
+filterSecondaryRows(year: string): any[] {
+  const secondaryRows = this.groupedTableData[year]?.secondary || [];
+  return secondaryRows;
+}
+
 
 isRowUsedInPlot(item: any, tableType: 'payments' | 'multiplePayments'): boolean {
   const licenseeMatch = tableType === 'payments'
