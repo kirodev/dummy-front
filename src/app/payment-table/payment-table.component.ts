@@ -725,11 +725,11 @@ plotData(): void {
       return (filteredMultiplePaymentsYellow[i] !== null && !hasOtherBars) ? val : null;
     }),
     type: 'bar',
-    name: 'MP "Others" (MinTPY)',
+    name: 'MP "Others" (MaxTPY)',
     marker: { color: 'rgba(128, 0, 128, 1)' }, // Violet color with full opacity
     hoverinfo: 'text',
     hovertext: mpOthersMinTPY.map((val, i) =>
-      val !== null ? `Year: ${sortedYears[i]}<br>MP "Others" (MinTPY): ${this.formatNumber(val)}` : ''
+      val !== null ? `Year: ${sortedYears[i]}<br>MP "Others" (MaxTPY): ${this.formatNumber(val)}` : ''
     ),
     opacity: 1, // Full opacity
     offsetgroup: '6', // Shared group for overlay
