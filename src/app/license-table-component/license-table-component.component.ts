@@ -359,9 +359,14 @@ fetchTimelineData(): void {
 plotData(): void {
   const data: any[] = [];
   const idToColor: Map<string, string> = new Map();
-  const staticColors: string[] = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+  const staticColors: string[] = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
+    '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
+    '#bcbd22', '#17becf'
+  ];
   const legendEntries: Set<string> = new Set();
 
+  // Function to assign a unique color to each mapping_id
   const getColorForMappingId = (mapping_id: string): string => {
     if (!idToColor.has(mapping_id)) {
       const color = staticColors[idToColor.size % staticColors.length];
@@ -370,60 +375,106 @@ plotData(): void {
     return idToColor.get(mapping_id) || '#000000';
   };
 
+  // Define technologies with explicit typing
+  const technologies: (keyof License)[] = ['_2G', '_3G', '_4G', '_5G', '_6G', 'wifi'];
+
+  // Step 1: Collect all main trace date ranges (traces with both signed and expiration dates)
+  const mainRanges: Array<{ signed: Date, expiration: Date }> = [];
+
+  this.groupedLicenseData.forEach((group: GroupedLicense) => {
+    const { signed, expiration } = this.getGroupDates(group);
+    if (signed && expiration) {
+      const signedDate = new Date(signed);
+      const expirationDate = new Date(expiration);
+      mainRanges.push({ signed: signedDate, expiration: expirationDate });
+    }
+  });
+
+  // Helper function to check if a date is within any main trace range
+  const isDateWithinMainRanges = (date: Date): boolean => {
+    return mainRanges.some(range => date >= range.signed && date <= range.expiration);
+  };
+
+  // Step 2: Iterate and plot traces
   this.groupedLicenseData.forEach((group: GroupedLicense) => {
     const mapping_id = group.mapping_id;
     const color = getColorForMappingId(mapping_id);
     const { signed, expiration } = this.getGroupDates(group);
 
-    // Total trace
+    // Add main trace with lines and markers (dots)
     if (signed && expiration) {
-      const totalTrace = {
+      const mainTrace = {
         x: [signed, expiration],
         y: [6, 6],
         line: { color },
         name: mapping_id,
-        showlegend: !legendEntries.has(mapping_id),
+        showlegend: !legendEntries.has(mapping_id), // Show legend only once per mapping_id
         type: 'scatter',
-      };
-      data.push(totalTrace);
-      legendEntries.add(mapping_id);
-    }
-
-    // If start or end date is missing, add a marker
-    if (!signed || !expiration) {
-      const markerTrace = {
-        x: [signed || expiration],
-        y: [6],
-        mode: 'markers',
-        name: mapping_id,
+        mode: 'lines+markers', // Ensures both lines and markers (dots) are shown
         marker: {
+          size: 8, // Adjust size as needed
           symbol: 'circle',
-          size: 10,
-          color,
+          color: color,
         },
-        showlegend: !legendEntries.has(mapping_id),
       };
-      data.push(markerTrace);
-      legendEntries.add(mapping_id);
+      data.push(mainTrace);
+      legendEntries.add(mapping_id); // Prevent adding multiple entries for the same mapping_id
     }
 
-    // Traces for individual technologies
-    const technologies: (keyof License)[] = ['_2G', '_3G', '_4G', '_5G', '_6G', 'wifi'];
+    // If start or end date is missing, conditionally add a marker
+    if (!signed || !expiration) {
+      const missingDateStr = signed || expiration;
+
+      if (missingDateStr) { // Ensure it's not null
+        const missingDateObj = new Date(missingDateStr);
+
+        // Check if the missing date falls within any main trace range
+        const isWithinAnyRange = isDateWithinMainRanges(missingDateObj);
+
+        if (!isWithinAnyRange) {
+          const markerTrace = {
+            x: [missingDateStr],
+            y: [6], // Align with 'Overall' category
+            mode: 'markers',
+            name: `${mapping_id} Missing Date`, // Unique name for legend
+            marker: {
+              symbol: 'circle', // Use circle symbol
+              size: 8, // Consistent size with main markers
+              color: color, // Same color as main trace for consistency
+            },
+            showlegend: true, // Include in legend
+          };
+          data.push(markerTrace);
+          // Do not add mapping_id to legendEntries again
+        }
+        // Else: Do not add the marker as it falls within an existing trace range
+      }
+      // Else: Both signed and expiration are null, do not add a marker
+    }
+
+    // Traces for individual technologies with lines and markers
     technologies.forEach((tech, i) => {
       if (group.licenses.some((license: License) => license[tech] === 'Y')) {
-        const knownTrace = {
+        const techTrace = {
           x: [signed, expiration],
           y: [i, i],
           line: { color },
-          name: mapping_id,
-          showlegend: false,
+          name: `${mapping_id} - ${tech.toUpperCase()}`,
+          showlegend: false, // Exclude from legend to prevent clutter
           type: 'scatter',
+          mode: 'lines+markers',
+          marker: {
+            size: 6, // Smaller size for technology traces
+            symbol: 'circle', // Ensure circles
+            color: color,
+          },
         };
-        data.push(knownTrace);
+        data.push(techTrace);
       }
     });
   });
 
+  // Define layout
   const layout: any = {
     height: 600,
     autosize: true,
@@ -490,6 +541,7 @@ plotData(): void {
     plotlyServerURL: 'https://plot.ly',
   };
 
+  // Render the plot with Plotly
   Plotly.newPlot('myDiv', data, layout, config);
 }
 
