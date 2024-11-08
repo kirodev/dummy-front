@@ -401,13 +401,26 @@ plotData(): void {
     const color = getColorForMappingId(mapping_id);
     const { signed, expiration } = this.getGroupDates(group);
 
+    // Prepare hover text with mapping_id, signed, and expiration dates
+    const hoverText = `${mapping_id}<br>Signed: ${signed || '?'}<br>Expiration: ${expiration || '?'}`;
+
+    // Adjust y-values slightly for overlapping traces
+    let y_value = 6; // Default y-position for 'Overall'
+    if (mapping_id === 'INT-SAM-5' && signed === '2023-01-01') {
+      y_value = 6.1; // Move INT-SAM-5 slightly up to separate it
+    } else if (mapping_id === 'INT-SAM-2' && expiration === '2022-12-31') {
+      y_value = 5.9; // Move INT-SAM-2 slightly down to separate it
+    }
+
     // Add main trace with lines and markers (dots)
     if (signed && expiration) {
       const mainTrace = {
         x: [signed, expiration],
-        y: [6, 6],
+        y: [y_value, y_value],
         line: { color },
         name: mapping_id,
+        text: [hoverText, hoverText], // Set custom hover text
+        hoverinfo: 'text', // Use custom text for hover
         showlegend: !legendEntries.has(mapping_id), // Show legend only once per mapping_id
         type: 'scatter',
         mode: 'lines+markers', // Ensures both lines and markers (dots) are shown
@@ -434,9 +447,11 @@ plotData(): void {
         if (!isWithinAnyRange) {
           const markerTrace = {
             x: [missingDateStr],
-            y: [6], // Align with 'Overall' category
+            y: [y_value], // Use adjusted y-value for consistency
             mode: 'markers',
             name: `${mapping_id} Missing Date`, // Unique name for legend
+            text: [hoverText], // Set custom hover text
+            hoverinfo: 'text', // Use custom text for hover
             marker: {
               symbol: 'circle', // Use circle symbol
               size: 8, // Consistent size with main markers
