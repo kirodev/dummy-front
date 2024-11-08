@@ -520,7 +520,7 @@ plotData(): void {
     }
   });
 
-  // Prepare data arrays for each trace with priority
+  // Prepare sorted years for the x-axis
   const sortedYears = Array.from(
     new Set([
       ...yearPaymentsMap.keys(),
@@ -534,6 +534,7 @@ plotData(): void {
     ])
   ).sort((a, b) => a - b);
 
+  // Initialize data arrays for each trace
   const payments: (number | null)[] = [];
   const results: (number | null)[] = [];
   const paymentsMinTPY: (number | null)[] = [];
@@ -544,6 +545,7 @@ plotData(): void {
   const mpOthersMinTPY: (number | null)[] = [];
   const revenues: (number | null)[] = [];
 
+  // Populate the data arrays based on sorted years
   sortedYears.forEach((year) => {
     const paymentData = yearPaymentsMap.get(year);
     const paymentsMinTPYValue = yearPaymentsMinTPYMap.get(year) ?? null;
@@ -578,12 +580,15 @@ plotData(): void {
     } else if (greenPayment !== null || yellowPayment !== null) {
       if (greenPayment !== null) {
         filteredMultiplePaymentsGreenVal = greenPayment;
-      } else if (yellowPayment !== null) {
+      }
+      if (yellowPayment !== null) { // Allow both to be present
         filteredMultiplePaymentsYellowVal = yellowPayment;
       }
-    } else if (minTPYValue !== null) {
+    }
+    if (minTPYValue !== null) {
       minTPYVal = minTPYValue;
-    } else if (mpOthersMinTPYValue !== null) {
+    }
+    if (mpOthersMinTPYValue !== null) {
       mpOthersMinTPYVal = mpOthersMinTPYValue;
     }
 
@@ -598,7 +603,7 @@ plotData(): void {
     revenues.push(revenue);
   });
 
-  // Define Plotly traces
+  // Define Plotly traces with unique offsetgroups, except for the two to overlay
   const revenueTrace = {
     x: sortedYears,
     y: revenues,
@@ -609,8 +614,9 @@ plotData(): void {
     hovertext: revenues.map((rev, i) =>
       rev !== null ? `Year: ${sortedYears[i]}<br>Total Revenue: ${this.formatNumber(rev)}` : ''
     ),
-    offsetgroup: 0,
+    offsetgroup: '0', // Unique group
   };
+
   const paymentTrace = {
     x: sortedYears,
     y: payments,
@@ -621,8 +627,9 @@ plotData(): void {
     hovertext: payments.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Payment: ${this.formatNumber(val)}` : ''
     ),
-    offsetgroup: 1,
+    offsetgroup: '1', // Unique group
   };
+
   const resultTrace = {
     x: sortedYears,
     y: results,
@@ -633,8 +640,9 @@ plotData(): void {
     hovertext: results.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Calculated Payment: ${this.formatNumber(val)}` : ''
     ),
-    offsetgroup: 1,
+    offsetgroup: '2', // Unique group
   };
+
   const paymentsMinTPYTrace = {
     x: sortedYears,
     y: paymentsMinTPY,
@@ -645,8 +653,9 @@ plotData(): void {
     hovertext: paymentsMinTPY.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Payments (MinTPY): ${this.formatNumber(val)}` : ''
     ),
-    offsetgroup: 1,
+    offsetgroup: '3', // Unique group
   };
+
   const othersMinTPYTrace = {
     x: sortedYears,
     y: othersMinTPY,
@@ -657,8 +666,9 @@ plotData(): void {
     hovertext: othersMinTPY.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Payments "Others" (MinTPY): ${this.formatNumber(val)}` : ''
     ),
-    offsetgroup: 1,
+    offsetgroup: '4', // Unique group
   };
+
   const filteredMultiplePaymentsGreenTrace = {
     x: sortedYears,
     y: filteredMultiplePaymentsGreen,
@@ -669,22 +679,62 @@ plotData(): void {
     hovertext: filteredMultiplePaymentsGreen.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Multiple Payment: ${this.formatNumber(val)}` : ''
     ),
-    offsetgroup: 1,
+    offsetgroup: '5', // Unique group
   };
+
+  // **Overlayed Traces: Calculated Multiple Payments (TPY) and MP "Others" (MinTPY)**
   const filteredMultiplePaymentsYellowTrace = {
     x: sortedYears,
-    y: filteredMultiplePaymentsYellow,
+    y: filteredMultiplePaymentsYellow.map((val, i) => {
+      // Condition: Show only if no other colored bar exists for the year except Total Revenue and Calculated Multiple Payments (yellow)
+      const hasOtherBars =
+        payments[i] !== null ||
+        results[i] !== null ||
+        paymentsMinTPY[i] !== null ||
+        othersMinTPY[i] !== null ||
+        filteredMultiplePaymentsGreen[i] !== null ||
+        minTPY[i] !== null;
+
+      return hasOtherBars ? null : val; // Hide by setting to null
+    }),
     type: 'bar',
     name: 'Calculated Multiple Payments (TPY)',
-    marker: { color: 'rgba(255, 255, 0, 0.8)' },
+    marker: { color: 'rgba(255, 255, 0, 0.5)' }, // Lower opacity for yellow
     hoverinfo: 'text',
     hovertext: filteredMultiplePaymentsYellow.map((val, i) =>
       val !== null
         ? `Year: ${sortedYears[i]}<br>Calculated Multiple Payments: ${this.formatNumber(val)}`
         : ''
     ),
-    offsetgroup: 1,
+    offsetgroup: '6', // Shared group for overlay
   };
+
+  const mpOthersMinTPYTrace = {
+    x: sortedYears,
+    y: mpOthersMinTPY.map((val, i) => {
+      // Condition: Show only if "Calculated Multiple Payments (TPY)" is present and no other bars exist
+      const hasOtherBars =
+        payments[i] !== null ||
+        results[i] !== null ||
+        paymentsMinTPY[i] !== null ||
+        othersMinTPY[i] !== null ||
+        filteredMultiplePaymentsGreen[i] !== null ||
+        minTPY[i] !== null;
+
+      // Show violet only if Calculated Multiple Payments (yellow) is present and no other bars exist
+      return (filteredMultiplePaymentsYellow[i] !== null && !hasOtherBars) ? val : null;
+    }),
+    type: 'bar',
+    name: 'MP "Others" (MinTPY)',
+    marker: { color: 'rgba(128, 0, 128, 1)' }, // Violet color with full opacity
+    hoverinfo: 'text',
+    hovertext: mpOthersMinTPY.map((val, i) =>
+      val !== null ? `Year: ${sortedYears[i]}<br>MP "Others" (MinTPY): ${this.formatNumber(val)}` : ''
+    ),
+    opacity: 1, // Full opacity
+    offsetgroup: '6', // Shared group for overlay
+  };
+
   const minTPYTrace = {
     x: sortedYears,
     y: minTPY,
@@ -695,21 +745,10 @@ plotData(): void {
     hovertext: minTPY.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Multiple Payments (MinTPY): ${this.formatNumber(val)}` : ''
     ),
-    offsetgroup: 1,
-  };
-  const mpOthersMinTPYTrace = {
-    x: sortedYears,
-    y: mpOthersMinTPY,
-    type: 'bar',
-    name: 'MP "Others" (MinTPY)',
-    marker: { color: 'rgba(128, 0, 128, 0.8)' }, // Purple color
-    hoverinfo: 'text',
-    hovertext: mpOthersMinTPY.map((val, i) =>
-      val !== null ? `Year: ${sortedYears[i]}<br>MP "Others" (MinTPY): ${this.formatNumber(val)}` : ''
-    ),
-    offsetgroup: 1,
+    offsetgroup: '7', // Unique group
   };
 
+  // Layout configuration
   const layout = {
     height: 600,
     autosize: true,
@@ -721,11 +760,12 @@ plotData(): void {
       type: 'linear',
       rangemode: 'tozero',
     },
-    barmode: 'overlay',
+    barmode: 'overlay', // Allows overlaying of traces with the same offsetgroup
     legend: { orientation: 'h', y: 1.1 },
     hovermode: 'closest',
   };
 
+  // Render the plot with Plotly
   Plotly.newPlot('myDiv', [
     revenueTrace,
     paymentTrace,
@@ -733,12 +773,16 @@ plotData(): void {
     paymentsMinTPYTrace,
     othersMinTPYTrace,
     filteredMultiplePaymentsGreenTrace,
-    filteredMultiplePaymentsYellowTrace,
+    filteredMultiplePaymentsYellowTrace, // Calculated Multiple Payments (TPY) - Yellow
     minTPYTrace,
-    mpOthersMinTPYTrace,
+    mpOthersMinTPYTrace, // MP "Others" (MinTPY) - Violet
   ], layout);
-}
 
+  // Optional: Make Plotly responsive
+  window.onresize = () => {
+    Plotly.Plots.resize('myDiv');
+  };
+}
 
 
   confirmAction(message: string, action: () => void): void {
@@ -1440,7 +1484,15 @@ groupTableData(): void {
       if (!this.groupedTableData[year]) {
         this.groupedTableData[year] = { primary: null, secondary: [] };
       }
-      if (!this.groupedTableData[year].primary || item !== this.groupedTableData[year].primary) {
+
+      // Check if item should be added to secondary (new condition)
+      const isLicenseeMatch = item.licensee?.toLowerCase().split('|').some((license: string) => license.trim() === this.licenseeName.toLowerCase());
+      const isIndivLicenseeMatch = item.indiv_licensee?.trim().toLowerCase() === this.licenseeName.trim().toLowerCase();
+
+      if (isLicenseeMatch || isIndivLicenseeMatch) {
+        this.groupedTableData[year].secondary.push(item);
+      } else if (!this.groupedTableData[year].primary || item !== this.groupedTableData[year].primary) {
+        // Ensure non-matching items still get added to secondary if no primary present
         this.groupedTableData[year].secondary.push(item);
       }
     }
@@ -1464,11 +1516,40 @@ prepareTableData(): void {
     }
   );
 }
+
 filterSecondaryRows(year: string): any[] {
   const secondaryRows = this.groupedTableData[year]?.secondary || [];
-  return secondaryRows;
+
+  console.log("Debugging secondary rows for year:", year);
+
+  // Filter for rows where indiv_licensee matches licenseeName (case insensitive)
+  const filteredRows = secondaryRows.filter(item => {
+    const isIndivLicenseeMatch = item.indiv_licensee?.trim().toLowerCase() === this.licenseeName.trim().toLowerCase();
+
+    // Log each item with the condition result
+    console.log(
+      "Year:", year,
+      "LicenseeName:", this.licenseeName,
+      "Item Licensee:", item.licensee,
+      "Indiv_Licensee:", item.indiv_licensee,
+      "isIndivLicenseeMatch:", isIndivLicenseeMatch
+    );
+
+    return isIndivLicenseeMatch;
+  });
+
+  console.log("Filtered rows for year:", year, "LicenseeName:", this.licenseeName, "->", filteredRows);
+
+  return filteredRows;
 }
 
+
+
+isMatchingLicensee(item: any): boolean {
+  if (!this.licenseeName) return true; // Show all if no filter is applied
+  return item.indiv_licensee &&
+    item.indiv_licensee.trim().toLowerCase() === this.licenseeName.trim().toLowerCase();
+}
 
 isRowUsedInPlot(item: any, tableType: 'payments' | 'multiplePayments'): boolean {
   const licenseeMatch = tableType === 'payments'
@@ -1510,9 +1591,7 @@ isYearExpanded(year: string): boolean {
   return this.expandedYears.has(year);
 }
 
-getSecondaryRows(year: string): any[] {
-  return this.groupedTableData[year]?.secondary || [];
-}
+
 
 objectKeys(obj: any): string[] {
   return Object.keys(obj);
