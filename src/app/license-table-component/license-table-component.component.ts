@@ -356,7 +356,7 @@ fetchTimelineData(): void {
     }
   );
 }
-plotData(): void {
+ plotData(): void {
   const data: any[] = [];
   const idToColor: Map<string, string> = new Map();
   const staticColors: string[] = [
@@ -365,6 +365,10 @@ plotData(): void {
     '#bcbd22', '#17becf'
   ];
   const legendEntries: Set<string> = new Set();
+
+  // Fixed y-value for "Overall" traces to ensure consistent alignment
+  const overallYValue = 6;
+  const missingDateOffset = 0.5; // Increased offset for missing date markers
 
   // Function to assign a unique color to each mapping_id
   const getColorForMappingId = (mapping_id: string): string => {
@@ -404,19 +408,11 @@ plotData(): void {
     // Prepare hover text with mapping_id, signed, and expiration dates
     const hoverText = `${mapping_id}<br>Signed: ${signed || '?'}<br>Expiration: ${expiration || '?'}`;
 
-    // Adjust y-values slightly for overlapping traces
-    let y_value = 6; // Default y-position for 'Overall'
-    if (mapping_id === 'INT-SAM-5' && signed === '2023-01-01') {
-      y_value = 6.1; // Move INT-SAM-5 slightly up to separate it
-    } else if (mapping_id === 'INT-SAM-2' && expiration === '2022-12-31') {
-      y_value = 5.9; // Move INT-SAM-2 slightly down to separate it
-    }
-
-    // Add main trace with lines and markers (dots)
+    // Add main trace with lines and markers for "Overall" if both signed and expiration dates exist
     if (signed && expiration) {
       const mainTrace = {
         x: [signed, expiration],
-        y: [y_value, y_value],
+        y: [overallYValue, overallYValue], // Use fixed y-value for alignment
         line: { color },
         name: mapping_id,
         text: [hoverText, hoverText], // Set custom hover text
@@ -434,7 +430,7 @@ plotData(): void {
       legendEntries.add(mapping_id); // Prevent adding multiple entries for the same mapping_id
     }
 
-    // If start or end date is missing, conditionally add a marker
+    // If start or end date is missing, conditionally add a marker with increased offset
     if (!signed || !expiration) {
       const missingDateStr = signed || expiration;
 
@@ -447,7 +443,7 @@ plotData(): void {
         if (!isWithinAnyRange) {
           const markerTrace = {
             x: [missingDateStr],
-            y: [y_value], // Use adjusted y-value for consistency
+            y: [overallYValue + missingDateOffset], // Apply increased offset for clarity
             mode: 'markers',
             name: `${mapping_id} Missing Date`, // Unique name for legend
             text: [hoverText], // Set custom hover text
@@ -460,11 +456,9 @@ plotData(): void {
             showlegend: true, // Include in legend
           };
           data.push(markerTrace);
-          // Do not add mapping_id to legendEntries again
+          legendEntries.add(`${mapping_id} Missing Date`);
         }
-        // Else: Do not add the marker as it falls within an existing trace range
       }
-      // Else: Both signed and expiration are null, do not add a marker
     }
 
     // Traces for individual technologies with lines and markers
@@ -542,7 +536,7 @@ plotData(): void {
     },
     yaxis: {
       autorange: false,
-      range: [-1, 7],
+      range: [-1, 7.5],
       showgrid: false,
       ticktext: ['2G', '3G', '4G', '5G', '6G', 'WIFI', 'Overall'],
       tickvals: [0, 1, 2, 3, 4, 5, 6],
