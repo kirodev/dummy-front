@@ -609,7 +609,7 @@ plotData(): void {
     y: revenues,
     type: 'bar',
     name: 'Total Revenue',
-    marker: { color: 'rgba(200, 200, 200, 0.7)' },
+    marker: { color: 'rgba(200, 200, 200, 1)' },
     hoverinfo: 'text',
     hovertext: revenues.map((rev, i) =>
       rev !== null ? `Year: ${sortedYears[i]}<br>Total Revenue: ${this.formatNumber(rev)}` : ''
@@ -726,7 +726,7 @@ plotData(): void {
     }),
     type: 'bar',
     name: 'MP "Others" (MinTPY)',
-    marker: { color: 'rgba(200, 200, 200, 0.8)' }, // Violet color with full opacity
+    marker: { color: 'rgba(200, 200, 200, 1)' }, // Violet color with full opacity
     hoverinfo: 'text',
     hovertext: mpOthersMinTPY.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>MP "Others" (MinTPY): ${this.formatNumber(val)}` : ''
