@@ -635,7 +635,7 @@ plotData(): void {
     y: results,
     type: 'bar',
     name: 'Calculated Payments (TPY)',
-    marker: { color: 'rgba(255, 165, 0, 0.8)' },
+    marker: { color: 'rgba(0, 123, 255, 0.8)' },
     hoverinfo: 'text',
     hovertext: results.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Calculated Payment: ${this.formatNumber(val)}` : ''
@@ -661,7 +661,7 @@ plotData(): void {
     y: othersMinTPY,
     type: 'bar',
     name: 'Payments "Others" (MinTPY)',
-    marker: { color: 'rgba(0, 0, 0, 0.8)' },
+    marker: { color: 'rgba(165, 42, 42, 0.8)' },
     hoverinfo: 'text',
     hovertext: othersMinTPY.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Payments "Others" (MinTPY): ${this.formatNumber(val)}` : ''
@@ -674,7 +674,7 @@ plotData(): void {
     y: filteredMultiplePaymentsGreen,
     type: 'bar',
     name: 'Multiple Payments (TPY)',
-    marker: { color: 'rgba(0, 255, 0, 0.8)' },
+    marker: { color: 'rgba(255, 165, 0, 0.8)' },
     hoverinfo: 'text',
     hovertext: filteredMultiplePaymentsGreen.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Multiple Payment: ${this.formatNumber(val)}` : ''
@@ -699,7 +699,7 @@ plotData(): void {
     }),
     type: 'bar',
     name: 'Calculated Multiple Payments (TPY)',
-    marker: { color: 'rgba(255, 255, 0, 0.5)' }, // Lower opacity for yellow
+    marker: { color: 'rgba(255, 165, 0, 0.8)' }, // Lower opacity for yellow
     hoverinfo: 'text',
     hovertext: filteredMultiplePaymentsYellow.map((val, i) =>
       val !== null
@@ -709,44 +709,110 @@ plotData(): void {
     offsetgroup: '6', // Shared group for overlay
   };
 
+  const minTPYTrace = {
+    x: sortedYears,
+    y: minTPY.map((val, i) => {
+      // Always include the bar if it has a value
+      return val !== null && val !== undefined ? val : null;
+    }),
+    type: 'bar',
+    name: 'Multiple Payments (MinTPY)',
+    marker: {
+      color: minTPY.map((val, i) => {
+        // Check if other bars exist in the same year
+        const hasOtherBars =
+          (payments[i] !== null && payments[i] !== undefined) ||
+          (results[i] !== null && results[i] !== undefined) ||
+          (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined) ||
+          (othersMinTPY[i] !== null && othersMinTPY[i] !== undefined) ||
+          (filteredMultiplePaymentsYellow[i] !== null && filteredMultiplePaymentsYellow[i] !== undefined) ||
+          (filteredMultiplePaymentsGreen[i] !== null && filteredMultiplePaymentsGreen[i] !== undefined);
+
+        // Violet if no other bars, grey otherwise
+        if (val !== null && val !== undefined && !hasOtherBars) {
+          return 'rgba(138, 43, 226, 1)'; // Violet
+        } else if (val !== null && val !== undefined) {
+          return 'rgba(200, 200, 200, 1)'; // Grey
+        } else {
+          return 'rgba(0, 0, 0, 0)'; // Transparent
+        }
+      }),
+    },
+    hoverinfo: 'text',
+    hovertext: minTPY.map((val, i) => {
+      const hasOtherBars =
+        (payments[i] !== null && payments[i] !== undefined) ||
+        (results[i] !== null && results[i] !== undefined) ||
+        (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined) ||
+        (othersMinTPY[i] !== null && othersMinTPY[i] !== undefined) ||
+        (filteredMultiplePaymentsYellow[i] !== null && filteredMultiplePaymentsYellow[i] !== undefined) ||
+        (filteredMultiplePaymentsGreen[i] !== null && filteredMultiplePaymentsGreen[i] !== undefined);
+
+      if (val !== null && val !== undefined && !hasOtherBars) {
+        return `Year: ${sortedYears[i]}<br><b>Multiple Payments (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Violet (No other bars)`;
+      } else if (val !== null && val !== undefined) {
+        return `Year: ${sortedYears[i]}<br><b>Multiple Payments (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Grey (Other bars exist)`;
+      } else {
+        return '';
+      }
+    }),
+    offsetgroup: '7', // Unique group
+  };
+
+
   const mpOthersMinTPYTrace = {
     x: sortedYears,
     y: mpOthersMinTPY.map((val, i) => {
-      // Condition: Show only if "Calculated Multiple Payments (TPY)" is present and no other bars exist
-      const hasOtherBars =
-        payments[i] !== null ||
-        results[i] !== null ||
-        paymentsMinTPY[i] !== null ||
-        othersMinTPY[i] !== null ||
-        filteredMultiplePaymentsGreen[i] !== null ||
-        minTPY[i] !== null;
-
-      // Show violet only if Calculated Multiple Payments (yellow) is present and no other bars exist
-      return (filteredMultiplePaymentsYellow[i] !== null && !hasOtherBars) ? val : null;
+      // Always include the bar if it has a value
+      return val !== null && val !== undefined ? val : null;
     }),
     type: 'bar',
     name: 'MP "Others" (MinTPY)',
-    marker: { color: 'rgba(200, 200, 200, 1)' }, // Violet color with full opacity
+    marker: {
+      color: mpOthersMinTPY.map((val, i) => {
+        // Check if other bars exist in the same year
+        const hasOtherBars =
+          (payments[i] !== null && payments[i] !== undefined) ||
+          (results[i] !== null && results[i] !== undefined) ||
+          (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined) ||
+          (othersMinTPY[i] !== null && othersMinTPY[i] !== undefined) ||
+          (filteredMultiplePaymentsYellow[i] !== null && filteredMultiplePaymentsYellow[i] !== undefined) ||
+          (filteredMultiplePaymentsGreen[i] !== null && filteredMultiplePaymentsGreen[i] !== undefined) ||
+          (minTPY[i] !== null && minTPY[i] !== undefined);
+
+        // Violet if no other bars, grey otherwise
+        if (val !== null && val !== undefined && !hasOtherBars) {
+          return 'rgba(138, 43, 226, 1)'; // Violet
+        } else if (val !== null && val !== undefined) {
+          return 'rgba(200, 200, 200, 1)'; // Grey
+        } else {
+          return 'rgba(0, 0, 0, 0)'; // Transparent
+        }
+      }),
+    },
     hoverinfo: 'text',
-    hovertext: mpOthersMinTPY.map((val, i) =>
-      val !== null ? `Year: ${sortedYears[i]}<br>MP "Others" (MinTPY): ${this.formatNumber(val)}` : ''
-    ),
+    hovertext: mpOthersMinTPY.map((val, i) => {
+      const hasOtherBars =
+        (payments[i] !== null && payments[i] !== undefined) ||
+        (results[i] !== null && results[i] !== undefined) ||
+        (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined) ||
+        (othersMinTPY[i] !== null && othersMinTPY[i] !== undefined) ||
+        (filteredMultiplePaymentsYellow[i] !== null && filteredMultiplePaymentsYellow[i] !== undefined) ||
+        (filteredMultiplePaymentsGreen[i] !== null && filteredMultiplePaymentsGreen[i] !== undefined) ||
+        (minTPY[i] !== null && minTPY[i] !== undefined);
+
+      if (val !== null && val !== undefined && !hasOtherBars) {
+        return `Year: ${sortedYears[i]}<br><b>MP "Others" (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Violet (No other bars)`;
+      } else if (val !== null && val !== undefined) {
+        return `Year: ${sortedYears[i]}<br><b>MP "Others" (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Grey (Other bars exist)`;
+      } else {
+        return '';
+      }
+    }),
     opacity: 1, // Full opacity
     offsetgroup: '6', // Shared group for overlay
   };
 
-  const minTPYTrace = {
-    x: sortedYears,
-    y: minTPY,
-    type: 'bar',
-    name: 'Multiple Payments (MinTPY)',
-    marker: { color: 'rgba(255, 0, 0, 0.8)' },
-    hoverinfo: 'text',
-    hovertext: minTPY.map((val, i) =>
-      val !== null ? `Year: ${sortedYears[i]}<br>Multiple Payments (MinTPY): ${this.formatNumber(val)}` : ''
-    ),
-    offsetgroup: '7', // Unique group
-  };
 
   // Layout configuration
   const layout = {
@@ -1247,7 +1313,6 @@ plotData(): void {
 
 maxCounter: number = 0; // Class-level variable to store the maximum counter value
 mappingIdCounter: Map<number, number> = new Map();
-
 uniqueMappingIds: string[] = [];
 
 
@@ -1300,6 +1365,8 @@ AddMappingId(itemId: number, item: any, tableType: 'payments' | 'multiplePayment
     this.updateMappingId(itemId, selectedMappingId, tableType, useMPMappingId);
   }
 }
+
+
 updateMappingId(itemId: number, mappingId: string, tableType: 'payments' | 'multiplePayments', useMappingId: boolean): void {
   let updateObservable;
 
