@@ -462,7 +462,7 @@ plotData(): void {
       }
 
       // Process MP Others MinTPY
-      if (['PSPY', 'FFPY', 'RPY', 'LSPY'].some((type) => eqType?.endsWith(type))) {
+      if (['PSPY', 'FFPY', 'RPYI', 'LSPY'].some((type) => eqType?.endsWith(type))) {
         const value = item.payment_amount ?? item.results ?? 0;
         if (typeof value === 'number' && !isNaN(value)) {
           yearMPOthersMinTPYMap.set(numericYear, (yearMPOthersMinTPYMap.get(numericYear) || 0) + value);
@@ -499,8 +499,8 @@ plotData(): void {
       item.licensor === this.licensorName &&
       item.licensee === this.licenseeName
     ) {
-      // Check if eq_type matches PSPY, FFPY, RPY, LSPY or their prefixed versions
-      if (['PSPY', 'FFPY', 'RPY', 'LSPY'].some((type) => eqType?.endsWith(type))) {
+      // Check if eq_type matches PSPY, FFPY, RPYI, LSPY or their prefixed versions
+      if (['PSPY', 'FFPY', 'RPYI', 'LSPY'].some((type) => eqType?.endsWith(type))) {
         const value = item.payment_amount ?? item.results ?? 0;
         if (typeof value === 'number' && !isNaN(value)) {
           yearOthersMinTPYMap.set(numericYear, (yearOthersMinTPYMap.get(numericYear) || 0) + value);
