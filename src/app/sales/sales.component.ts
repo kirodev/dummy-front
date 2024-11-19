@@ -212,6 +212,9 @@ export class SalesComponent implements OnInit {
       }
     }, 100);
   }
+
+
+
   handlePointClick(data: any): void {
     const point = data.points[0];
     const customData = point.customdata;
@@ -222,67 +225,71 @@ export class SalesComponent implements OnInit {
     infoText += `<strong>Sales:</strong> ${customData.sales ? customData.sales.toFixed(2) : 'N/A'}<br><br>`;
 
     const extractDomain = (url: string): string => {
-      try {
-        const { hostname } = new URL(url);
-        return hostname.replace(/^www\./, '');
-      } catch (e) {
-        console.error('Invalid URL:', url);
-        return 'Invalid URL';
-      }
+        try {
+            const { hostname } = new URL(url);
+            return hostname.replace(/^www\./, '');
+        } catch (e) {
+            console.error('Invalid URL:', url);
+            return 'Invalid URL';
+        }
     };
 
     const createSafeLink = (url: string): string => {
-      const sanitizedUrl = this.sanitizeUrl(url);
-      const domain = extractDomain(url);
-      return `<a href="${sanitizedUrl}" target="_blank" rel="noopener noreferrer">${this.sanitizeHtml(domain)}</a>`;
+        const sanitizedUrl = this.sanitizeUrl(url);
+        const domain = extractDomain(url);
+        return `<a href="${sanitizedUrl}" target="_blank" rel="noopener noreferrer">${this.sanitizeHtml(domain)}</a>`;
     };
+
+    // Filter out discarded sources
+    const filteredSources = customData.source.filter((source: any) => source.source !== source.discarded);
 
     // Display sources
     infoText += '<strong>Source:</strong><br>';
-    customData.source.forEach((source: any) => {
-      const links = source.link
-        ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
-        : '';
+    filteredSources.forEach((source: any) => {
+        const links = source.link
+            ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
+            : '';
 
-      infoText += `${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}<br>`;
+        infoText += `${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}<br>`;
     });
 
     // Display Used
     const usedSet = new Set<string>();
-    customData.source.forEach((source: any) => {
-      if (source.used && source.used.trim() !== '') {
-        const links = source.link
-          ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
-          : '';
-        usedSet.add(`${this.sanitizeHtml(source.used)} ${links ? `(${links})` : ''}`);
-      }
+    filteredSources.forEach((source: any) => {
+        if (source.used && source.used.trim() !== '') {
+            const links = source.link
+                ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
+                : '';
+            usedSet.add(`${this.sanitizeHtml(source.used)} ${links ? `(${links})` : ''}`);
+        }
     });
     if (usedSet.size > 0) {
-      infoText += '<br><strong>Used:</strong><br>';
-      usedSet.forEach(item => {
-        infoText += `${item}<br>`;
-      });
+        infoText += '<br><strong>Used:</strong><br>';
+        usedSet.forEach(item => {
+            infoText += `${item}<br>`;
+        });
     }
 
     // Display Discarded
     const discardedSet = new Set<string>();
     customData.source.forEach((source: any) => {
-      if (source.source === source.discarded) {
-        const links = source.link
-          ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
-          : '';
-        discardedSet.add(`${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}`);
-      }
+        if (source.source === source.discarded) {
+            const links = source.link
+                ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
+                : '';
+            discardedSet.add(`${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}`);
+        }
     });
     if (discardedSet.size > 0) {
-      infoText += '<br><strong>Discarded:</strong><br>';
-      discardedSet.forEach(item => {
-        infoText += `${item}<br>`;
-      });
+        infoText += '<br><strong>Discarded:</strong><br>';
+        discardedSet.forEach(item => {
+            infoText += `${item}<br>`;
+        });
     }
 
     this.showPopup(infoText);
-  }
+}
+
 
 
   // Add these helper methods to your component if not already present
