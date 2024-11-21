@@ -35,6 +35,15 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
   groupedTableData: { [year: string]: { primary: any, secondary: any[] } } = {};
   expandedYears: Set<string> = new Set();
   showDetailsMap: Map<string, boolean> = new Map();
+  showPDFViewer: boolean = false;
+  selectedPDF: string = '';
+  showPopup: boolean = false;
+  maxCounter: number = 0; // Class-level variable to store the maximum counter value
+  mappingIdCounter: Map<number, number> = new Map();
+  uniqueMappingIds: string[] = [];
+  showConfirmationModal: boolean = false;
+  actionToConfirm: string = '';
+  itemToModifyOrDelete: any;
 
   constructor(
     private paymentConnection: PaymentConnection,
@@ -178,9 +187,7 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
 
 
 
-  showPDFViewer: boolean = false;
-  selectedPDF: string = '';
-  showPopup: boolean = false;
+
 
   generateCloudinaryUrl(directory_path: string): string {
     let normalizedPath = directory_path.replace(/\\/g, '/');
@@ -383,14 +390,32 @@ aggregateQuarterlyToYearly(): void {
 
 
 plotData(): void {
+  // Initialize Maps
   const yearPaymentsMap = new Map<number, { value: number; isResult: boolean; rowData: any }>();
   const yearFilteredMultiplePaymentsGreenMap = new Map<number, number>();
   const yearFilteredMultiplePaymentsYellowMap = new Map<number, number>();
+  const yearFilteredMultiplePaymentsMaxMap = new Map<number, number>(); // Direct maxTPY payments
+  const yearFilteredMultiplePaymentsMaxCalculatedMap = new Map<number, number>(); // Calculated maxTPY payments
   const yearMinTPYMap = new Map<number, number>();
   const yearPaymentsMinTPYMap = new Map<number, number>();
   const yearOthersMinTPYMap = new Map<number, number>();
   const yearMPOthersMinTPYMap = new Map<number, number>();
   const yearRevenuesMap = new Map<number, number>();
+
+  // Process annual revenue data
+  this.annualRevenues.forEach((revenue) => {
+    if (revenue.year && typeof revenue.total_revenue === 'number' && !isNaN(revenue.total_revenue)) {
+      yearRevenuesMap.set(revenue.year, revenue.total_revenue);
+    }
+  });
+
+  // Debug: Check if 2016 revenue is present
+  const testYear = 2016;
+  if (yearRevenuesMap.has(testYear)) {
+    console.log(`Annual Revenue for ${testYear}:`, yearRevenuesMap.get(testYear));
+  } else {
+    console.error(`Annual Revenue for ${testYear} is missing in yearRevenuesMap.`);
+  }
 
   // Process grouped data for primary payments (Payment and Calculated Payment)
   Object.entries(this.groupedTableData).forEach(([year, data]) => {
@@ -417,6 +442,7 @@ plotData(): void {
 
       if (value !== undefined) {
         yearPaymentsMap.set(numericYear, { value, isResult, rowData: data.primary });
+        console.log(`Stored primary payment for year ${numericYear}:`, value, `isResult:`, isResult);
       }
     }
   });
@@ -425,6 +451,7 @@ plotData(): void {
   const quarterlyPaymentsMap = new Map<number, { sum: number; count: number }>();
 
   this.filteredMultiplePayments.forEach((item) => {
+    console.log(`Processing filteredMultiplePayments item:`, item);
     const numericYear = parseInt(item.year, 10);
     const eqType = item.eq_type?.toUpperCase();
 
@@ -433,39 +460,66 @@ plotData(): void {
       item.licensor === this.licensorName &&
       (item.indiv_licensee === this.licenseeName || item.licensee?.includes(this.licenseeName))
     ) {
-      if (eqType === 'TPY') {
-        const value =
-          item.payment_amount !== null && !isNaN(item.payment_amount)
-            ? item.payment_amount
-            : item.results;
-        const isResult = item.payment_amount === null || isNaN(item.payment_amount);
+      let paymentAmount: number | null = null;
+      let isResult = false;
 
-        if (!yearPaymentsMap.has(numericYear)) {
-          if (typeof value === 'number' && !isNaN(value)) {
-            if (isResult) {
-              yearFilteredMultiplePaymentsYellowMap.set(numericYear, value);
-            } else {
-              yearFilteredMultiplePaymentsGreenMap.set(numericYear, value);
-            }
-          }
-        }
-      } else if (eqType === 'TPQ') {
-        if (!quarterlyPaymentsMap.has(numericYear)) {
-          quarterlyPaymentsMap.set(numericYear, { sum: 0, count: 0 });
-        }
-        const quarterlyData = quarterlyPaymentsMap.get(numericYear)!;
-        const quarterlyValue = item.payment_amount ?? item.results;
-        if (typeof quarterlyValue === 'number' && !isNaN(quarterlyValue)) {
-          quarterlyData.sum += quarterlyValue;
-          quarterlyData.count += 1;
-        }
+      // Calculate payment_amount if not available
+      if (item.payment_amount !== null && !isNaN(item.payment_amount)) {
+        paymentAmount = item.payment_amount;
+      } else if (item.coef !== null && !isNaN(parseFloat(item.coef))) {
+        const annualRevenue = yearRevenuesMap.get(numericYear) ?? 0;
+        const parsedCoef = parseFloat(item.coef);
+        paymentAmount = parsedCoef * annualRevenue;
+        isResult = true; // Indicate that the payment is calculated
+        console.log(`Calculated paymentAmount for year ${numericYear} using coef:`, paymentAmount);
+      } else {
+        // Fallback to results if both payment_amount and coef are unavailable
+        paymentAmount = item.results ?? null;
+        isResult = true;
+        console.log(`Fallback paymentAmount for year ${numericYear} using results:`, paymentAmount);
       }
 
-      // Process MP Others MinTPY
-      if (['PSPY', 'FFPY', 'RPYI', 'LSPY'].some((type) => eqType?.endsWith(type))) {
-        const value = item.payment_amount ?? item.results ?? 0;
-        if (typeof value === 'number' && !isNaN(value)) {
-          yearMPOthersMinTPYMap.set(numericYear, (yearMPOthersMinTPYMap.get(numericYear) || 0) + value);
+      if (paymentAmount !== null && !isNaN(paymentAmount)) {
+        if (eqType === 'TPY') {
+          if (!yearPaymentsMap.has(numericYear)) {
+            if (isResult) {
+              yearFilteredMultiplePaymentsYellowMap.set(numericYear, paymentAmount);
+              console.log(`Stored TPY (calculated) payment for year ${numericYear}:`, paymentAmount);
+            } else {
+              yearFilteredMultiplePaymentsGreenMap.set(numericYear, paymentAmount);
+              console.log(`Stored TPY (direct) payment for year ${numericYear}:`, paymentAmount);
+            }
+          }
+        } else if (eqType === 'MAXTPY') { // Handling maxTPY
+          if (!yearPaymentsMap.has(numericYear)) {
+            if (isResult) {
+              yearFilteredMultiplePaymentsMaxCalculatedMap.set(numericYear, paymentAmount);
+              console.log(`Stored MAXTPY (calculated) payment for year ${numericYear}:`, paymentAmount);
+            } else {
+              yearFilteredMultiplePaymentsMaxMap.set(numericYear, paymentAmount);
+              console.log(`Stored MAXTPY (direct) payment for year ${numericYear}:`, paymentAmount);
+            }
+          }
+        } else if (eqType === 'TPQ') {
+          if (!quarterlyPaymentsMap.has(numericYear)) {
+            quarterlyPaymentsMap.set(numericYear, { sum: 0, count: 0 });
+          }
+          const quarterlyData = quarterlyPaymentsMap.get(numericYear)!;
+          const quarterlyValue = item.payment_amount ?? item.results;
+          if (typeof quarterlyValue === 'number' && !isNaN(quarterlyValue)) {
+            quarterlyData.sum += quarterlyValue;
+            quarterlyData.count += 1;
+            console.log(`Updated quarterlyPaymentsMap for year ${numericYear}:`, quarterlyData);
+          }
+        }
+
+        // Process MP Others MinTPY
+        if (['PSPY', 'FFPY', 'RPYI', 'LSPY'].some((type) => eqType?.endsWith(type))) {
+          const value = item.payment_amount ?? item.results ?? 0;
+          if (typeof value === 'number' && !isNaN(value)) {
+            yearMPOthersMinTPYMap.set(numericYear, (yearMPOthersMinTPYMap.get(numericYear) || 0) + value);
+            console.log(`Updated yearMPOthersMinTPYMap for year ${numericYear}:`, value);
+          }
         }
       }
     }
@@ -480,18 +534,13 @@ plotData(): void {
       !yearFilteredMultiplePaymentsYellowMap.has(year)
     ) {
       yearMinTPYMap.set(year, data.sum);
-    }
-  });
-
-  // Process annual revenue data
-  this.annualRevenues.forEach((revenue) => {
-    if (revenue.year && typeof revenue.total_revenue === 'number' && !isNaN(revenue.total_revenue)) {
-      yearRevenuesMap.set(revenue.year, revenue.total_revenue);
+      console.log(`Stored minTPY for year ${year}:`, data.sum);
     }
   });
 
   // Process payments minTPY data and sum for "Others MinTPY"
   this.paymentData.forEach((item) => {
+    console.log(`Processing paymentData item:`, item);
     const numericYear = parseInt(item.year, 10);
     const eqType = item.eq_type?.toUpperCase();
     if (
@@ -499,22 +548,50 @@ plotData(): void {
       item.licensor === this.licensorName &&
       item.licensee === this.licenseeName
     ) {
-      // Check if eq_type matches PSPY, FFPY, RPYI, LSPY or their prefixed versions
-      if (['PSPY', 'FFPY', 'RPYI', 'LSPY'].some((type) => eqType?.endsWith(type))) {
-        const value = item.payment_amount ?? item.results ?? 0;
-        if (typeof value === 'number' && !isNaN(value)) {
-          yearOthersMinTPYMap.set(numericYear, (yearOthersMinTPYMap.get(numericYear) || 0) + value);
-        }
-      } else if (eqType === 'TPQ') {
-        // For payments minTPY data
-        if (!yearPaymentsMinTPYMap.has(numericYear)) {
-          yearPaymentsMinTPYMap.set(numericYear, item.payment_amount ?? item.results);
-        } else {
-          const currentSum = yearPaymentsMinTPYMap.get(numericYear)!;
-          yearPaymentsMinTPYMap.set(
-            numericYear,
-            currentSum + (item.payment_amount ?? item.results ?? 0)
-          );
+      let paymentAmount: number | null = null;
+      let isResult = false;
+
+      // Calculate payment_amount if not available
+      if (item.payment_amount !== null && !isNaN(item.payment_amount)) {
+        paymentAmount = item.payment_amount;
+      } else if (item.coef !== null && !isNaN(parseFloat(item.coef))) {
+        const annualRevenue = yearRevenuesMap.get(numericYear) ?? 0;
+        const parsedCoef = parseFloat(item.coef);
+        paymentAmount = parsedCoef * annualRevenue;
+        isResult = true; // Indicate that the payment is calculated
+        console.log(`Calculated paymentAmount for year ${numericYear} using coef:`, paymentAmount);
+      } else {
+        // Fallback to results if both payment_amount and coef are unavailable
+        paymentAmount = item.results ?? null;
+        isResult = true;
+        console.log(`Fallback paymentAmount for year ${numericYear} using results:`, paymentAmount);
+      }
+
+      if (paymentAmount !== null && !isNaN(paymentAmount)) {
+        // Check if eq_type matches PSPY, FFPY, RPYI, LSPY or their prefixed versions
+        if (['PSPY', 'FFPY', 'RPYI', 'LSPY'].some((type) => eqType?.endsWith(type))) {
+          yearOthersMinTPYMap.set(numericYear, (yearOthersMinTPYMap.get(numericYear) || 0) + paymentAmount);
+          console.log(`Updated yearOthersMinTPYMap for year ${numericYear}:`, paymentAmount);
+        } else if (eqType === 'TPQ') {
+          // For payments minTPY data
+          if (!yearPaymentsMinTPYMap.has(numericYear)) {
+            yearPaymentsMinTPYMap.set(numericYear, paymentAmount);
+            console.log(`Stored TPQ payment for year ${numericYear}:`, paymentAmount);
+          } else {
+            const currentSum = yearPaymentsMinTPYMap.get(numericYear)!;
+            yearPaymentsMinTPYMap.set(numericYear, currentSum + paymentAmount);
+            console.log(`Updated TPQ payment for year ${numericYear}:`, currentSum + paymentAmount);
+          }
+        } else if (eqType === 'MAXTPY') { // Handling maxTPY
+          if (!yearPaymentsMap.has(numericYear)) {
+            if (isResult) {
+              yearFilteredMultiplePaymentsMaxCalculatedMap.set(numericYear, paymentAmount);
+              console.log(`Stored MAXTPY (calculated) payment for year ${numericYear}:`, paymentAmount);
+            } else {
+              yearFilteredMultiplePaymentsMaxMap.set(numericYear, paymentAmount);
+              console.log(`Stored MAXTPY (direct) payment for year ${numericYear}:`, paymentAmount);
+            }
+          }
         }
       }
     }
@@ -527,12 +604,16 @@ plotData(): void {
       ...yearRevenuesMap.keys(),
       ...yearFilteredMultiplePaymentsGreenMap.keys(),
       ...yearFilteredMultiplePaymentsYellowMap.keys(),
+      ...yearFilteredMultiplePaymentsMaxMap.keys(), // Include direct maxTPY years
+      ...yearFilteredMultiplePaymentsMaxCalculatedMap.keys(), // Include calculated maxTPY years
       ...yearMinTPYMap.keys(),
       ...yearPaymentsMinTPYMap.keys(),
       ...yearOthersMinTPYMap.keys(),
       ...yearMPOthersMinTPYMap.keys(),
     ])
   ).sort((a, b) => a - b);
+
+  console.log('Sorted Years:', sortedYears);
 
   // Initialize data arrays for each trace
   const payments: (number | null)[] = [];
@@ -541,7 +622,9 @@ plotData(): void {
   const othersMinTPY: (number | null)[] = [];
   const filteredMultiplePaymentsGreen: (number | null)[] = [];
   const filteredMultiplePaymentsYellow: (number | null)[] = [];
-  const minTPY: (number | null)[] = [];
+  const filteredMultiplePaymentsMax: (number | null)[] = [];
+  const filteredMultiplePaymentsMaxCalculated: (number | null)[] = [];
+  const MPminTPY: (number | null)[] = [];
   const mpOthersMinTPY: (number | null)[] = [];
   const revenues: (number | null)[] = [];
 
@@ -552,6 +635,8 @@ plotData(): void {
     const othersMinTPYValue = yearOthersMinTPYMap.get(year) ?? null;
     const greenPayment = yearFilteredMultiplePaymentsGreenMap.get(year) ?? null;
     const yellowPayment = yearFilteredMultiplePaymentsYellowMap.get(year) ?? null;
+    const maxPayment = yearFilteredMultiplePaymentsMaxMap.get(year) ?? null; // Direct maxTPY
+    const maxCalculatedPayment = yearFilteredMultiplePaymentsMaxCalculatedMap.get(year) ?? null; // Calculated maxTPY
     const minTPYValue = yearMinTPYMap.get(year) ?? null;
     const mpOthersMinTPYValue = yearMPOthersMinTPYMap.get(year) ?? null;
     const revenue = yearRevenuesMap.get(year) ?? null;
@@ -562,6 +647,8 @@ plotData(): void {
     let othersMinTPYVal: number | null = null;
     let filteredMultiplePaymentsGreenVal: number | null = null;
     let filteredMultiplePaymentsYellowVal: number | null = null;
+    let filteredMultiplePaymentsMaxVal: number | null = null; // Direct maxTPY
+    let filteredMultiplePaymentsMaxCalculatedVal: number | null = null; // Calculated maxTPY
     let minTPYVal: number | null = null;
     let mpOthersMinTPYVal: number | null = null;
 
@@ -577,14 +664,22 @@ plotData(): void {
       paymentsMinTPYVal = paymentsMinTPYValue;
     } else if (othersMinTPYValue !== null) {
       othersMinTPYVal = othersMinTPYValue;
-    } else if (greenPayment !== null || yellowPayment !== null) {
+    } else {
+      // Handle multiple payments
       if (greenPayment !== null) {
         filteredMultiplePaymentsGreenVal = greenPayment;
       }
-      if (yellowPayment !== null) { // Allow both to be present
+      if (yellowPayment !== null) {
         filteredMultiplePaymentsYellowVal = yellowPayment;
       }
+      if (maxPayment !== null) {
+        filteredMultiplePaymentsMaxVal = maxPayment;
+      }
+      if (maxCalculatedPayment !== null) {
+        filteredMultiplePaymentsMaxCalculatedVal = maxCalculatedPayment;
+      }
     }
+
     if (minTPYValue !== null) {
       minTPYVal = minTPYValue;
     }
@@ -598,10 +693,24 @@ plotData(): void {
     othersMinTPY.push(othersMinTPYVal);
     filteredMultiplePaymentsGreen.push(filteredMultiplePaymentsGreenVal);
     filteredMultiplePaymentsYellow.push(filteredMultiplePaymentsYellowVal);
-    minTPY.push(minTPYVal);
+    filteredMultiplePaymentsMax.push(filteredMultiplePaymentsMaxVal); // Direct maxTPY
+    filteredMultiplePaymentsMaxCalculated.push(filteredMultiplePaymentsMaxCalculatedVal); // Calculated maxTPY
+    MPminTPY.push(minTPYVal);
     mpOthersMinTPY.push(mpOthersMinTPYVal);
     revenues.push(revenue);
   });
+
+  console.log('Payments:', payments);
+  console.log('Results:', results);
+  console.log('PaymentsMinTPY:', paymentsMinTPY);
+  console.log('OthersMinTPY:', othersMinTPY);
+  console.log('FilteredMultiplePaymentsGreen:', filteredMultiplePaymentsGreen);
+  console.log('FilteredMultiplePaymentsYellow:', filteredMultiplePaymentsYellow);
+  console.log('FilteredMultiplePaymentsMax:', filteredMultiplePaymentsMax);
+  console.log('FilteredMultiplePaymentsMaxCalculated:', filteredMultiplePaymentsMaxCalculated);
+  console.log('MPminTPY:', MPminTPY);
+  console.log('mpOthersMinTPY:', mpOthersMinTPY);
+  console.log('Revenues:', revenues);
 
   // Define Plotly traces with unique offsetgroups, except for the two to overlay
   const revenueTrace = {
@@ -682,24 +791,25 @@ plotData(): void {
     offsetgroup: '5', // Unique group
   };
 
-  // **Overlayed Traces: Calculated Multiple Payments (TPY) and MP "Others" (MinTPY)**
+  // **Overlayed Traces: Calculated Multiple Payments (TPY)**
   const filteredMultiplePaymentsYellowTrace = {
     x: sortedYears,
     y: filteredMultiplePaymentsYellow.map((val, i) => {
-      // Condition: Show only if no other colored bar exists for the year except Total Revenue and Calculated Multiple Payments (yellow)
+      // Condition: Show only TPY calculated payments, exclude maxTPY
       const hasOtherBars =
         payments[i] !== null ||
         results[i] !== null ||
         paymentsMinTPY[i] !== null ||
         othersMinTPY[i] !== null ||
         filteredMultiplePaymentsGreen[i] !== null ||
-        minTPY[i] !== null;
+        filteredMultiplePaymentsMax[i] !== null || // Ensure maxTPY is not included
+        MPminTPY[i] !== null;
 
       return hasOtherBars ? null : val; // Hide by setting to null
     }),
     type: 'bar',
     name: 'Calculated Multiple Payments (TPY)',
-    marker: { color: 'rgba(255, 165, 0, 0.8)' }, // Lower opacity for yellow
+    marker: { color: 'rgba(255, 165, 0, 0.8)' }, // Orange
     hoverinfo: 'text',
     hovertext: filteredMultiplePaymentsYellow.map((val, i) =>
       val !== null
@@ -709,16 +819,52 @@ plotData(): void {
     offsetgroup: '6', // Shared group for overlay
   };
 
+  // **New Traces for maxTPY**
+  // Trace for direct maxTPY payments
+  const filteredMultiplePaymentsMaxTrace = {
+    x: sortedYears,
+    y: filteredMultiplePaymentsMax,
+    type: 'bar',
+    name: 'Multiple Payments (MaxTPY)',
+    marker: { color: 'rgba(0, 255, 0, 0.8)' }, // Green
+    hoverinfo: 'text',
+    hovertext: filteredMultiplePaymentsMax.map((val, i) =>
+      val !== null ? `Year: ${sortedYears[i]}<br>Multiple Payment (MaxTPY): ${this.formatNumber(val)}` : ''
+    ),
+    offsetgroup: '8', // Unique group for maxTPY
+  };
+
+  // Trace for calculated maxTPY payments
+  const filteredMultiplePaymentsMaxCalculatedTrace = {
+    x: sortedYears,
+    y: filteredMultiplePaymentsMaxCalculated,
+    type: 'bar',
+    name: 'Calculated Multiple Payments (MaxTPY)',
+    marker: { color: 'rgba(0, 128, 0, 0.6)' }, // Darker Green with some transparency
+    hoverinfo: 'text',
+    hovertext: filteredMultiplePaymentsMaxCalculated.map((val, i) =>
+      val !== null ? `Year: ${sortedYears[i]}<br>Calculated Multiple Payment (MaxTPY): ${this.formatNumber(val)}` : ''
+    ),
+    offsetgroup: '8', // Same group to overlay
+    opacity: 0.6, // Slight transparency
+  };
+
   const minTPYTrace = {
     x: sortedYears,
-    y: minTPY.map((val, i) => {
-      // Always include the bar if it has a value
-      return val !== null && val !== undefined ? val : null;
+    y: MPminTPY.map((val, i) => {
+      // Check if higher-priority bars exist in the same year
+      const hasHigherPriorityBars =
+        (payments[i] !== null && payments[i] !== undefined) || // Payment TPY
+        (results[i] !== null && results[i] !== undefined) || // Calculated Payment
+        (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined); // Payments (MinTPY)
+
+      // Show minTPY only if higher-priority bars don't exist
+      return val !== null && val !== undefined && !hasHigherPriorityBars ? val : null;
     }),
     type: 'bar',
     name: 'Multiple Payments (MinTPY)',
     marker: {
-      color: minTPY.map((val, i) => {
+      color: MPminTPY.map((val, i) => {
         // Check if other bars exist in the same year
         const hasOtherBars =
           (payments[i] !== null && payments[i] !== undefined) ||
@@ -726,7 +872,8 @@ plotData(): void {
           (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined) ||
           (othersMinTPY[i] !== null && othersMinTPY[i] !== undefined) ||
           (filteredMultiplePaymentsYellow[i] !== null && filteredMultiplePaymentsYellow[i] !== undefined) ||
-          (filteredMultiplePaymentsGreen[i] !== null && filteredMultiplePaymentsGreen[i] !== undefined);
+          (filteredMultiplePaymentsGreen[i] !== null && filteredMultiplePaymentsGreen[i] !== undefined) ||
+          (filteredMultiplePaymentsMax[i] !== null && filteredMultiplePaymentsMax[i] !== undefined); // Include maxTPY
 
         // Violet if no other bars, grey otherwise
         if (val !== null && val !== undefined && !hasOtherBars) {
@@ -739,19 +886,16 @@ plotData(): void {
       }),
     },
     hoverinfo: 'text',
-    hovertext: minTPY.map((val, i) => {
-      const hasOtherBars =
+    hovertext: MPminTPY.map((val, i) => {
+      const hasHigherPriorityBars =
         (payments[i] !== null && payments[i] !== undefined) ||
         (results[i] !== null && results[i] !== undefined) ||
-        (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined) ||
-        (othersMinTPY[i] !== null && othersMinTPY[i] !== undefined) ||
-        (filteredMultiplePaymentsYellow[i] !== null && filteredMultiplePaymentsYellow[i] !== undefined) ||
-        (filteredMultiplePaymentsGreen[i] !== null && filteredMultiplePaymentsGreen[i] !== undefined);
+        (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined);
 
-      if (val !== null && val !== undefined && !hasOtherBars) {
-        return `Year: ${sortedYears[i]}<br><b>Multiple Payments (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Violet (No other bars)`;
+      if (val !== null && val !== undefined && !hasHigherPriorityBars) {
+        return `Year: ${sortedYears[i]}<br><b>Multiple Payments (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Violet (No higher-priority bars)`;
       } else if (val !== null && val !== undefined) {
-        return `Year: ${sortedYears[i]}<br><b>Multiple Payments (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Grey (Other bars exist)`;
+        return `Year: ${sortedYears[i]}<br><b>Multiple Payments (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Grey (Higher-priority bars exist)`;
       } else {
         return '';
       }
@@ -759,18 +903,23 @@ plotData(): void {
     offsetgroup: '7', // Unique group
   };
 
-
   const mpOthersMinTPYTrace = {
     x: sortedYears,
     y: mpOthersMinTPY.map((val, i) => {
-      // Always include the bar if it has a value
-      return val !== null && val !== undefined ? val : null;
+      // Check if Payment TPY or other higher-priority bars exist in the same year
+      const hasHigherPriorityBars =
+        (payments[i] !== null && payments[i] !== undefined) || // Payment TPY has the highest priority
+        (results[i] !== null && results[i] !== undefined) || // Calculated Payment (TPY)
+        (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined); // Payments (MinTPY)
+
+      // Show MP "Others" only if higher-priority bars don't exist
+      return val !== null && val !== undefined && !hasHigherPriorityBars ? val : null;
     }),
     type: 'bar',
     name: 'MP "Others" (MinTPY)',
     marker: {
       color: mpOthersMinTPY.map((val, i) => {
-        // Check if other bars exist in the same year
+        // Check if there are any other bars in the same year
         const hasOtherBars =
           (payments[i] !== null && payments[i] !== undefined) ||
           (results[i] !== null && results[i] !== undefined) ||
@@ -778,7 +927,8 @@ plotData(): void {
           (othersMinTPY[i] !== null && othersMinTPY[i] !== undefined) ||
           (filteredMultiplePaymentsYellow[i] !== null && filteredMultiplePaymentsYellow[i] !== undefined) ||
           (filteredMultiplePaymentsGreen[i] !== null && filteredMultiplePaymentsGreen[i] !== undefined) ||
-          (minTPY[i] !== null && minTPY[i] !== undefined);
+          (filteredMultiplePaymentsMax[i] !== null && filteredMultiplePaymentsMax[i] !== undefined) || // Include maxTPY
+          (MPminTPY[i] !== null && MPminTPY[i] !== undefined);
 
         // Violet if no other bars, grey otherwise
         if (val !== null && val !== undefined && !hasOtherBars) {
@@ -792,19 +942,15 @@ plotData(): void {
     },
     hoverinfo: 'text',
     hovertext: mpOthersMinTPY.map((val, i) => {
-      const hasOtherBars =
+      const hasHigherPriorityBars =
         (payments[i] !== null && payments[i] !== undefined) ||
         (results[i] !== null && results[i] !== undefined) ||
-        (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined) ||
-        (othersMinTPY[i] !== null && othersMinTPY[i] !== undefined) ||
-        (filteredMultiplePaymentsYellow[i] !== null && filteredMultiplePaymentsYellow[i] !== undefined) ||
-        (filteredMultiplePaymentsGreen[i] !== null && filteredMultiplePaymentsGreen[i] !== undefined) ||
-        (minTPY[i] !== null && minTPY[i] !== undefined);
+        (paymentsMinTPY[i] !== null && paymentsMinTPY[i] !== undefined);
 
-      if (val !== null && val !== undefined && !hasOtherBars) {
-        return `Year: ${sortedYears[i]}<br><b>MP "Others" (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Violet (No other bars)`;
+      if (val !== null && val !== undefined && !hasHigherPriorityBars) {
+        return `Year: ${sortedYears[i]}<br><b>MP "Others" (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Violet (No higher-priority bars)`;
       } else if (val !== null && val !== undefined) {
-        return `Year: ${sortedYears[i]}<br><b>MP "Others" (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Grey (Other bars exist)`;
+        return `Year: ${sortedYears[i]}<br><b>MP "Others" (MinTPY)</b>: ${this.formatNumber(val)}<br>Color: Grey (Higher-priority bars exist)`;
       } else {
         return '';
       }
@@ -813,6 +959,20 @@ plotData(): void {
     offsetgroup: '6', // Shared group for overlay
   };
 
+  // Define Plotly traces with unique offsetgroups, except for the two to overlay
+  const traces = [
+    revenueTrace,
+    paymentTrace,
+    resultTrace,
+    paymentsMinTPYTrace,
+    othersMinTPYTrace,
+    filteredMultiplePaymentsGreenTrace,
+    filteredMultiplePaymentsYellowTrace,
+    filteredMultiplePaymentsMaxTrace, // Direct maxTPY
+    filteredMultiplePaymentsMaxCalculatedTrace, // Calculated maxTPY
+    minTPYTrace,
+    mpOthersMinTPYTrace,
+  ];
 
   // Layout configuration
   const layout = {
@@ -831,24 +991,15 @@ plotData(): void {
     hovermode: 'closest',
   };
 
-  // Render the plot with Plotly
-  Plotly.newPlot('myDiv', [
-    revenueTrace,
-    paymentTrace,
-    resultTrace,
-    paymentsMinTPYTrace,
-    othersMinTPYTrace,
-    filteredMultiplePaymentsGreenTrace,
-    filteredMultiplePaymentsYellowTrace, // Calculated Multiple Payments (TPY) - Yellow
-    minTPYTrace,
-    mpOthersMinTPYTrace, // MP "Others" (MinTPY) - Violet
-  ], layout);
+  // Render the plot with Plotly, including the new maxTPY traces
+  Plotly.newPlot('myDiv', traces, layout);
 
   // Optional: Make Plotly responsive
   window.onresize = () => {
     Plotly.Plots.resize('myDiv');
   };
 }
+
 
 
   confirmAction(message: string, action: () => void): void {
@@ -1039,9 +1190,6 @@ plotData(): void {
     this.showPopup = false;
   }
 
-  showConfirmationModal: boolean = false;
-  actionToConfirm: string = '';
-  itemToModifyOrDelete: any;
 
   openConfirmationModal(action: string, item: any): void {
     this.actionToConfirm = action;
@@ -1311,9 +1459,6 @@ plotData(): void {
 
 
 
-maxCounter: number = 0; // Class-level variable to store the maximum counter value
-mappingIdCounter: Map<number, number> = new Map();
-uniqueMappingIds: string[] = [];
 
 
 AddMappingId(itemId: number, item: any, tableType: 'payments' | 'multiplePayments', useMPMappingId: boolean = false): void {
