@@ -6,6 +6,7 @@ import { FeedbackPopupComponent } from '../feedback-popup/feedback-popup.compone
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, forkJoin, map, of } from 'rxjs';
 import { TimelineService } from '../timeline-service.service';
+import { RoleService } from '../role.service';
 
 
 
@@ -96,8 +97,10 @@ export class LicenseTableComponent implements OnInit {
   showPDFViewer: boolean = false;
   selectedPDF: string = '';
   showPopup: boolean = false;
-
-  constructor(private connectionService: ConnectionService, private http: HttpClient,private dialog: MatDialog,private timelineConnection : TimelineService) {}
+  showAdminBoard = false;
+  showModeratorBoard = false;
+  
+  constructor(private connectionService: ConnectionService, private http: HttpClient,private dialog: MatDialog,private timelineConnection : TimelineService,private roleService: RoleService) {}
 
   ngOnInit(): void {
     this.licensorName = localStorage.getItem('licensorName') || 'Licensor Name';
@@ -115,6 +118,14 @@ export class LicenseTableComponent implements OnInit {
       this.plotData();
     }).catch(error => {
       console.error('Error loading Plotly.js script:', error);
+    });
+
+    this.roleService.isAdmin().subscribe(isAdmin => {
+      this.showAdminBoard = isAdmin;
+    });
+
+    this.roleService.isModerator().subscribe(isModerator => {
+      this.showModeratorBoard = isModerator;
     });
   }
   ngAfterViewInit(): void {

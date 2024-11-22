@@ -826,7 +826,7 @@ plotData(): void {
     y: filteredMultiplePaymentsMax,
     type: 'bar',
     name: 'Multiple Payments (MaxTPY)',
-    marker: { color: 'rgba(0, 255, 0, 0.8)' }, // Green
+    marker: { color: 'rgba(0, 128, 0, 1)' }, // Green
     hoverinfo: 'text',
     hovertext: filteredMultiplePaymentsMax.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Multiple Payment (MaxTPY): ${this.formatNumber(val)}` : ''
@@ -840,13 +840,12 @@ plotData(): void {
     y: filteredMultiplePaymentsMaxCalculated,
     type: 'bar',
     name: 'Calculated Multiple Payments (MaxTPY)',
-    marker: { color: 'rgba(0, 128, 0, 0.6)' }, // Darker Green with some transparency
+    marker: { color: 'rgba(0, 128, 0, 1)' }, // Darker Green with some transparency
     hoverinfo: 'text',
     hovertext: filteredMultiplePaymentsMaxCalculated.map((val, i) =>
       val !== null ? `Year: ${sortedYears[i]}<br>Calculated Multiple Payment (MaxTPY): ${this.formatNumber(val)}` : ''
     ),
     offsetgroup: '8', // Same group to overlay
-    opacity: 0.6, // Slight transparency
   };
 
   const minTPYTrace = {

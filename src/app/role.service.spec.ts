@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { OpenAIService } from './open-ai.service';
+import { RoleService } from './role.service';
 
-describe('OpenAIService', () => {
-  let service: OpenAIService;
+describe('RoleService', () => {
+  let service: RoleService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(OpenAIService);
+    service = TestBed.inject(RoleService);
   });
 
   it('should be created', () => {

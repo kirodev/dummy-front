@@ -14,8 +14,9 @@
 </ul>
 
 
-  <div id='myDiv'></div>
 
+<div *ngIf="showAdminBoard || showModeratorBoard">
+  <div id='myDiv'></div>
 <h1>Summary Table:</h1>
 <br>
 <table class="license-table">
@@ -156,11 +157,12 @@
   </tbody>
 
 </table>
+</div>
 
 
 
 
-
+<div *ngIf="showAdminBoard">
 
 <h1>{{this.licensorName}} Vs. Unknown :</h1>
 <br>
@@ -390,6 +392,11 @@
     </ng-container>
   </tbody>
 </table>
+</div>
+
+
+
+<div *ngIf="showAdminBoard">
 
 <h1>{{this.licensorName}} Vs. Multiple Unknowns :</h1>
 <br>
@@ -478,14 +485,9 @@
   </tbody>
 </table>
 
+  <!-- Multiple Licensees Table HTML -->
+</div>
 
-<!-- license-table-component.component.html -->
-
-<!-- Existing HTML above -->
-
-<!-- license-table-component.component.html -->
-
-<!-- Existing HTML above -->
 
 <div class="popup-overlay" *ngIf="showPopup">
   <div class="popup-content">
