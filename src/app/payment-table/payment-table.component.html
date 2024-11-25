@@ -14,6 +14,7 @@
 </ul>
 
 <!-- Content will be rendered here based on the active route -->
+<div *ngIf="showAdminBoard || showModeratorBoard">
 
 <div id='myDiv'></div>
 
@@ -27,8 +28,9 @@
           <table class="table table-striped table-hover">
             <thead>
               <tr>
-                <th>Additional Informations</th>
+                <th>Show more </th>
                 <th>Snippet ID</th>
+                <th>Mapping ID</th>
                 <th>Licensor</th>
                 <th>Licensee</th>
                 <th>Year</th>
@@ -42,6 +44,8 @@
                 <th>Payment Amount</th>
                 <th>Calculated Payment</th>
                 <th>Actions</th>
+
+
               </tr>
             </thead>
             <tbody>
@@ -50,10 +54,11 @@
                   <tr>
                     <td>
                       <button (click)="toggleYearExpansion(year)" class="btn btn-sm btn-info">
-                        {{ isYearExpanded(year) ? 'Hide' : 'Show' }} Additional
+                        {{ isYearExpanded(year) ? 'Hide' : 'Show' }} More
                       </button>
                     </td>
                     <td>{{ groupedTableData[year].primary.snippet_id }}</td>
+                    <td>{{ groupedTableData[year].primary.mapping_id }}</td>
                     <td>{{ groupedTableData[year].primary.licensor }}</td>
                     <td>{{ groupedTableData[year].primary.licensee }}</td>
                     <td>{{ groupedTableData[year].primary.year }}</td>
@@ -86,6 +91,7 @@
                         <tr>
                           <td></td> <!-- Empty cell for "Additional Rows" column -->
                           <td>{{ item.snippet_id }}</td>
+                          <td>{{ item.mapping_id }}</td>
                           <td>{{ item.licensor }}</td>
                           <td>{{ item.licensee }}</td>
                           <td>{{ item.year }}</td>
@@ -109,6 +115,41 @@
                               {{ item.details }}
                             </div>
                           </td>
+                          <td *ngIf="showAdminBoard">
+
+                            <ng-container *ngIf="uniquePayments.length > 0">
+                              <select [(ngModel)]="item.selectedMappingId"
+                                [id]="'mappingIdSelect-' + item.id">
+                                <option value selected>Select Mapping ID to add :</option>
+                                <!-- Iterate over the filteredMappingIds array -->
+                                <ng-container
+                                  *ngFor="let mappingId of filterMappingIds(item, 'payments')">
+                                  <option [value]="mappingId">{{ mappingId }}</option>
+                                </ng-container>
+                              </select>
+                            </ng-container>
+                  
+                            <button
+                              (click)="AddMappingId(item.id, item, 'payments')">Mapping</button>
+                            <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
+                  
+                            <button *ngIf="item.modified"
+                              (click)="openFeedbackAfterUndoPayment(item)">Undo</button>
+                            <button (click)="deletePayment(item.id)">Delete Record</button>
+                  
+                          </td>
+                  
+                          <td (mouseenter)="showCommentTooltip(item)"
+                            (mouseleave)="hideCommentTooltip(item)">
+                            <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+                              <img class="icon" [class.hidden]="item.showComment"
+                                src="assets/question-mark-round-icon.png"
+                                alt="Question Mark Icon">
+                              <div class="tooltip" [class.active]="item.showComment">{{
+                                item.comment }}</div>
+                            </ng-container>
+                          </td>
+                  
                         </tr>
                       </ng-container>
                     </ng-container>
@@ -123,7 +164,11 @@
     </div>
   </div>
 </div>
+</div>
 
+
+
+<div *ngIf="showAdminBoard">
 
 <h1>Payment :</h1>
 <h1>{{ dynamicTitle }} :</h1>
@@ -254,6 +299,10 @@
     </ng-container>
   </tbody>
 </table>
+</div>
+
+
+<div *ngIf="showAdminBoard">
 
 <h1>Unknown Payments :</h1>
 <h1>{{ dynamicTitle }} :</h1>
@@ -483,6 +532,10 @@
     </ng-container>
   </tbody>
 </table>
+</div>
+
+
+<div *ngIf="showAdminBoard">
 
 <h1>Payments from multiple unknowns :</h1>
 <h1>{{ dynamicTitle }} :</h1>
@@ -584,7 +637,7 @@
     </ng-container>
   </tbody>
 </table>
-
+</div>
 <div class="popup-overlay" *ngIf="showPopup">
   <div class="popup-content">
     <!-- PDF Viewer -->

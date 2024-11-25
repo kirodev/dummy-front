@@ -17,12 +17,14 @@ interface GroupedLicense {
   mapping_id: string;
   licenses: any[];
   isExpanded: boolean;
+  showTooltip?: boolean;
 }
 
 interface GroupedMlLicense {
   mapping_id: string;
   Mlicenses: any[];
   isExpanded: boolean;
+  showTooltip?: boolean;
 }
 interface License {
   id: string;
@@ -99,7 +101,7 @@ export class LicenseTableComponent implements OnInit {
   showPopup: boolean = false;
   showAdminBoard = false;
   showModeratorBoard = false;
-  
+
   constructor(private connectionService: ConnectionService, private http: HttpClient,private dialog: MatDialog,private timelineConnection : TimelineService,private roleService: RoleService) {}
 
   ngOnInit(): void {

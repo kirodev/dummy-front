@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConnectionService } from '../connection.service';
 import { Observable, throwError, mapTo } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
+import { RoleService } from '../role.service';
 declare var Plotly: any;
 
 @Component({
@@ -44,11 +45,14 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
   showConfirmationModal: boolean = false;
   actionToConfirm: string = '';
   itemToModifyOrDelete: any;
+  showModeratorBoard = false;
+  showAdminBoard = false;
 
   constructor(
     private paymentConnection: PaymentConnection,
     private dialog: MatDialog,
-    private connectionservice: ConnectionService
+    private connectionservice: ConnectionService,
+    private roleService: RoleService
   ) { }
 
   ngOnInit(): void {
@@ -69,6 +73,14 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
       this.plotData();
     }).catch(error => {
       console.error('Error loading Plotly.js script:', error);
+    });
+
+    this.roleService.isAdmin().subscribe(isAdmin => {
+      this.showAdminBoard = isAdmin;
+    });
+
+    this.roleService.isModerator().subscribe(isModerator => {
+      this.showModeratorBoard = isModerator;
     });
   }
   ngAfterViewInit(): void {

@@ -5,489 +5,565 @@
 <!-- Tab Navigation -->
 <ul class="nav nav-tabs custom-tabs">
   <li class="nav-item">
-    <a class="nav-link" routerLink="/license" routerLinkActive="active">Licenses</a>
+    <a class="nav-link" routerLink="/license"
+      routerLinkActive="active">Licenses</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" routerLink="/payment" routerLinkActive="active">Payments</a>
+    <a class="nav-link" routerLink="/payment"
+      routerLinkActive="active">Payments</a>
   </li>
 
 </ul>
 
-
-
 <div *ngIf="showAdminBoard || showModeratorBoard">
   <div id='myDiv'></div>
-<h1>Summary Table:</h1>
-<br>
-<table class="license-table">
-  <thead>
-    <tr>
-      <th></th>
-      <th>ID</th>
-      <th>Snippet ID</th>
-      <th>Mapping ID</th>
-      <th>Licensor</th>
-      <th>Licensee</th>
-      <th>Affiliate</th>
-      <th>Indication</th>
-   <th>First Known Date </th>
-<th>First Known Date Quarter</th>
-<th>Last Known Date</th>
-<th>Last Known Date Quarter</th>
-      <th>Information Type</th>
-      <th>2G</th>
-      <th>3G</th>
-      <th>4G</th>
-      <th>5G</th>
-      <th>6G</th>
-      <th>WiFi</th>
-      <th>Technologies</th>
-      <th>Payment structure</th>
-      <th>Geographical scope</th>
-    </tr>
-  </thead>
-  <tbody>
-    <ng-container *ngFor="let group of groupedLicenseData">
+  <h1>Summary Table:</h1>
+  <br>
+  <table class="license-table">
+    <thead>
       <tr>
-        <button (click)="toggleGroupExpansion(group)">
-          {{ group.isExpanded ? 'Hide' : 'Show' }} ({{ group.licenses.length }} records)
-        </button>
-        <td></td>
-        <td></td>
-        <td>{{ group.mapping_id }}</td>
-        <td>{{ getUniqueValues(group.licenses, 'licensor').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, 'licensee').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, 'affiliate').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, 'indication').join(' - ') }}</td>
-        <td>
-          <ng-container *ngIf="getGroupDates(group) as dates">
-            <span *ngIf="dates.signed">{{ dates.signed || 'N/A' }}</span>
-          </ng-container>
-        </td>
-        <td>{{ getUniqueValues(group.licenses, 'signed_year_quarter').join(' - ') }}</td>
-        <td>
-          <ng-container *ngIf="getGroupDates(group) as dates">
-            <span *ngIf="dates.expiration">{{ dates.expiration || 'N/A' }}</span>
-          </ng-container>
-        </td>
-        <td>{{ getUniqueValues(group.licenses, 'expiration_year_quarter').join(' - ') }}</td>
-        <td></td>
-        <td>{{ getUniqueValues(group.licenses, '_2G').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, '_3G').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, '_4G').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, '_5G').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, '_6G').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, 'wifi').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, 'technologies').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, 'payment_structure').join(' - ') }}</td>
-        <td>{{ getUniqueValues(group.licenses, 'geographical_scope').join(' - ') }}</td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <th></th>
+        <th *ngIf="showAdminBoard">ID</th>
+        <th *ngIf="showAdminBoard">Snippet ID</th>
+        <th>Mapping ID</th>
+        <th>Licensor</th>
+        <th>Licensee</th>
+        <th>Affiliate</th>
+        <th>Indication</th>
+        <th>First Known Date </th>
+        <th>First Known Date Quarter</th>
+        <th>Last Known Date</th>
+        <th>Last Known Date Quarter</th>
+        <th>Information Type</th>
+        <th>2G</th>
+        <th>3G</th>
+        <th>4G</th>
+        <th>5G</th>
+        <th>6G</th>
+        <th>WiFi</th>
+        <th>Technologies</th>
+        <th>Payment structure</th>
+        <th>Geographical scope</th>
+        <th>Actions</th>
+        <th *ngIf="showAdminBoard"></th>
+        <th *ngIf="showAdminBoard"></th>
       </tr>
-      <ng-container *ngIf="group.isExpanded">
-        <ng-container *ngFor="let item of group.licenses">
-          <tr>
-            <td></td>
-            <td>{{ item.id }}</td>
-            <td>{{ item.snippet_id }}</td>
-            <td>{{ item.mapping_id }}</td>
-            <td>{{ item.licensor }}</td>
-            <td>{{ item.licensee }}</td>
-            <td>{{ item.affiliate }}</td>
-            <td>{{ item.indication }}</td>
-            <td>{{ item.signed_date }}</td>
-            <td>{{ item.signed_year_quarter }}</td>
-            <td>{{ item.expiration_date }}</td>
-            <td>{{ item.expiration_year_quarter }}</td>
-            <td>{{ item.information_type }}</td>
-            <td>{{ item._2G }}</td>
-            <td>{{ item._3G }}</td>
-            <td>{{ item._4G }}</td>
-            <td>{{ item._5G }}</td>
-            <td>{{ item._6G }}</td>
-            <td>{{ item.wifi }}</td>
-            <td>{{ item.technologies }}</td>
-            <td>{{ item.payment_structure }}</td>
-            <td>{{ item.geographical_scope }}</td>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let group of groupedLicenseData">
+        <tr>
+          <button (click)="toggleGroupExpansion(group)">
+            {{ group.isExpanded ? 'Hide' : 'Show' }} ({{ group.licenses.length
+            }} records)
+          </button>
+          <td *ngIf="showAdminBoard">{{ getUniqueValues(group.licenses,
+            'id').join(' - ') }}</td>
+          <td *ngIf="showAdminBoard">{{ getUniqueValues(group.licenses,
+            'snippet_id').join(' - ')
+            }}</td>
+          <td>{{ group.mapping_id }}</td>
+          <td>{{ getUniqueValues(group.licenses, 'licensor').join(' - ') }}</td>
+          <td>{{ getUniqueValues(group.licenses, 'licensee').join(' - ') }}</td>
+          <td>{{ getUniqueValues(group.licenses, 'affiliate').join(' - ')
+            }}</td>
+          <td>{{ getUniqueValues(group.licenses, 'indication').join(' - ')
+            }}</td>
+          <td>
+            <ng-container *ngIf="getGroupDates(group) as dates">
+              <span *ngIf="dates.signed">{{ dates.signed || 'N/A' }}</span>
+            </ng-container>
+          </td>
+          <td>{{ getUniqueValues(group.licenses,
+            'signed_year_quarter').join(' - ') }}</td>
+          <td>
+            <ng-container *ngIf="getGroupDates(group) as dates">
+              <span *ngIf="dates.expiration">{{ dates.expiration || 'N/A'
+                }}</span>
+            </ng-container>
+          </td>
+          <td>{{ getUniqueValues(group.licenses,
+            'expiration_year_quarter').join(' - ') }}</td>
+          <td></td>
+          <td>{{ getUniqueValues(group.licenses, '_2G').join(' - ') }}</td>
+          <td>{{ getUniqueValues(group.licenses, '_3G').join(' - ') }}</td>
+          <td>{{ getUniqueValues(group.licenses, '_4G').join(' - ') }}</td>
+          <td>{{ getUniqueValues(group.licenses, '_5G').join(' - ') }}</td>
+          <td>{{ getUniqueValues(group.licenses, '_6G').join(' - ') }}</td>
+          <td>{{ getUniqueValues(group.licenses, 'wifi').join(' - ') }}</td>
+          <td>{{ getUniqueValues(group.licenses, 'technologies').join(' - ')
+            }}</td>
+          <td>{{ getUniqueValues(group.licenses,
+            'payment_structure').join(' - ') }}</td>
+          <td>{{ getUniqueValues(group.licenses,
+            'geographical_scope').join(' - ') }}</td>
+          <td>
+            <img
+              class="icon"
+              src="assets/question-mark-round-icon.png"
+              alt="Question Mark Icon"
+              (mouseenter)="group.showTooltip = true"
+              (mouseleave)="group.showTooltip = false">
+            <div class="tooltip" [class.active]="group.showTooltip">
+              Check records below for more details
+            </div>
+          </td>
 
-            <td>
-              <div *ngIf="!item.editing && item.showDetails; else editingMode">
-                {{ item.details }}
-              </div>
-              <ng-template #editingMode>
-                <span *ngIf="item.editing">
-                  <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-                  <button (click)="saveDetails(item)">Save</button>
-                  <button (click)="cancelEditing(item)">Cancel</button>
-                </span>
-              </ng-template>
-              <br>
-              <button (click)="toggleEditingMode(item)">Edit</button>
-              <button (click)="toggleDetailsVisibility(item)">
-                {{ item.showDetails ? 'Hide' : 'Show' }}
-              </button>
-              <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
-            </td>
-            <td>
-              <ng-container *ngIf="uniqueLicenses.length > 0">
-                <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
-                  <option value="" selected>Select Mapping ID to add :</option>
-                  <ng-container *ngFor="let mappingId of filterMappingIds(item, 'licenses')">
-                    <option [value]="mappingId">{{ mappingId }}</option>
-                  </ng-container>
-                </select>
-              </ng-container>
-              <button (click)="AddMappingId(item.id, item, 'licenses')">Mapping</button>
-              <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
-              <button *ngIf="item.modified" (click)="openFeedbackAfterUndolicense(item)">Undo</button>
-              <button (click)="deleteLicense(item.id)">Delete Record</button>
-            </td>
-            <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
-              <ng-container *ngIf="item.comment !== null && item.comment !== ''">
-                <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
-                  alt="Question Mark Icon">
-                <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
-              </ng-container>
-            </td>
-          </tr>
+          <td *ngIf="showAdminBoard"></td>
+          <td *ngIf="showAdminBoard"></td>
+        </tr>
+        <ng-container *ngIf="group.isExpanded">
+          <ng-container *ngFor="let item of group.licenses">
+            <tr>
+              <td></td>
+              <td *ngIf="showAdminBoard">{{ item.id }}</td>
+              <td *ngIf="showAdminBoard">{{ item.snippet_id }}</td>
+              <td>{{ item.mapping_id }}</td>
+              <td>{{ item.licensor }}</td>
+              <td>{{ item.licensee }}</td>
+              <td>{{ item.affiliate }}</td>
+              <td>{{ item.indication }}</td>
+              <td>{{ item.signed_date }}</td>
+              <td>{{ item.signed_year_quarter }}</td>
+              <td>{{ item.expiration_date }}</td>
+              <td>{{ item.expiration_year_quarter }}</td>
+              <td>{{ item.information_type }}</td>
+              <td>{{ item._2G }}</td>
+              <td>{{ item._3G }}</td>
+              <td>{{ item._4G }}</td>
+              <td>{{ item._5G }}</td>
+              <td>{{ item._6G }}</td>
+              <td>{{ item.wifi }}</td>
+              <td>{{ item.technologies }}</td>
+              <td>{{ item.payment_structure }}</td>
+              <td>{{ item.geographical_scope }}</td>
+
+              <td>
+                <div
+                  *ngIf="!item.editing && item.showDetails; else editingMode">
+                  {{ item.details }}
+                </div>
+                <ng-template #editingMode>
+                  <span *ngIf="item.editing">
+                    <textarea [(ngModel)]="item.updatedDetails" rows="15"
+                      cols="25"></textarea>
+                    <button (click)="saveDetails(item)">Save</button>
+                    <button (click)="cancelEditing(item)">Cancel</button>
+                  </span>
+                </ng-template>
+                <br>
+
+                <button (click)="toggleEditingMode(item)">Edit</button>
+                <button (click)="toggleDetailsVisibility(item)">
+                  {{ item.showDetails ? 'Hide' : 'Show' }}
+                </button>
+                <button
+                  (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
+              </td>
+              <td *ngIf="showAdminBoard">
+                <ng-container *ngIf="uniqueLicenses.length > 0">
+                  <select [(ngModel)]="item.selectedMappingId"
+                    [id]="'mappingIdSelect-' + item.id">
+                    <option value selected>Select Mapping ID to add :</option>
+                    <ng-container
+                      *ngFor="let mappingId of filterMappingIds(item, 'licenses')">
+                      <option [value]="mappingId">{{ mappingId }}</option>
+                    </ng-container>
+                  </select>
+                </ng-container>
+                <button
+                  (click)="AddMappingId(item.id, item, 'licenses')">Mapping</button>
+                <button (click)="deleteMappingId(item.id)">Delete Mapping
+                  ID</button>
+                <button *ngIf="item.modified"
+                  (click)="openFeedbackAfterUndolicense(item)">Undo</button>
+                <button (click)="deleteLicense(item.id)">Delete Record</button>
+              </td>
+              <td (mouseenter)="showCommentTooltip(item)"
+                (mouseleave)="hideCommentTooltip(item)" *ngIf="showAdminBoard">
+                <ng-container
+                  *ngIf="item.comment !== null && item.comment !== ''">
+                  <img class="icon" [class.hidden]="item.showComment"
+                    src="assets/question-mark-round-icon.png"
+                    alt="Question Mark Icon">
+                  <div class="tooltip" [class.active]="item.showComment">{{
+                    item.comment }}</div>
+                </ng-container>
+              </td>
+            </tr>
+          </ng-container>
         </ng-container>
       </ng-container>
-    </ng-container>
-  </tbody>
+    </tbody>
 
-</table>
+  </table>
 </div>
-
-
-
 
 <div *ngIf="showAdminBoard">
 
-<h1>{{this.licensorName}} Vs. Unknown :</h1>
-<br>
-<table class="unknown-table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Snippet ID</th>
-      <th>Mapping ID</th>
-      <th>snippet id</th>
-      <th>Licensor</th>
-      <th>Licensee</th>
-      <th>Affiliate</th>
-      <th>Indication</th>
-   <th>First Known Date </th>
-<th>First Known Date Quarter</th>
-<th>Last Known Date</th>
-<th>Last Known Date Quarter</th>
-      <th>Information Type</th>
-      <th>2G</th>
-      <th>3G</th>
-      <th>4G</th>
-      <th>5G</th>
-      <th>6G</th>
-      <th>WiFi</th>
-      <th>technologies</th>
-      <th>Payment structure</th>
-      <th>Geographical scope</th>
-      <th>Directory path</th>
-      <th>Document date</th>
-
-    </tr>
-  </thead>
-  <tbody>
-    <!-- Use Angular directives to iterate over your data and fill the table rows -->
-    <ng-container *ngFor="let item of filteredDataUnknown">
+  <h1>{{this.licensorName}} Vs. Unknown :</h1>
+  <br>
+  <table class="unknown-table">
+    <thead>
       <tr>
-        <td>{{ item.id }}</td>
-        <td>{{ item.snippet_id }}</td>
-        <td>{{ item.mapping_id }}</td>
-        <td>{{ item.snippet_id }}</td>
-        <td>{{ item.licensor }}</td>
-        <td>{{ item.licensee }}</td>
-        <td>{{ item.affiliate }}</td>
-        <td>{{ item.indication }}</td>
-        <td>{{ item.signed_date }}</td>
-        <td>{{ item.signed_year_quarter}}</td>
-        <td>{{ item.expiration_date }}</td>
-        <td>{{ item.expiration_year_quarter}}</td>
-        <td>{{ item.information_type }}</td>
-        <td>{{ item._2G }}</td>
-        <td>{{ item._3G }}</td>
-        <td>{{ item._4G }}</td>
-        <td>{{ item._5G }}</td>
-        <td>{{ item._6G }}</td>
-        <td>{{ item.wifi }}</td>
-        <td>{{ item.technologies }}</td>
-        <td>{{ item.payment_structure }}</td>
-        <td>{{ item.geographical_scope }}</td>
-        <td>{{  item.directory_path }}</td>
-        <td>{{ item.document_date}}</td>
-        <td>
-          <!-- Editable field -->
-          <div *ngIf="!item.editing && item.showDetails; else editingMode">
-            {{ item.details }}
-          </div>
-          <ng-template #editingMode>
-            <span *ngIf="item.editing"> <!-- Only show if item.editing is true -->
-              <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-              <button (click)="saveDetails(item)">Save</button>
-              <button (click)="cancelEditing(item)">Cancel</button>
-            </span>
-          </ng-template>
-          <br>
-          <button (click)="toggleEditingMode(item)">Edit</button>
-          <button (click)="toggleDetailsVisibility(item)">
-            {{ item.showDetails ? 'Hide' : 'Show' }}
-          </button>          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
-        </td>
-        <td>
-        <button (click)="openFeedbackAfterUpdate(item)">Add</button>
-        <button (click)="deleteMappingId(item.id)">Delete Mapping ID</button>
-        <button (click)="deleteLicense(item.id)">Delete</button>
+        <th>ID</th>
+        <th>Snippet ID</th>
+        <th>Mapping ID</th>
+        <th>snippet id</th>
+        <th>Licensor</th>
+        <th>Licensee</th>
+        <th>Affiliate</th>
+        <th>Indication</th>
+        <th>First Known Date </th>
+        <th>First Known Date Quarter</th>
+        <th>Last Known Date</th>
+        <th>Last Known Date Quarter</th>
+        <th>Information Type</th>
+        <th>2G</th>
+        <th>3G</th>
+        <th>4G</th>
+        <th>5G</th>
+        <th>6G</th>
+        <th>WiFi</th>
+        <th>technologies</th>
+        <th>Payment structure</th>
+        <th>Geographical scope</th>
+        <th>Directory path</th>
+        <th>Document date</th>
 
-        </td>
-        <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
-          <ng-container *ngIf="item.comment !== null && item.comment !== ''">
-            <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
-              alt="Question Mark Icon">
-            <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
-          </ng-container>
-        </td>
       </tr>
-    </ng-container>
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      <!-- Use Angular directives to iterate over your data and fill the table rows -->
+      <ng-container *ngFor="let item of filteredDataUnknown">
+        <tr>
+          <td>{{ item.id }}</td>
+          <td>{{ item.snippet_id }}</td>
+          <td>{{ item.mapping_id }}</td>
+          <td>{{ item.snippet_id }}</td>
+          <td>{{ item.licensor }}</td>
+          <td>{{ item.licensee }}</td>
+          <td>{{ item.affiliate }}</td>
+          <td>{{ item.indication }}</td>
+          <td>{{ item.signed_date }}</td>
+          <td>{{ item.signed_year_quarter}}</td>
+          <td>{{ item.expiration_date }}</td>
+          <td>{{ item.expiration_year_quarter}}</td>
+          <td>{{ item.information_type }}</td>
+          <td>{{ item._2G }}</td>
+          <td>{{ item._3G }}</td>
+          <td>{{ item._4G }}</td>
+          <td>{{ item._5G }}</td>
+          <td>{{ item._6G }}</td>
+          <td>{{ item.wifi }}</td>
+          <td>{{ item.technologies }}</td>
+          <td>{{ item.payment_structure }}</td>
+          <td>{{ item.geographical_scope }}</td>
+          <td>{{ item.directory_path }}</td>
+          <td>{{ item.document_date}}</td>
+          <td>
+            <!-- Editable field -->
+            <div *ngIf="!item.editing && item.showDetails; else editingMode">
+              {{ item.details }}
+            </div>
+            <ng-template #editingMode>
+              <span *ngIf="item.editing">
+                <!-- Only show if item.editing is true -->
+                <textarea [(ngModel)]="item.updatedDetails" rows="15"
+                  cols="25"></textarea>
+                <button (click)="saveDetails(item)">Save</button>
+                <button (click)="cancelEditing(item)">Cancel</button>
+              </span>
+            </ng-template>
+            <br>
+            <button (click)="toggleEditingMode(item)">Edit</button>
+            <button (click)="toggleDetailsVisibility(item)">
+              {{ item.showDetails ? 'Hide' : 'Show' }}
+            </button> <button
+              (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
+          </td>
+          <td>
+            <button (click)="openFeedbackAfterUpdate(item)">Add</button>
+            <button (click)="deleteMappingId(item.id)">Delete Mapping
+              ID</button>
+            <button (click)="deleteLicense(item.id)">Delete</button>
 
+          </td>
+          <td (mouseenter)="showCommentTooltip(item)"
+            (mouseleave)="hideCommentTooltip(item)">
+            <ng-container *ngIf="item.comment !== null && item.comment !== ''">
+              <img class="icon" [class.hidden]="item.showComment"
+                src="assets/question-mark-round-icon.png"
+                alt="Question Mark Icon">
+              <div class="tooltip" [class.active]="item.showComment">{{
+                item.comment }}</div>
+            </ng-container>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
 
-<h1>Multiple licensees table</h1>
+  <h1>Multiple licensees table</h1>
 
-<h1>{{ dynamicTitle }} :</h1>
-<br>
-<table class="knownML-table">
-  <thead>
-    <tr>
-      <td></td>
-      <td>ID</td>
-      <th>Snippet ID</th>
-      <th>Mapping ID</th>
-      <td>licensor</td>
-      <td>licensee</td>
-      <td>indiv licensee</td>
-      <td>affiliate</td>
-      <td>qualifiers</td>
-      <td>signed date</td>
-      <td>signed year quarter</td>
-      <td>expiration date</td>
-      <td>expiration year quarter</td>
-      <td>information type</td>
-      <td>technologies</td>
-      <th>Payment structure</th>
-      <td>geographical scope</td>
-      <td>details</td>
-    </tr>
-  </thead>
-  <tbody>
-    <ng-container *ngFor="let group of groupedMLData">
-
+  <h1>{{ dynamicTitle }} :</h1>
+  <br>
+  <table class="knownML-table">
+    <thead>
       <tr>
-        <button (click)="toggleMlGroupExpansion(group)">
-          {{ group.isExpanded ? 'Hide' : 'Show' }} ({{ group.Mlicenses.length }} records)
-        </button>
         <td></td>
-
-        <td></td>
-
-        <td>{{ group.mapping_id }}</td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'licensor').join(' - ') }}</td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'licensee').join(' + ') }}</td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'indiv_licensee').join(' - ') }}</td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'affiliate').join(' - ') }}</td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'qualifiers').join(' - ') }}</td>
-        <td>
-          <ng-container *ngIf="getMlGroupDates(group) as dates">
-            <span *ngIf="dates.signed">{{ dates.signed || 'N/A' }}</span>
-          </ng-container>
-        </td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'signed_year_quarter').join(' - ') }}</td>
-        <td>
-          <ng-container *ngIf="getMlGroupDates(group) as dates">
-            <span *ngIf="dates.expiration">{{ dates.expiration || 'N/A' }}</span>
-          </ng-container>
-        </td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'expiration_year_quarter').join(' - ') }}</td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'information_type').join(' - ') }}</td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'technologies').join(' - ') }}</td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'payment_structure').join(' - ') }}</td>
-        <td>{{ getMlUniqueValues(group.Mlicenses, 'geographical_scope').join(' - ') }}</td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td>ID</td>
+        <th>Snippet ID</th>
+        <th>Mapping ID</th>
+        <td>licensor</td>
+        <td>licensee</td>
+        <td>indiv licensee</td>
+        <td>affiliate</td>
+        <td>qualifiers</td>
+        <td>signed date</td>
+        <td>signed year quarter</td>
+        <td>expiration date</td>
+        <td>expiration year quarter</td>
+        <td>information type</td>
+        <td>technologies</td>
+        <th>Payment structure</th>
+        <td>geographical scope</td>
+        <td>details</td>
       </tr>
-      <ng-container *ngIf="group.isExpanded">
-        <ng-container *ngFor="let item of group.Mlicenses">
-          <tr>
-            <td></td>
-            <td>{{ item.id }}</td>
-            <td>{{ item.snippet_id }}</td>
-            <td>{{ item.mapping_id }}</td>
-            <td>{{ item.licensor }}</td>
-            <td>{{ item.licensee }}</td>
-            <td>{{ item.indiv_licensee }}</td>
-            <td>{{ item.affiliate }}</td>
-            <td>{{ item.qualifiers }}</td>
-            <td>{{ item.signed_date }}</td>
-            <td>{{ item.signed_quarter }}</td>
-            <td>{{ item.expiration_date }}</td>
-            <td>{{ item.expiration_quarter }}</td>
-            <td>{{ item.information_type }}</td>
-            <td>{{ item.technologies }}</td>
-            <td>{{ item.payment_structure }}</td>
-            <td>{{ item.geographical_scope }}</td>
-            <td>
-              <div *ngIf="!item.editing && item.showDetails; else editingMode">
-                {{ item.details }}
-              </div>
-              <ng-template #editingMode>
-                <span *ngIf="item.editing"> <!-- Only show if item.editing is true -->
-                  <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-                  <button (click)="saveMLDetails(item)">Save</button>
-                  <button (click)="cancelEditing(item)">Cancel</button>
-                </span>
-              </ng-template>
-              <br>
-              <button (click)="toggleEditingMode(item)">Edit</button>
-              <button (click)="toggleDetailsVisibility(item)">
-                {{ item.showDetails ? 'Hide' : 'Show' }}
-              </button>          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
-            </td>
-            <td>
-              <ng-container *ngIf="uniqueLicenses.length > 0">
-                <select [(ngModel)]="item.selectedMappingId" [id]="'mappingIdSelect-' + item.id">
-                  <option value="" selected>Select Mapping ID to add :</option>
-                  <ng-container *ngFor="let mappingId of filterMappingIds(item, 'multipleLicenses')">
-                    <option [value]="mappingId">{{ mappingId }}</option>
-                  </ng-container>
-                </select>
-              </ng-container>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let group of groupedMLData">
 
-              <button (click)="AddMappingId(item.id, item, 'multipleLicenses')">Mapping</button>
-              <button (click)="deleteMPMappingId(item.id)">Delete Mapping ID</button>
+        <tr>
+          <button (click)="toggleMlGroupExpansion(group)">
+            {{ group.isExpanded ? 'Hide' : 'Show' }} ({{ group.Mlicenses.length
+            }} records)
+          </button>
+          <td></td>
 
-              <button *ngIf="item.modified" (click)="openFeedbackAfterUndoML(item)">Undo</button>
-              <button (click)="deleteMultipleLicenses(item.id)">Delete Record</button>
+          <td></td>
 
-            </td>
-            <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
-              <ng-container *ngIf="item.comment !== null && item.comment !== ''">
-                <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
-                  alt="Question Mark Icon">
-                <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
-              </ng-container>
-            </td>
-          </tr>
+          <td>{{ group.mapping_id }}</td>
+          <td>{{ getMlUniqueValues(group.Mlicenses, 'licensor').join(' - ')
+            }}</td>
+          <td>{{ getMlUniqueValues(group.Mlicenses, 'licensee').join(' + ')
+            }}</td>
+          <td>{{ getMlUniqueValues(group.Mlicenses,
+            'indiv_licensee').join(' - ') }}</td>
+          <td>{{ getMlUniqueValues(group.Mlicenses, 'affiliate').join(' - ')
+            }}</td>
+          <td>{{ getMlUniqueValues(group.Mlicenses, 'qualifiers').join(' - ')
+            }}</td>
+          <td>
+            <ng-container *ngIf="getMlGroupDates(group) as dates">
+              <span *ngIf="dates.signed">{{ dates.signed || 'N/A' }}</span>
+            </ng-container>
+          </td>
+          <td>{{ getMlUniqueValues(group.Mlicenses,
+            'signed_year_quarter').join(' - ') }}</td>
+          <td>
+            <ng-container *ngIf="getMlGroupDates(group) as dates">
+              <span *ngIf="dates.expiration">{{ dates.expiration || 'N/A'
+                }}</span>
+            </ng-container>
+          </td>
+          <td>{{ getMlUniqueValues(group.Mlicenses,
+            'expiration_year_quarter').join(' - ') }}</td>
+          <td>{{ getMlUniqueValues(group.Mlicenses,
+            'information_type').join(' - ') }}</td>
+          <td>{{ getMlUniqueValues(group.Mlicenses, 'technologies').join(' - ')
+            }}</td>
+          <td>{{ getMlUniqueValues(group.Mlicenses,
+            'payment_structure').join(' - ') }}</td>
+          <td>{{ getMlUniqueValues(group.Mlicenses,
+            'geographical_scope').join(' - ') }}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <ng-container *ngIf="group.isExpanded">
+          <ng-container *ngFor="let item of group.Mlicenses">
+            <tr>
+              <td></td>
+              <td>{{ item.id }}</td>
+              <td>{{ item.snippet_id }}</td>
+              <td>{{ item.mapping_id }}</td>
+              <td>{{ item.licensor }}</td>
+              <td>{{ item.licensee }}</td>
+              <td>{{ item.indiv_licensee }}</td>
+              <td>{{ item.affiliate }}</td>
+              <td>{{ item.qualifiers }}</td>
+              <td>{{ item.signed_date }}</td>
+              <td>{{ item.signed_quarter }}</td>
+              <td>{{ item.expiration_date }}</td>
+              <td>{{ item.expiration_quarter }}</td>
+              <td>{{ item.information_type }}</td>
+              <td>{{ item.technologies }}</td>
+              <td>{{ item.payment_structure }}</td>
+              <td>{{ item.geographical_scope }}</td>
+              <td>
+                <div
+                  *ngIf="!item.editing && item.showDetails; else editingMode">
+                  {{ item.details }}
+                </div>
+                <ng-template #editingMode>
+                  <span *ngIf="item.editing">
+                    <!-- Only show if item.editing is true -->
+                    <textarea [(ngModel)]="item.updatedDetails" rows="15"
+                      cols="25"></textarea>
+                    <button (click)="saveMLDetails(item)">Save</button>
+                    <button (click)="cancelEditing(item)">Cancel</button>
+                  </span>
+                </ng-template>
+                <br>
+                <button (click)="toggleEditingMode(item)">Edit</button>
+                <button (click)="toggleDetailsVisibility(item)">
+                  {{ item.showDetails ? 'Hide' : 'Show' }}
+                </button> <button
+                  (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
+              </td>
+              <td>
+                <ng-container *ngIf="uniqueLicenses.length > 0">
+                  <select [(ngModel)]="item.selectedMappingId"
+                    [id]="'mappingIdSelect-' + item.id">
+                    <option value selected>Select Mapping ID to add :</option>
+                    <ng-container
+                      *ngFor="let mappingId of filterMappingIds(item, 'multipleLicenses')">
+                      <option [value]="mappingId">{{ mappingId }}</option>
+                    </ng-container>
+                  </select>
+                </ng-container>
+
+                <button
+                  (click)="AddMappingId(item.id, item, 'multipleLicenses')">Mapping</button>
+                <button (click)="deleteMPMappingId(item.id)">Delete Mapping
+                  ID</button>
+
+                <button *ngIf="item.modified"
+                  (click)="openFeedbackAfterUndoML(item)">Undo</button>
+                <button (click)="deleteMultipleLicenses(item.id)">Delete
+                  Record</button>
+
+              </td>
+              <td (mouseenter)="showCommentTooltip(item)"
+                (mouseleave)="hideCommentTooltip(item)">
+                <ng-container
+                  *ngIf="item.comment !== null && item.comment !== ''">
+                  <img class="icon" [class.hidden]="item.showComment"
+                    src="assets/question-mark-round-icon.png"
+                    alt="Question Mark Icon">
+                  <div class="tooltip" [class.active]="item.showComment">{{
+                    item.comment }}</div>
+                </ng-container>
+              </td>
+            </tr>
+          </ng-container>
         </ng-container>
       </ng-container>
-    </ng-container>
-  </tbody>
-</table>
+    </tbody>
+  </table>
 </div>
-
-
 
 <div *ngIf="showAdminBoard">
 
-<h1>{{this.licensorName}} Vs. Multiple Unknowns :</h1>
-<br>
-<table class="unknownML-table">
-  <thead>
-    <tr>
-      <td>ID</td>
-      <th>Snippet ID</th>
-      <th>Mapping ID</th>
-      <td>licensor</td>
-      <td>licensee</td>
-      <td>indiv licensee</td>
-      <td>affiliate</td>
-      <td>multiplier</td>
-      <td>qualifiers</td>
-      <td>signed date</td>
-      <td>signed year quarter</td>
-      <td>expiration date</td>
-      <td>expiration year quarter</td>
-      <td>information type</td>
-      <td>technologies</td>
-      <td>geographical scope</td>
-      <td>details</td>
-      <th>Directory path</th>
-    </tr>
-  </thead>
-  <tbody>
-    <ng-container *ngFor="let item of multipleLicenses; let i = index">
-      <tr *ngIf="(item.multiplier > 0 &&
+  <h1>{{this.licensorName}} Vs. Multiple Unknowns :</h1>
+  <br>
+  <table class="unknownML-table">
+    <thead>
+      <tr>
+        <td>ID</td>
+        <th>Snippet ID</th>
+        <th>Mapping ID</th>
+        <td>licensor</td>
+        <td>licensee</td>
+        <td>indiv licensee</td>
+        <td>affiliate</td>
+        <td>multiplier</td>
+        <td>qualifiers</td>
+        <td>signed date</td>
+        <td>signed year quarter</td>
+        <td>expiration date</td>
+        <td>expiration year quarter</td>
+        <td>information type</td>
+        <td>technologies</td>
+        <td>geographical scope</td>
+        <td>details</td>
+        <th>Directory path</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let item of multipleLicenses; let i = index">
+        <tr *ngIf="(item.multiplier > 0 &&
         item.indiv_licensee === null &&
         !(item.licensee && item.licensee.includes(licenseeName))) ||
        (item.multiplier > 0 && item.licensee === null)">
-        <td>{{ item.id }}</td>
-        <td>{{ item.snippet_id }}</td>
-        <td>{{ item.mapping_id }}</td>
-        <td>{{ item.licensor }}</td>
-        <td>{{ item.licensee }}</td>
-        <td>{{ item.indiv_licensee }}</td>
-        <td>{{ item.affiliate }}</td>
-        <td>{{ item.multiplier }}</td>
-        <td>{{ item.qualifiers }}</td>
-        <td>{{item.signed_date}}</td>
-        <td>{{item.signed_quarter}}</td>
-        <td>{{item.expiration_date}}</td>
-        <td>{{item.expiration_quarter}}</td>
-        <td>{{item.information_type}}</td>
-        <td>{{item.technologies}}</td>
-        <td>{{ item.payment_structure }}</td>
-        <td>{{item.geographical_scope}}</td>
-        <!-- <td>{{item.details}}</td> -->
-        <td>{{item.directory_path}}</td>
+          <td>{{ item.id }}</td>
+          <td>{{ item.snippet_id }}</td>
+          <td>{{ item.mapping_id }}</td>
+          <td>{{ item.licensor }}</td>
+          <td>{{ item.licensee }}</td>
+          <td>{{ item.indiv_licensee }}</td>
+          <td>{{ item.affiliate }}</td>
+          <td>{{ item.multiplier }}</td>
+          <td>{{ item.qualifiers }}</td>
+          <td>{{item.signed_date}}</td>
+          <td>{{item.signed_quarter}}</td>
+          <td>{{item.expiration_date}}</td>
+          <td>{{item.expiration_quarter}}</td>
+          <td>{{item.information_type}}</td>
+          <td>{{item.technologies}}</td>
+          <td>{{ item.payment_structure }}</td>
+          <td>{{item.geographical_scope}}</td>
+          <!-- <td>{{item.details}}</td> -->
+          <td>{{item.directory_path}}</td>
 
-        <td>
-          <!-- Editable field -->
-          <div *ngIf="!item.editing && item.showDetails; else editingMode">
-            {{ item.details }}
-          </div>
-          <ng-template #editingMode>
-            <span *ngIf="item.editing"> <!-- Only show if item.editing is true -->
-              <textarea [(ngModel)]="item.updatedDetails" rows="15" cols="25"></textarea>
-              <button (click)="saveMLDetails(item)">Save</button>
-              <button (click)="cancelEditing(item)">Cancel</button>
-            </span>
-          </ng-template>
-          <br>
-          <button (click)="toggleEditingMode(item)">Edit</button>
-          <button (click)="toggleDetailsVisibility(item)">
-            {{ item.showDetails ? 'Hide' : 'Show' }}
-          </button>
-          <button (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
-        </td>
-        <td>
-          <button (click)="openFeedbackAfterUpdateMultipleLicenses(item)">Add</button>
-          <button (click)="deleteMPMappingId(item.id)">Delete Mapping ID</button>
-          <button (click)="deleteMultipleLicenses(item.id)">Delete Record</button>
-        </td>
-        <td (mouseenter)="showCommentTooltip(item)" (mouseleave)="hideCommentTooltip(item)">
-          <ng-container class="tooltip-container" *ngIf="item.comment !== null && item.comment !== ''">
-            <img class="icon" [class.hidden]="item.showComment" src="assets/question-mark-round-icon.png"
-              alt="Question Mark Icon">
-            <div class="tooltip" [class.active]="item.showComment">{{ item.comment }}</div>
-          </ng-container>
-        </td>
-      </tr>
-    </ng-container>
-  </tbody>
-</table>
+          <td>
+            <!-- Editable field -->
+            <div *ngIf="!item.editing && item.showDetails; else editingMode">
+              {{ item.details }}
+            </div>
+            <ng-template #editingMode>
+              <span *ngIf="item.editing">
+                <!-- Only show if item.editing is true -->
+                <textarea [(ngModel)]="item.updatedDetails" rows="15"
+                  cols="25"></textarea>
+                <button (click)="saveMLDetails(item)">Save</button>
+                <button (click)="cancelEditing(item)">Cancel</button>
+              </span>
+            </ng-template>
+            <br>
+            <button (click)="toggleEditingMode(item)">Edit</button>
+            <button (click)="toggleDetailsVisibility(item)">
+              {{ item.showDetails ? 'Hide' : 'Show' }}
+            </button>
+            <button
+              (click)="openPDFViewerPopup(item.directory_path, item.details)">PDF</button>
+          </td>
+          <td>
+            <button
+              (click)="openFeedbackAfterUpdateMultipleLicenses(item)">Add</button>
+            <button (click)="deleteMPMappingId(item.id)">Delete Mapping
+              ID</button>
+            <button (click)="deleteMultipleLicenses(item.id)">Delete
+              Record</button>
+          </td>
+          <td (mouseenter)="showCommentTooltip(item)"
+            (mouseleave)="hideCommentTooltip(item)">
+            <ng-container class="tooltip-container"
+              *ngIf="item.comment !== null && item.comment !== ''">
+              <img class="icon" [class.hidden]="item.showComment"
+                src="assets/question-mark-round-icon.png"
+                alt="Question Mark Icon">
+              <div class="tooltip" [class.active]="item.showComment">{{
+                item.comment }}</div>
+            </ng-container>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
 
   <!-- Multiple Licensees Table HTML -->
 </div>
-
 
 <div class="popup-overlay" *ngIf="showPopup">
   <div class="popup-content">

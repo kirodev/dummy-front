@@ -185,11 +185,7 @@ h1 {
   display: block;
 }
 
-/* Keep tooltip visible when hovering over tooltip container */
-.tooltip-container:hover .tooltip,
-.tooltip-container:hover .icon {
-  display: block; /* Show tooltip and icon when hovering over container */
-}
+
 
 
 
