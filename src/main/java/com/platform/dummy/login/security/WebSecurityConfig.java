@@ -47,13 +47,25 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Use configurationSource directly
+            // Enable CORS with the defined configuration
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            // Disable CSRF as we're using JWT
             .csrf(csrf -> csrf.disable())
+            // Handle unauthorized attempts
             .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(unauthorizedHandler))
+            // Use stateless session; sessions won't be used to store user state
             .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Define URL-based authorization rules
             .authorizeHttpRequests(authorize -> authorize
+                // Permit all users to access signin and signup endpoints
                 .antMatchers("/signin", "/signup").permitAll()
-                .antMatchers("/licenses", "/payments", "/multiple-payments", "/multiple-licenses").hasRole("ADMIN")
+                
+      
+                
+                // Restrict these endpoints to ADMIN role only
+                .antMatchers("/payments", "/multiple-payments", "/multiple-licenses","/licenses", "/sales","/revenues").hasAnyRole("ADMIN", "MODERATOR")
+                
+                // Restrict specific PUT endpoints to ADMIN role
                 .antMatchers(HttpMethod.PUT,
                         "/payments/{id}", "/licenses/{id}",
                         "/licenses/{id}/mappingId", "/licenses/{id}/details",
@@ -63,16 +75,23 @@ public class WebSecurityConfig {
                         "/licenses/{id}/mappingId", "/multiple-payments/{id}/MPmappingId",
                         "/payments/{id}/mappingId", "/timeline", "/annual-revenues",
                         "/multiple-licenses/{id}/undo", "/equations"
-                ).hasRole("ADMIN")
+                ).hasAnyRole("ADMIN")
+                
+                // Restrict specific GET endpoints to ADMIN role
                 .antMatchers(HttpMethod.GET,
                         "/mappingId", "/quarterly-revenues", "/annual-revenues",
-                        "/licenses", "/payments", "/multiple-payments",
-                        "/multiple-licenses", "/equations"
-                ).hasRole("ADMIN")
-                .antMatchers(HttpMethod.DELETE, "/mappingId").hasRole("ADMIN")
+                        "/payments", "/multiple-payments",
+                        "/multiple-licenses", "/equations","/sales","/revenues"
+                ).hasAnyRole("ADMIN", "MODERATOR")
+                
+                // Restrict DELETE endpoints to ADMIN role
+                .antMatchers(HttpMethod.DELETE, "/mappingId").hasAnyRole("ADMIN")
+                
+                // Any other request requires authentication
                 .anyRequest().authenticated()
             );
 
+        // Add JWT token filter before the UsernamePasswordAuthenticationFilter
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -82,10 +101,16 @@ public class WebSecurityConfig {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*")); // Allow all origins
+        
+        // Allow all origins
+        config.setAllowedOriginPatterns(List.of("*"));
+        // Allow specific HTTP methods
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // Allow all headers
         config.setAllowedHeaders(List.of("*"));
+        // Allow credentials (e.g., cookies, authorization headers)
         config.setAllowCredentials(true);
+        // Register the CORS configuration for all paths
         source.registerCorsConfiguration("/**", config);
         return source;
     }
