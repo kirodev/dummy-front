@@ -129,12 +129,12 @@
                             <td>{{ item.payment_amount | number:'1.2-2' }}</td>
                             <td>{{ item.results | number:'1.2-2' }}</td>
                             <td>
-                              <div
+                              <div 
                                 *ngIf="!item.editing && item.showDetails; else editingMode">
                                 {{ item.details }}
                               </div>
-                              <ng-template #editingMode>
-                                <span *ngIf="item.editing">
+                              <ng-template #editingMode >
+                                <span *ngIf="item.editing" >
                                   <textarea [(ngModel)]="item.updatedDetails"
                                     rows="15"
                                     cols="25"></textarea>
@@ -146,7 +146,7 @@
                               </ng-template>
                               <br>
                               <button
-                                (click)="toggleEditingMode(item)">Edit</button>
+                                (click)="toggleEditingMode(item)" *ngIf="showAdminBoard">Edit</button>
                               <button (click)="toggleDetailsVisibility(item)">
                                 {{ item.showDetails ? 'Hide' : 'Show' }}
                               </button> <button
