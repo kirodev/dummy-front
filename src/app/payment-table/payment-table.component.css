@@ -1,41 +1,42 @@
 @font-face {
-    font-family: 'ROG Fonts';
-    src: url('src/assets/7032-fontps.ttf') format('truetype');
-  }
-  .table-container {
-    margin: 0 auto; /* Center the container horizontally */
-    max-width: calc(100% - 200px); /* Set maximum width with 100px space on each side */
-    padding: 0 100px; /* Add 50px padding on each side */
-
+  font-family: "ROG Fonts";
+  src: url("src/assets/7032-fontps.ttf") format("truetype");
+}
+.table-container {
+  margin: 0 auto; /* Center the container horizontally */
+  max-width: calc(
+    100% - 200px
+  ); /* Set maximum width with 100px space on each side */
+  padding: 0 100px; /* Add 50px padding on each side */
 }
 
-  table {
-    width: 200px;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-  }
-  button {
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+table {
+  width: 200px;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 button:hover {
-    background-color: #0056b3;
+  background-color: #0056b3;
 }
-  .terms-table,
+.terms-table,
 .knownMP-table,
 .unknownMP-table,
 .unknown-table {
-    width: 50%; /* Set the width of the table to 50% */
-    font-size: 12px; /* Lower the font size */
-    margin: 0 auto; /* Center the table horizontally */
-    border-collapse: collapse;
-    margin-bottom: 20px;
+  width: 50%; /* Set the width of the table to 50% */
+  font-size: 12px; /* Lower the font size */
+  margin: 0 auto; /* Center the table horizontally */
+  border-collapse: collapse;
+  margin-bottom: 20px;
 }
 
 /* Style the table headers */
@@ -43,11 +44,11 @@ button:hover {
 .knownMP-table th,
 .unknownMP-table th,
 .unknown-table th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-    text-align: left;
-    padding: 5px; /* Reduce padding */
-    border: 1px solid #ccc;
+  background-color: #f2f2f2;
+  font-weight: bold;
+  text-align: left;
+  padding: 5px; /* Reduce padding */
+  border: 1px solid #ccc;
 }
 
 /* Style the table cells */
@@ -55,8 +56,8 @@ button:hover {
 .knownMP-table td,
 .unknownMP-table td,
 .unknown-table td {
-    padding: 10px; /* Reduce padding */
-    border: 1px solid #ccc;
+  padding: 10px; /* Reduce padding */
+  border: 1px solid #ccc;
 }
 
 /* Style the table rows alternatively for better readability */
@@ -64,7 +65,7 @@ button:hover {
 .knownMP-table tr:nth-child(even),
 .unknownMP-table tr:nth-child(even),
 .unknown-table tr:nth-child(even) {
-    background-color: #f2f2f2;
+  background-color: #f2f2f2;
 }
 
 /* Style the images in the "Screenshot" column */
@@ -72,95 +73,90 @@ button:hover {
 .knownMP-table td img,
 .unknownMP-table td img,
 .unknown-table td img {
-    height: auto; /* Maintain the aspect ratio of the images */
-    cursor: pointer; /* Add a pointer cursor to indicate they are clickable */
-    transition: transform 0.2s; /* Add a smooth transition effect */
+  height: auto; /* Maintain the aspect ratio of the images */
+  cursor: pointer; /* Add a pointer cursor to indicate they are clickable */
+  transition: transform 0.2s; /* Add a smooth transition effect */
 }
 
 /* Apply a zoom effect to images on hover */
 .terms-table td img:hover,
 .knownMP-table td img:hover,
-.unknownMP-table td img:hover ,
-.unknown-table td img:hover{
-    transform: scale(1.1);
+.unknownMP-table td img:hover,
+.unknown-table td img:hover {
+  transform: scale(1.1);
 }
 
-  /* Style the table headers */
-  th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-    text-align: left;
-    padding: 10px;
-    border: 1px solid #ccc;
-  }
+/* Style the table headers */
+th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  text-align: left;
+  padding: 10px;
+  border: 1px solid #ccc;
+}
 
-  /* Style the table cells */
-  td {
-    padding: 10px;
-    border: 1px solid #ccc;
-  }
+/* Style the table cells */
+td {
+  padding: 10px;
+  border: 1px solid #ccc;
+}
 
-  /* Style the table rows alternatively for better readability */
-  tr:nth-child(even) {
-    background-color: #f2f2f2;
-  }
+/* Style the table rows alternatively for better readability */
+tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
 
-  /* Style the images in the "Screenshot" column */
-  td img {
-    max-width: 100px; /* Adjust the maximum width of the images */
-    height: auto; /* Maintain the aspect ratio of the images */
-    cursor: pointer; /* Add a pointer cursor to indicate they are clickable */
-    transition: transform 0.2s; /* Add a smooth transition effect */
-  }
+/* Style the images in the "Screenshot" column */
+td img {
+  max-width: 100px; /* Adjust the maximum width of the images */
+  height: auto; /* Maintain the aspect ratio of the images */
+  cursor: pointer; /* Add a pointer cursor to indicate they are clickable */
+  transition: transform 0.2s; /* Add a smooth transition effect */
+}
 
-  /* Apply a zoom effect to images on hover */
-  td img:hover {
-    transform: scale(1.1);
-  }
-  /* Style the pop-up overlay */
+/* Apply a zoom effect to images on hover */
+td img:hover {
+  transform: scale(1.1);
+}
+/* Style the pop-up overlay */
 
-  td button {
-    margin-bottom: 10px; /* Add space between the button and the div */
-  }
-  /* Style the pop-up content */
-  td div {
-    border: 2px solid black; /* Adjust border width and color as needed */
-    padding: 10px; /* Adjust padding as needed */
-    width: 200px; /* Set the width of the square frame */
-    height: 200px; /* Set the height of the square frame */
-    overflow: auto; /* Enable overflow scrolling if content exceeds dimensions */
-    box-sizing: border-box; /* Include padding and border in element's total width and height */
-  }
+td button {
+  margin-bottom: 10px; /* Add space between the button and the div */
+  padding-top:10px ;
+  padding-left: 10px;
+}
+/* Style the pop-up content */
+td div {
+  border: 2px solid black; /* Adjust border width and color as needed */
+  padding: 10px; /* Adjust padding as needed */
+  width: 200px; /* Set the width of the square frame */
+  height: 200px; /* Set the height of the square frame */
+  overflow: auto; /* Enable overflow scrolling if content exceeds dimensions */
+  box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
 
-  .popup img {
-    max-width: 100%;
-    height: auto;
-  }
+.popup img {
+  max-width: 100%;
+  height: auto;
+}
 
-  h1 {
-    color: #E57A45;
-    font-family: 'ROG Fonts', sans-serif;
-    font-size: 20px;
-    font-style: normal;
-    line-height: normal;
-    margin: 50px auto 0 auto; /* Centers the h1 element */
-    text-align: center;        /* Centers the text inside h1 */
-  }
+h1 {
+  color: #e57a45;
+  font-family: "ROG Fonts", sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  line-height: normal;
+  margin: 50px auto 0 auto; /* Centers the h1 element */
+  text-align: center; /* Centers the text inside h1 */
+}
 
-
-
-  .modified-row {
-    background-color: lightgreen; /* Change this to the desired shade of green */
-  }
-  /* Adjust the size of the icon */
+.modified-row {
+  background-color: lightgreen; /* Change this to the desired shade of green */
+}
+/* Adjust the size of the icon */
 /* Center the icon */
 /* Center the content vertically and horizontally */
-.tooltip-container {
-  position: relative; /* Ensure tooltip is positioned relative to the container */
-  cursor: pointer; /* Indicate that it is clickable */
-}
-
-
+/* Tooltip Styles */
 .tooltip-container {
   position: relative; /* Ensure tooltip is positioned relative to the container */
   cursor: pointer; /* Indicate that it is clickable */
@@ -186,106 +182,130 @@ button:hover {
   display: block;
 }
 
-/* Keep tooltip visible when hovering over tooltip container */
-.tooltip-container:hover .tooltip,
+/* Hide icon when hovering over the tooltip container */
 .tooltip-container:hover .icon {
-  display: block; /* Show tooltip and icon when hovering over container */
+  display: none; /* Hide icon on hover */
 }
 
+/* Show tooltip when hovering over the tooltip container */
+.tooltip-container:hover .tooltip {
+  display: block; /* Show tooltip on hover */
+}
 
+/* Optional: Smooth transition for hiding the icon */
+.tooltip-container .icon {
+  transition: opacity 0.3s ease;
+}
 
-.icon {
+.tooltip-container:hover .icon {
+  opacity: 0; /* Fade out the icon */
+}
+
+/* Adjust tooltip positioning if needed */
+.tooltip {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 10px;
+  padding: 5px;
+  z-index: 1;
+  display: none; /* Hide by default */
+  left: auto;
+  right: 100%;
+  transform: translateX(-0.1px); /* Adjust spacing */
+  max-width: 300px; /* Adjust max-width as needed */
+  box-sizing: border-box; /* Include padding and border in width */
+}
+
+/* Ensure tooltip is visible when active */
+.tooltip.active {
+  display: block;
+}
+.icon {
   width: 20px;
   height: 20px;
 }
-
-.icon.hidden {
-  display: none;
+/* Ensure tooltip is visible when hovering over tooltip container */
+.tooltip-container:hover .tooltip {
+  display: block;
 }
 
 td {
   position: relative; /* Ensure tooltip is positioned relative to the table cell */
 }
 
+#center-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  #center-button-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+#center-button {
+  width: 150px; /* Static width for the button */
+  height: 50px; /* Static height for the button */
+  font-size: 16px; /* Font size */
+  padding: 10px; /* Padding for inner spacing */
+  text-align: center; /* Center text inside the button */
+}
 
-  #center-button {
-    width: 150px; /* Static width for the button */
-    height: 50px; /* Static height for the button */
-    font-size: 16px; /* Font size */
-    padding: 10px; /* Padding for inner spacing */
-    text-align: center; /* Center text inside the button */
-  }
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure the popup is above other content */
+}
 
+.popup-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-  .popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000; /* Ensure the popup is above other content */
-  }
+.popup-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 50%;
+  height: 75%;
+  align-items: center;
+}
 
-  .popup-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.close-button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
 
-  }
-
-  .popup-content {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    width: 50%;
-    height: 75%;
-    align-items: center;
-  }
-
-  .close-button {
-    margin-top: 10px;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-
-  }
-
-  .close-button:hover {
-    background-color: #0056b3;
-  }
-  .button-container {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
-/* Custom Chrome-like tab styles */
+.close-button:hover {
+  background-color: #0056b3;
+}
+.button-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
 .custom-tabs {
   display: flex;
   list-style: none;
-  padding-left: 0;
-  margin-bottom: 1rem;
+  padding-left: 0; /* Ensure no extra padding */
+  margin-bottom: 0; /* Remove space below tabs */
+  margin-left: -0.5px; /* Adjust this value to align the tabs with the plot */
   border-bottom: 1px solid #ccc;
 }
+
 
 .custom-tabs .nav-item {
   margin-bottom: -1px;
@@ -303,14 +323,14 @@ td {
   position: relative;
   top: 1px;
   user-select: none; /* Prevent text selection */
-  cursor: pointer;   /* Show hand cursor */
-  text-decoration: none
+  cursor: pointer; /* Show hand cursor */
+  text-decoration: none;
 }
 
 .custom-tabs .nav-link.active {
   background-color: #fff;
   border-color: #ddd #ddd transparent;
-  color: #4E7EBF;
+  color: #4e7ebf;
   font-weight: bold;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -331,7 +351,10 @@ td {
   border: 1px solid #ddd;
   border-radius: 0 0 10px 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-top: 0; /* Ensure no top margin for the content */
 }
+
+
 .year-group-header {
   background-color: #f0f0f0;
   font-weight: bold;
@@ -369,3 +392,44 @@ td {
   overflow-x: auto;
 }
 
+
+/* Style for the table cell to center align buttons */
+td {
+  position: relative; /* Ensure tooltip is positioned relative to the table cell */
+  text-align: center; /* Center text inside the cell */
+  vertical-align: middle; /* Vertically center the content */
+  padding: 10px;
+  border: 1px solid #ccc;
+}
+
+/* Button container to apply consistent sizing and alignment */
+td .button-container {
+  display: flex;
+  flex-direction: column; /* Stack buttons vertically */
+  align-items: center; /* Center align horizontally */
+  justify-content: center; /* Center align vertically */
+  gap: 10px; /* Add space between buttons */
+}
+
+/* Standardize button size */
+td button {
+  width: 120px; /* Set a fixed width */
+  height: 40px; /* Set a fixed height */
+  padding: 10px; /* Adjust inner spacing */
+  background-color: #007bff; /* Button color */
+  color: white; /* Text color */
+  border: none; /* Remove border */
+  border-radius: 4px; /* Add rounded corners */
+  cursor: pointer; /* Pointer cursor for hover */
+  transition: background-color 0.3s ease; /* Smooth hover effect */
+  text-align: center; /* Center button text */
+  font-size: 14px; /* Standard font size */
+  margin-bottom: 10px; /* Add space between the button and the div */
+  padding-top:10px ;
+  padding-left: 10px;
+}
+
+/* Hover effect for buttons */
+td button:hover {
+  background-color: #0056b3;
+}

@@ -47,6 +47,7 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
   itemToModifyOrDelete: any;
   showModeratorBoard = false;
   showAdminBoard = false;
+  activeTooltipId: string = '';
 
   constructor(
     private paymentConnection: PaymentConnection,
@@ -102,6 +103,12 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
     item.showDetails = !item.showDetails;
   }
 
+  showTooltip(id: string): void {
+    this.activeTooltipId = id;
+  }
+  hideTooltip(): void {
+    this.activeTooltipId = '';
+  }
 
   fetchPaymentsData(): void {
     this.paymentConnection.getPayments().subscribe(
@@ -198,9 +205,6 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
   }
 
 
-
-
-
   generateCloudinaryUrl(directory_path: string): string {
     let normalizedPath = directory_path.replace(/\\/g, '/');
 
@@ -295,9 +299,6 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
       document.head.appendChild(scriptElement);
     });
   }
-
-
-
 
 
 fetchAnnualRevenues(): void {
