@@ -63,7 +63,7 @@ public class WebSecurityConfig {
       
                 
                 // Restrict these endpoints to ADMIN role only
-                .antMatchers("/payments", "/multiple-payments", "/multiple-licenses","/licenses", "/sales","/revenues").hasAnyRole("ADMIN", "MODERATOR")
+                .antMatchers("/payments", "/multiple-payments", "/multiple-licenses","/licenses", "/sales","/revenues","/company-types").hasAnyRole("ADMIN", "MODERATOR")
                 
                 // Restrict specific PUT endpoints to ADMIN role
                 .antMatchers(HttpMethod.PUT,
@@ -81,7 +81,7 @@ public class WebSecurityConfig {
                 .antMatchers(HttpMethod.GET,
                         "/mappingId", "/quarterly-revenues", "/annual-revenues",
                         "/payments", "/multiple-payments",
-                        "/multiple-licenses", "/equations","/sales","/revenues"
+                        "/multiple-licenses", "/equations","/sales","/revenues","/company-types"
                 ).hasAnyRole("ADMIN", "MODERATOR")
                 
                 // Restrict DELETE endpoints to ADMIN role
