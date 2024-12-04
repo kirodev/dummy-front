@@ -33,6 +33,7 @@ import { EquationsPaymentsComponent } from './equations-payments/equations-payme
 import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-revenues.component';
 
 const routes: Routes = [
+
   { path: 'home', component: HomeComponent },
   { path: 'adv-mobile', component: AdvMobileComponent },
   { path: 'mobile', component: MobileComponent },

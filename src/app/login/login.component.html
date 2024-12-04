@@ -71,8 +71,12 @@
       </div>
     </form>
 
-    <div class="alert alert-success" *ngIf="isLoggedIn">
-      Logged in as {{ roles }}.
+    <div *ngIf="isLoggedIn">
+      <h2>WELCOME {{ username.toUpperCase() }} !!</h2> <br>  ROLE: {{ roles.join(', ') }}
     </div>
+    <div *ngIf="isLoginFailed">
+      Login failed: {{ errorMessage }}
+    </div>
+
   </div>
 </div>

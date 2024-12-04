@@ -15,6 +15,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
   isLoginFailed = false;
   errorMessage = '';
   roles: string[] = [];
+  username: string = '';
 
   constructor(
     private authService: AuthService,
@@ -27,7 +28,9 @@ export class LoginComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     if (this.tokenStorage.getToken()) {
       this.isLoggedIn = true;
-      this.roles = this.tokenStorage.getUser().roles;
+      const user = this.tokenStorage.getUser();
+      this.roles = user.roles;
+      this.username = user.username; // Retrieve the username
     }
   }
 
@@ -47,7 +50,9 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
         this.isLoginFailed = false;
         this.isLoggedIn = true;
-        this.roles = this.tokenStorage.getUser().roles;
+        const user = this.tokenStorage.getUser();
+        this.roles = user.roles;
+        this.username = user.username; // Retrieve the username
         this.reloadPage();
       },
       err => {
@@ -55,6 +60,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
         this.isLoginFailed = true;
       }
     );
+  
   }
 
   reloadPage(): void {
@@ -64,21 +70,27 @@ export class LoginComponent implements OnInit, AfterViewInit {
   initializeBackground(): void {
     const square = document.querySelector(".Square") as HTMLElement;
     const background = document.getElementById("Background");
+
     if (square && background) {
       const windowWidth = window.innerWidth || document.documentElement.clientWidth;
       const windowHeight = window.innerHeight || document.documentElement.clientHeight;
       const squareLen = Math.ceil((windowWidth / square.clientWidth) * (windowHeight / square.clientHeight));
 
-      const tempDiv = document.createElement('div');
-      for (let i = 0; i < squareLen; i++) {
-        tempDiv.appendChild(square.cloneNode(true));
+      // Clear any existing children
+      while (background.firstChild) {
+        background.removeChild(background.firstChild);
       }
 
-      // Safely set sanitized HTML to background
-      const sanitizedContent: SafeHtml = this.sanitizer.bypassSecurityTrustHtml(tempDiv.innerHTML);
-      this.renderer.setProperty(background, 'innerHTML', sanitizedContent);
+      // Create and append squares securely
+      for (let i = 0; i < squareLen; i++) {
+        const squareClone = this.renderer.createElement('div');
+        this.renderer.addClass(squareClone, 'Square');
+        this.renderer.listen(squareClone, 'click', this.activeSquare.bind(this));
+        this.renderer.appendChild(background, squareClone);
+      }
     }
   }
+
 
   activeSquare(event: MouseEvent): void {
     if (event.target instanceof HTMLElement) {

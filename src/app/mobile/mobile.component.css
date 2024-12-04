@@ -7,6 +7,7 @@
 /* Apply some basic styling to the container */
 /* Apply some basic styling to the container */
 table {
+  position: absolute;
   width: 100%; /* Adjust the width of the table container */
   max-width: 100%; /* Ensure it doesn't exceed the width of the screen */
   border-collapse: collapse; /* Collapse the borders between cells */
@@ -24,7 +25,6 @@ table {
 .table-container {
   width: 100%; /* Adjust the width of the table container */
   max-width: 100%; /* Ensure it doesn't exceed the width of the screen */
-
 
 }
 
@@ -51,7 +51,7 @@ button {
   left: 20px; /* Adjust the left position as needed to position the buttons */
 }
 
-button:hover {
+.button:hover {
   background-color: #DED8C4;
 }
 
@@ -255,3 +255,213 @@ td.vertical-header:not(:first-child)::before {
   width: 20px; /* Adjust width if needed */
   height: 20px; /* Adjust height if needed */
 }
+.type-toggle {
+  margin-top: 10px;
+}
+
+.type-toggle label {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+}
+
+.type-toggle input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+
+
+/*///////////////////////////*
+
+
+/* mobile.component.css */
+
+/* General Styles */
+
+/* Side Nav Toggle Button */
+.side-nav-toggle {
+
+  top: 20px;
+  right: 20px; /* Changed from left: 20px; to right: 20px; */
+  background-color: #007bff; /* Bootstrap primary color */
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 4px;
+  z-index: 1003; /* Above the overlay and side nav */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  transition: background-color 0.3s ease; /* Smooth transition */
+}
+
+.side-nav-toggle:hover {
+  background-color: #0056b3;
+}
+
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s, visibility 0.5s;
+  z-index: 1000; /* Below the side nav and toggle button */
+}
+
+.overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Side Nav */
+.side-nav {
+  height: 100%; /* Full-height */
+  width: 0; /* Initial width */
+  position: fixed; /* Stay in place */
+  top: 0;
+  right: 0; /* Positioned on the right */
+  background-color: #f1f1f1; /* Light gray background */
+  overflow-x: hidden; /* Disable horizontal scroll */
+  transition: width 0.5s; /* Smooth transition */
+  padding-top: 60px; /* Place content 60px from the top */
+  z-index: 1002; /* Above the overlay */
+  box-shadow: -2px 0 5px rgba(0,0,0,0.3);
+}
+
+/* Side Nav Open State */
+.side-nav.open {
+  width: 300px; /* Adjust width as needed */
+}
+
+/* minimal.component.css */
+
+
+
+/* Close Button */
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 36px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333; /* Initial text color */
+  transition: color 0.3s ease; /* Smooth transition */
+}
+
+.close-btn:hover {
+  color: #b81212;
+}
+
+
+
+
+/* Filter Sections */
+.filter-section {
+  margin: 20px;
+}
+
+.filter-section label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.filter-section select,
+.filter-section input[type="text"],
+.filter-section input[type="date"] {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+/* Apply Filters Button */
+.apply-filters-btn {
+  width: 90%;
+  padding: 10px;
+  margin: 10px auto;
+  display: block;
+  background-color: #28a745; /* Bootstrap success color */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.apply-filters-btn:hover {
+  background-color: #218838;
+}
+
+/* Sorting Dropdown */
+.filter-section select#sortOrder {
+  margin-top: 10px;
+}
+
+
+
+th,
+td {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+
+
+.row-name {
+  font-weight: bold;
+}
+
+/* No Data Message */
+.no-data-message {
+  text-align: center;
+  font-weight: bold;
+  padding: 20px;
+  color: #555;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 600px) {
+  .side-nav.open {
+    width: 100%; /* Full width on small screens */
+  }
+
+  .side-nav-toggle {
+    left: 10px;
+    top: 10px;
+    padding: 8px 12px;
+    font-size: 16px;
+  }
+
+  .close-btn {
+    font-size: 30px;
+    top: 15px;
+    left: 15px;
+  }
+/* mobile.component.css */
+.reset-filters-btn {
+  background-color: #f44336; /* Red color for attention */
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.reset-filters-btn:hover {
+  background-color: #d32f2f; /* Darker red on hover */
+}
+
+
+
+}
+

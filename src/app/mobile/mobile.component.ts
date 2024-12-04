@@ -1,33 +1,62 @@
+// mobile.component.ts
+
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CellSelectionService } from '../cell-selection-service.service';
 import { ConnectionService } from '../connection.service';
 import { PaymentConnection } from '../payment-connection.service';
+import { CompanyTypeService, CompanyType } from '../company-type.service';
 
 @Component({
   selector: 'app-mobile',
   templateUrl: './mobile.component.html',
-  styleUrls: ['./mobile.component.css']
+  styleUrls: ['./mobile.component.css'],
 })
 export class MobileComponent implements OnInit {
-  licensees: string[] = [];
+  // Licensee and Licensor Data
+  allLicensees: string[] = []; // Normalized all licensees
+  filteredLicensees: string[] = []; // Normalized licensees after applying type and search filters
   licensors: string[] = [];
+
+  // Mapping between normalized and original licensee names
+  normalizedToOriginalLicenseeMap: Map<string, string> = new Map(); // New mapping
+
+  // Table Data
   tableData: string[][] = [];
   filteredTableData: string[][] = [];
+
+  // Fetched Data
   fetchedData: any[] = [];
   paymentsData: any[] = [];
   multiplePayments: any[] = [];
   multipleLicenses: any[] = [];
+
+  // Search and Sorting
   searchTerm$ = new BehaviorSubject<string>('');
   searchTerm: string = '';
   sortOrder: 'alphabetical' | 'count' = 'alphabetical';
+
+  // Date Filtering
   startDate: string = '';
   endDate: string = '';
-  dateFilterType: 'exactDate' | 'fullPeriod' | 'startDateInside' | 'endDateInside' | 'anyDateInside' = 'exactDate';
+  dateFilterType:
+    | 'exactDate'
+    | 'fullPeriod'
+    | 'startDateInside'
+    | 'endDateInside'
+    | 'anyDateInside' = 'exactDate';
 
-  // Snapshot of original data
+  // Type Filtering
+  companyTypes: CompanyType[] = [];
+  licenseeTypeMap: Map<string, number> = new Map();
+  typeFilter: 'include' | 'exclude' | 'all' = 'all';
+
+  // Side Nav Control
+  isSideNavOpen: boolean = false;
+
+  // Original Data Snapshot
   private originalLicensees: string[] = [];
   private originalTableData: string[][] = [];
 
@@ -35,174 +64,420 @@ export class MobileComponent implements OnInit {
     private router: Router,
     private cellSelectionService: CellSelectionService,
     private connectionService: ConnectionService,
-    private paymentConnection: PaymentConnection
+    private paymentConnection: PaymentConnection,
+    private companyTypeService: CompanyTypeService // Inject CompanyTypeService
   ) {}
 
   ngOnInit(): void {
-    this.fetchLicenseData();
+    // Restore filter state from localStorage
+    const savedFilterState = localStorage.getItem('filterState');
+    if (savedFilterState) {
+      const filterState = JSON.parse(savedFilterState);
+      this.searchTerm = filterState.searchTerm;
+      this.startDate = filterState.startDate;
+      this.endDate = filterState.endDate;
+      this.dateFilterType = filterState.dateFilterType;
+      this.typeFilter = filterState.typeFilter;
+      this.sortOrder = filterState.sortOrder;
+      this.filteredLicensees = filterState.filteredLicensees;
+    }
 
-    this.searchTerm$.pipe(
-      debounceTime(300),
-      distinctUntilChanged()
-    ).subscribe(term => {
-      this.searchTerm = term;
-      this.filterTableData(term);
+    // Fetch all necessary data
+    forkJoin({
+      companyTypes: this.companyTypeService.getCompanyTypes(),
+      licenseData: this.connectionService.getData(),
+      payments: this.paymentConnection.getPayments(),
+      multiplePayments: this.paymentConnection.getMultiplePayments(),
+      multipleLicenses: this.connectionService.getMultipleLicenses(),
+    }).subscribe({
+      next: ({
+        companyTypes,
+        licenseData,
+        payments,
+        multiplePayments,
+        multipleLicenses,
+      }) => {
+        this.companyTypes = companyTypes;
+        this.mapLicenseeTypes();
+
+        this.fetchedData = licenseData;
+        this.licensors = [
+          ...new Set(this.fetchedData.map((item) => item.licensor)),
+        ].filter((licensor) => licensor !== null);
+        this.allLicensees = [
+          ...new Set(this.fetchedData.map((item) => item.licensee)),
+        ].filter((licensee) => licensee !== 'Unknown' && licensee !== null);
+
+        // Include payments data
+        this.paymentsData = payments;
+        const paymentLicensors = [
+          ...new Set(payments.map((item) => item.licensor)),
+        ].filter((licensor) => licensor !== null);
+        const paymentLicensees = [
+          ...new Set(payments.map((item) => item.licensee)),
+        ].filter((licensee) => licensee !== 'Unknown' && licensee !== null);
+
+        this.licensors = [
+          ...new Set([...this.licensors, ...paymentLicensors]),
+        ];
+        this.allLicensees = [
+          ...new Set([...this.allLicensees, ...paymentLicensees]),
+        ];
+
+        // Include multiple payments and licenses
+        this.multiplePayments = multiplePayments;
+        this.multipleLicenses = multipleLicenses;
+
+        // Debugging: Log all licensees from various sources
+        console.log('All Licensees:', this.allLicensees);
+        console.log('Company Types:', this.companyTypes);
+
+        this.initializeTableData();
+        this.applyFilters();
+      },
+      error: (error) => {
+        console.error('Error fetching data:', error);
+      },
     });
 
-    // Set the default sort order to 'count' and apply the sorting
-    this.sortOrder = 'count';
+    // Search term handling with debounce
+    this.searchTerm$
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((term) => {
+        this.searchTerm = term;
+        this.applyFilters();
+      });
   }
 
-  fetchLicenseData(): void {
-    this.connectionService.getData().subscribe(
-      (data: any[]) => {
-        this.fetchedData = data;
-        this.licensors = [...new Set(this.fetchedData.map((item: any) => item.licensor))].filter(licensor => licensor !== null);
-        this.licensees = [...new Set(this.fetchedData.map((item: any) => item.licensee))].filter(licensee => licensee !== 'Unknown' && licensee !== null);
 
-        this.paymentConnection.getPayments().subscribe(
-          (payments: any[]) => {
-            this.paymentsData = payments;
-            const paymentLicensors = [...new Set(payments.map((item: any) => item.licensor))].filter(licensor => licensor !== null);
-            const paymentLicensees = [...new Set(payments.map((item: any) => item.licensee))].filter(licensee => licensee !== 'Unknown' && licensee !== null);
+  /**
+   * Toggle the visibility of the side nav.
+   */
+  toggleSideNav(): void {
+    this.isSideNavOpen = !this.isSideNavOpen;
+  }
 
-            this.licensors = [...new Set([...this.licensors, ...paymentLicensors])];
-            this.licensees = [...new Set([...this.licensees, ...paymentLicensees])];
+  /**
+   * Utility function to normalize licensee names.
+   * Converts to lowercase, trims whitespace, and removes periods and commas.
+   */
+  normalizeName(name: string | null | undefined): string {
+    return name
+      ? name
+          .trim()
+          .toLowerCase()
+          .replace(/[.,]/g, '') // Remove periods and commas
+      : '';
+  }
 
-            this.paymentConnection.getMultiplePayments().subscribe(
-              (multiplePayments: any[]) => {
-                this.multiplePayments = multiplePayments;
-
-                this.connectionService.getMultipleLicenses().subscribe(
-                  (multipleLicenses: any[]) => {
-                    this.multipleLicenses = multipleLicenses;
-                    this.initializeTableData();
-                    this.updateTableData();
-                  },
-                  (error) => {
-                    console.error('Error fetching multiple licenses data:', error);
-                  }
-                );
-              },
-              (error) => {
-                console.error('Error fetching multiple payments data:', error);
-              }
-            );
-          },
-          (error) => {
-            console.error('Error fetching payments data:', error);
-          }
-        );
-      },
-      (error) => {
-        console.error('Error fetching license data:', error);
+  /**
+   * Map licensee names to their types for easy lookup.
+   * Populates the `licenseeTypeMap`.
+   */
+  mapLicenseeTypes(): void {
+    this.companyTypes.forEach((ct) => {
+      const normalizedLicensee = this.normalizeName(ct.licensee);
+      const typeNumber = Number(ct.type);
+      if (normalizedLicensee && !isNaN(typeNumber)) {
+        this.licenseeTypeMap.set(normalizedLicensee, typeNumber);
       }
-    );
+    });
+    console.log('Normalized Licensee Type Map:', this.licenseeTypeMap);
   }
 
-  updateTableData(): void {
-    this.updateCellColors();
-    this.applyDateFilter();
-    this.filterTableData(this.searchTerm$.getValue());
-  }
+  /**
+   * Initialize table data by normalizing licensee names and setting up the table structure.
+   */
+  initializeTableData(): void {
+    // Normalize allLicensees and populate mapping
+    this.normalizedToOriginalLicenseeMap.clear();
+    this.allLicensees = this.allLicensees
+      .map((originalLicensee) => {
+        const normalizedLicensee = this.normalizeName(originalLicensee);
+        if (normalizedLicensee) {
+          this.normalizedToOriginalLicenseeMap.set(normalizedLicensee, originalLicensee);
+          return normalizedLicensee;
+        }
+        return ''; // Return empty string for invalid licensee
+      })
+      .filter(licensee => licensee !== ''); // Remove empty strings
 
-  updateCellColors(): void {
-    this.tableData = Array(this.licensors.length).fill(null).map(() =>
-      Array(this.licensees.length).fill('white')
-    );
+    console.log('Normalized All Licensees:', this.allLicensees);
+    console.log('Normalized to Original Licensee Map:', this.normalizedToOriginalLicenseeMap);
 
+    // Initialize tableData with normalized licensees
+    this.tableData = Array(this.licensors.length)
+      .fill(null)
+      .map(() => Array(this.allLicensees.length).fill('white'));
+
+    // Apply data colors based on fetched data
     this.applyDataColors(this.fetchedData);
     this.applyDataColors(this.paymentsData);
     this.applyDataColors(this.multiplePayments);
     this.applyDataColors(this.multipleLicenses);
 
-    console.log('Table data after updating cell colors:', this.tableData);
-  }
-
-  applyDataColors(data: any[]): void {
-    for (const dataItem of data) {
-      const licensorIndex = this.licensors.indexOf(dataItem.licensor);
-      const licenseeIndex = this.licensees.indexOf(dataItem.licensee);
-
-      if (licensorIndex !== -1 && licenseeIndex !== -1 && dataItem.licensee !== 'Unknown') {
-        this.tableData[licensorIndex][licenseeIndex] = 'green';
-        console.log(`Cell marked green: Licensor "${dataItem.licensor}", Licensee "${dataItem.licensee}"`);
-      }
-    }
-  }
-
-  initializeTableData(): void {
-    this.tableData = Array(this.licensors.length).fill(null).map(() =>
-      Array(this.licensees.length).fill('white')
-    );
-    this.updateCellColors();
-
     // Capture the initial state of data
-    this.originalLicensees = [...this.licensees];
-    this.originalTableData = this.tableData.map(row => [...row]);
+    this.originalLicensees = [...this.allLicensees];
+    this.originalTableData = this.tableData.map((row) => [...row]);
 
-    this.filteredTableData = this.tableData.map(row => [...row]);
+    this.filteredLicensees = [...this.allLicensees];
+    this.filteredTableData = this.tableData.map((row) => [...row]);
   }
 
-  parseDate(date: string): number | null {
-    if (!date) return null;
+  /**
+   * Apply cell colors based on data.
+   * Sets cells to 'green' if the licensee-licensor pair exists.
+   */
+  applyDataColors(data: any[]): void {
+    data.forEach((dataItem) => {
+      const licensorIndex = this.licensors.indexOf(dataItem.licensor);
+      const licenseeNormalized = this.normalizeName(dataItem.licensee);
+      const licenseeIndex = this.allLicensees.indexOf(licenseeNormalized);
 
-    // If the date is in "YYYY" format
-    if (/^\d{4}$/.test(date)) {
-      return parseInt(date);
-    }
-
-    // If the date is in "YYYY-MM-DD" format
-    const parsed = new Date(date);
-    if (!isNaN(parsed.getTime())) {
-      return parsed.getFullYear();
-    }
-
-    return null;
+      if (
+        licensorIndex !== -1 &&
+        licenseeIndex !== -1 &&
+        licenseeNormalized !== ''
+      ) {
+        this.tableData[licensorIndex][licenseeIndex] = 'green';
+      }
+    });
   }
 
+  /**
+   * Apply all filters: type, search, and date.
+   * The order ensures that type filter is applied first, followed by search and date filters.
+   */
+  applyFilters(): void {
+    this.filterByType();
+    this.filterBySearch();
+    this.updateFilteredTableData();
+    this.applyDateFilter(); // Ensure date filter is applied on the already filtered data
+  }
+
+  /**
+   * Filter licensees based on the select dropdown state (include or exclude Type 1 & 10).
+   */
+  filterByType(): void {
+    if (this.typeFilter === 'include') {
+      // Show only licensees with Type 1 or 10, but exclude Type 0
+      this.filteredLicensees = this.allLicensees.filter((licensee) => {
+        const type = this.licenseeTypeMap.get(licensee);
+        console.log(`Including Licensee: ${licensee}, Type: ${type}`);
+        return type !== undefined && [1, 10].includes(type) && type !== 0;
+      });
+    } else if (this.typeFilter === 'exclude') {
+      // Exclude licensees with Type 1 or 10 and also exclude Type 0
+      this.filteredLicensees = this.allLicensees.filter((licensee) => {
+        const type = this.licenseeTypeMap.get(licensee);
+        console.log(`Excluding Licensee: ${licensee}, Type: ${type}`);
+        return (type === undefined || ![1, 10].includes(type)) && type !== 0;
+      });
+    } else if (this.typeFilter === 'all') {
+      // Show all licensees except Type 0
+      this.filteredLicensees = this.allLicensees.filter((licensee) => {
+        const type = this.licenseeTypeMap.get(licensee);
+        return type !== 0;
+      });
+      console.log('Showing all licensees (OEM + Others), excluding Type 0.');
+    }
+
+    console.log('Filtered Licensees after Type Filter:', this.filteredLicensees);
+  }
+
+
+
+  filterBySearch(): void {
+    const lowerCaseSearchTerm = this.searchTerm.toLowerCase();
+    if (lowerCaseSearchTerm) {
+      this.filteredLicensees = this.filteredLicensees.filter((licensee) =>
+        this.normalizedToOriginalLicenseeMap
+          .get(licensee)!
+          .toLowerCase()
+          .includes(lowerCaseSearchTerm)
+      );
+    }
+    console.log('Filtered Licensees after Search Filter:', this.filteredLicensees);
+  }
+
+  /**
+   * Update table data based on filtered licensees.
+   * Ensures that the table aligns with the current filtered and sorted licensees.
+   */
+  updateFilteredTableData(): void {
+    this.filteredTableData = this.licensors.map((licensor) =>
+      this.filteredLicensees.map((licensee) => {
+        const licenseeIndex = this.allLicensees.indexOf(licensee);
+        if (licenseeIndex === -1) return 'white'; // Default to 'white' if not found
+
+        return this.tableData[this.licensors.indexOf(licensor)][licenseeIndex] === 'green'
+          ? 'green'
+          : 'white';
+      })
+    );
+    console.log('Filtered Table Data:', this.filteredTableData);
+  }
+
+  /**
+   * Toggle handler for the Type Filter select dropdown.
+   * Re-applies all filters when the select option changes.
+   */
+  toggleTypeFilter(): void {
+    this.applyFilters();
+  }
+
+  /**
+   * Parse a date string to a year number.
+   * Supports full dates and years.
+   */
+
+
+  parseDate(date: string): { year: number | null; month: number | null; day: number | null } {
+    if (!date) return { year: null, month: null, day: null };
+
+    const fullDateMatch = /^(\d{4})-(\d{2})-(\d{2})$/; // Matches YYYY-MM-DD
+    const yearMonthMatch = /^(\d{4})-(\d{2})$/;         // Matches YYYY-MM
+    const yearMatch = /^(\d{4})$/;                      // Matches YYYY
+
+    let match;
+    if ((match = date.match(fullDateMatch))) {
+      return {
+        year: parseInt(match[1], 10),
+        month: parseInt(match[2], 10),
+        day: parseInt(match[3], 10),
+      };
+    } else if ((match = date.match(yearMonthMatch))) {
+      return {
+        year: parseInt(match[1], 10),
+        month: parseInt(match[2], 10),
+        day: null, // Day is missing
+      };
+    } else if ((match = date.match(yearMatch))) {
+      return {
+        year: parseInt(match[1], 10),
+        month: null, // Month is missing
+        day: null, // Day is missing
+      };
+    }
+
+    // Invalid format
+    return { year: null, month: null, day: null };
+  }
+
+
+
+
+  /**
+   * Determine if the licensee's signed and expiration dates fall within the specified range.
+   */
   isWithinDateRange(signedDate: string, expirationDate: string): boolean {
-    const start = this.parseDate(this.startDate);
-    const end = this.parseDate(this.endDate);
-    const signed = this.parseDate(signedDate);
-    const expiration = this.parseDate(expirationDate);
+    const start = this.parseDate(this.startDate); // Parse start date
+    const end = this.parseDate(this.endDate); // Parse end date
+    const signed = this.parseDate(signedDate); // Parse signed date
+    const expiration = this.parseDate(expirationDate); // Parse expiration date
 
-    if (!signed || !expiration) return false;
+    // If signed date is invalid, exclude the record
+    if (!signed.year) return false;
+
+    const isDateWithinRange = (
+      date: { year: number | null; month: number | null; day: number | null },
+      rangeStart: { year: number | null; month: number | null; day: number | null } | null,
+      rangeEnd: { year: number | null; month: number | null; day: number | null } | null
+    ): boolean => {
+      if (!date.year) return false;
+
+      // Compare years
+      if (rangeStart?.year && date.year < rangeStart.year) return false;
+      if (rangeEnd?.year && date.year > rangeEnd.year) return false;
+
+      // Compare months if applicable
+      if (
+        rangeStart?.year === date.year &&
+        rangeStart.month &&
+        date.month &&
+        date.month < rangeStart.month
+      ) {
+        return false;
+      }
+      if (
+        rangeEnd?.year === date.year &&
+        rangeEnd.month &&
+        date.month &&
+        date.month > rangeEnd.month
+      ) {
+        return false;
+      }
+
+      // Compare days if applicable
+      if (
+        rangeStart?.year === date.year &&
+        rangeStart.month === date.month &&
+        rangeStart.day &&
+        date.day &&
+        date.day < rangeStart.day
+      ) {
+        return false;
+      }
+      if (
+        rangeEnd?.year === date.year &&
+        rangeEnd.month === date.month &&
+        rangeEnd.day &&
+        date.day &&
+        date.day > rangeEnd.day
+      ) {
+        return false;
+      }
+
+      return true;
+    };
 
     switch (this.dateFilterType) {
       case 'exactDate':
-        if (start && !end) {
-          return signed === start;
-        } else if (!start && end) {
-          return expiration === end;
-        } else if (start && end) {
-          return signed === start && expiration === end;
-        }
-        return false;
+        return (
+          isDateWithinRange(signed, start, start) || isDateWithinRange(expiration, end, end)
+        );
+
       case 'fullPeriod':
-        return (start ? signed >= start : true) && (end ? expiration <= end : true);
+        return (
+          isDateWithinRange(signed, start, end) || isDateWithinRange(expiration, start, end)
+        );
+
       case 'startDateInside':
-        return start ? signed >= start && (end ? signed <= end : true) : false;
+        return isDateWithinRange(signed, start, end);
+
       case 'endDateInside':
-        return end ? expiration <= end && (start ? expiration >= start : true) : false;
+        return isDateWithinRange(expiration, start, end);
+
       case 'anyDateInside':
-        return (start ? expiration >= start : true) && (end ? signed <= end : true);
+        return (
+          isDateWithinRange(signed, start, end) || isDateWithinRange(expiration, start, end)
+        );
+
       default:
         return false;
     }
   }
 
+
+
+
+
+
+  /**
+   * Apply date filter to the filtered table data.
+   * Updates cell colors based on whether the licensee meets the date criteria.
+   */
   applyDateFilter(): void {
     if (!this.startDate && !this.endDate) {
-      this.filteredTableData = this.tableData.map(row => [...row]);
+      // No date filter applied
       return;
     }
 
-    this.filteredTableData = this.tableData.map((row, rowIndex) =>
+    this.filteredTableData = this.filteredTableData.map((row, rowIndex) =>
       row.map((cell, colIndex) => {
         if (cell === 'green') {
           const licensor = this.licensors[rowIndex];
-          const licensee = this.licensees[colIndex];
+          const licensee = this.filteredLicensees[colIndex];
 
           const isValid =
             this.checkDateInData(this.fetchedData, licensor, licensee) ||
@@ -219,47 +494,75 @@ export class MobileComponent implements OnInit {
     console.log('Table data after applying date filter:', this.filteredTableData);
   }
 
+  /**
+   * Check if any data entry for the given licensor and licensee meets the date criteria.
+   */
   checkDateInData(data: any[], licensor: string, licensee: string): boolean {
-    return data.some(item =>
-      item.licensor === licensor &&
-      item.licensee === licensee &&
-      this.isWithinDateRange(item.signed_date, item.expiration_date)
+    return data.some(
+      (item) =>
+        item.licensor === licensor &&
+        this.normalizeName(item.licensee) === licensee &&
+        this.isWithinDateRange(item.signed_date, item.expiration_date)
     );
   }
 
+  /**
+   * Sort licensees alphabetically based on their original names.
+   */
   sortLicenseesAlphabetically(): void {
-    this.resetFilters();
-    this.licensees.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-    this.updateTableData();
+    this.filteredLicensees.sort((a, b) =>
+      this.normalizedToOriginalLicenseeMap.get(a)!.localeCompare(
+        this.normalizedToOriginalLicenseeMap.get(b)!,
+        undefined,
+        { sensitivity: 'base' }
+      )
+    );
+    this.updateFilteredTableData();
   }
 
+  /**
+   * Sort licensees by the total number of 'green' cells (total statements).
+   * Licensees with more 'green' cells appear first.
+   */
   sortLicenseesByCount(): void {
-    this.resetFilters();
-    this.licensees.sort((a, b) => this.getLicenseeCount(b) - this.getLicenseeCount(a));
-    this.updateTableData();
+    this.filteredLicensees.sort((a, b) => this.getLicenseeCount(b) - this.getLicenseeCount(a));
+    this.updateFilteredTableData();
   }
 
+  /**
+   * Get the count of 'green' cells for a specific licensee.
+   */
   getLicenseeCount(licensee: string): number {
-    return this.tableData.map(row => row[this.licensees.indexOf(licensee)]).filter(color => color === 'green').length;
+    const index = this.allLicensees.indexOf(licensee);
+    return this.tableData.map((row) => row[index]).filter((color) => color === 'green').length;
   }
 
+  /**
+   * Reset all filters to their default states.
+   */
   resetFilters(): void {
     this.searchTerm = '';
     this.searchTerm$.next('');
     this.startDate = '';
     this.endDate = '';
     this.dateFilterType = 'exactDate';
+    this.typeFilter = 'all'; // Default to 'all'
 
-    // Reset licensees to the original order
-    this.licensees = [...this.originalLicensees];
+    // Clear saved filter state
+    localStorage.removeItem('filterState');
 
-    // Reset table data to the original order
-    this.tableData = this.originalTableData.map(row => [...row]);
+    // Reset licensees and table data to original state
+    this.filteredLicensees = [...this.originalLicensees];
+    this.tableData = this.originalTableData.map((row) => [...row]);
+    this.filteredTableData = this.tableData.map((row) => [...row]);
 
-    // Reset filtered data to match original data
-    this.filteredTableData = this.tableData.map(row => [...row]);
+    console.log('Filters have been reset.');
   }
 
+
+  /**
+   * General sorting method based on the selected sort order.
+   */
   sortLicensees(): void {
     if (this.sortOrder === 'alphabetical') {
       this.sortLicenseesAlphabetically();
@@ -268,21 +571,42 @@ export class MobileComponent implements OnInit {
     }
   }
 
+  /**
+   * Get the description for a table cell, used for tooltips.
+   */
   getCellDescription(rowIndex: number, colIndex: number): string {
     const licensor = this.licensors[rowIndex];
-    const licensee = this.licensees[colIndex];
+    const licensee = this.displayLicensees[colIndex];
     return `${licensor} - ${licensee}`;
   }
 
+  /**
+   * Handle cell clicks.
+   * Navigate to different routes based on cell color and store relevant information in localStorage.
+   */
   cellClick(rowIndex: number, colIndex: number): void {
-    const licenseeName = this.licensees[colIndex];
+    const licenseeNameNormalized = this.filteredLicensees[colIndex];
+    const licenseeName = this.normalizedToOriginalLicenseeMap.get(licenseeNameNormalized) || licenseeNameNormalized;
     const licensorName = this.licensors[rowIndex];
-    const dynamicTitle = licenseeName + '-' + licensorName;
-    const cellColor = this.tableData[rowIndex][colIndex];
+    const dynamicTitle = `${licenseeName}-${licensorName}`;
+    const licenseeIndex = this.allLicensees.indexOf(licenseeNameNormalized);
+    const cellColor = this.tableData[rowIndex][licenseeIndex];
 
     localStorage.setItem('currentDynamicTitle', dynamicTitle);
     localStorage.setItem('licensorName', licensorName);
     localStorage.setItem('licenseeName', licenseeName);
+
+    // Save current filter state
+    const filterState = {
+      searchTerm: this.searchTerm,
+      startDate: this.startDate,
+      endDate: this.endDate,
+      dateFilterType: this.dateFilterType,
+      typeFilter: this.typeFilter,
+      sortOrder: this.sortOrder,
+      filteredLicensees: this.filteredLicensees,
+    };
+    localStorage.setItem('filterState', JSON.stringify(filterState));
 
     this.cellSelectionService.addUnselectedCell({ row: rowIndex, col: colIndex });
 
@@ -297,61 +621,40 @@ export class MobileComponent implements OnInit {
     localStorage.setItem('unselectedCells', JSON.stringify(unselectedCells));
   }
 
-  private filterTableData(searchTerm: string): void {
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
 
-    // Determine matching column indices
-    const matchingColumnIndices: number[] = this.licensees
-      .map((licensee, colIndex) => licensee.toLowerCase().includes(lowerCaseSearchTerm) ? colIndex : -1)
-      .filter(index => index !== -1);
-
-    if (matchingColumnIndices.length === 0) {
-      this.filteredTableData = this.tableData.map(row => row.map(cell => cell === 'white' ? 'transparent' : cell));
-      console.log('No matching columns found. Filtered table data set to all transparent:', this.filteredTableData);
-      return;
-    }
-
-    // Prepare arrays to hold the reordered licensees and table data
-    const reorderedLicensees: string[] = [];
-    const reorderedTableData: string[][] = [];
-
-    // Move matching columns to the left
-    matchingColumnIndices.forEach((colIndex) => {
-      reorderedLicensees.push(this.licensees[colIndex]);
-      reorderedTableData.push(this.tableData.map(row => row[colIndex]));
-    });
-
-    // Add remaining non-matching columns
-    this.licensees.forEach((licensee, colIndex) => {
-      if (!matchingColumnIndices.includes(colIndex)) {
-        reorderedLicensees.push(licensee);
-        reorderedTableData.push(this.tableData.map(row => row[colIndex]));
-      }
-    });
-
-    // Reconstruct tableData with non-matching columns set to transparent
-    this.licensees = reorderedLicensees;
-    this.filteredTableData = reorderedTableData[0].map((_, rowIndex) =>
-      reorderedTableData.map(column => column[rowIndex])
-    ).map((row, rowIndex) =>
-      row.map((cell, colIndex) => colIndex < matchingColumnIndices.length && this.licensees[colIndex] !== 'Unknown' ? cell : 'white')
-    );
-
-    console.log('Filtered table data after applying search term:', this.filteredTableData);
-  }
-
+  /**
+   * Search Input Handler.
+   * Triggers filter application when the Enter key is pressed.
+   */
   onSearchInput(event: KeyboardEvent): void {
     if (event.key === 'Enter') {
-      this.searchTerm$.next(this.searchTerm);
+      this.applyFilters();
     }
   }
 
+  /**
+   * Handle sort order changes.
+   * Updates the sort order and applies the corresponding sort.
+   */
   onSortOrderChange(event: any): void {
     this.sortOrder = event.target.value;
     this.sortLicensees();
   }
 
+  /**
+   * Handle date filter type changes.
+   */
   onDateFilterTypeChange(event: any): void {
     this.dateFilterType = event.target.value;
+  }
+
+  /**
+   * Getter to display original licensee names.
+   * Maps normalized names back to their original form.
+   */
+  get displayLicensees(): string[] {
+    return this.filteredLicensees.map(
+      (normalized) => this.normalizedToOriginalLicenseeMap.get(normalized) || normalized
+    );
   }
 }

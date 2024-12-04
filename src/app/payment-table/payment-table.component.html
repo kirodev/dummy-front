@@ -129,7 +129,7 @@
                             <td>{{ item.payment_amount | number:'1.2-2' }}</td>
                             <td>{{ item.results | number:'1.2-2' }}</td>
                             <td>
-                              <div 
+                              <div
                                 *ngIf="!item.editing && item.showDetails; else editingMode">
                                 {{ item.details }}
                               </div>
@@ -172,7 +172,7 @@
                               <button
                                 (click)="AddMappingId(item.id, item, 'payments')">Mapping</button>
                               <button (click)="deleteMappingId(item.id)">Delete
-                                Mapping ID</button>
+                                </button>
 
                               <button *ngIf="item.modified"
                                 (click)="openFeedbackAfterUndoPayment(item)">Undo</button>

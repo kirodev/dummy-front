@@ -136,7 +136,7 @@
               <td>{{ item.payment_structure }}</td>
               <td>{{ item.geographical_scope }}</td>
               <td >
-                <div 
+                <div
                   *ngIf="!item.editing && item.showDetails ; else editingMode">
                   {{ item.details }}
                 </div>
@@ -161,7 +161,7 @@
                 <ng-container *ngIf="uniqueLicenses.length > 0">
                   <select [(ngModel)]="item.selectedMappingId"
                     [id]="'mappingIdSelect-' + item.id">
-                    <option value selected>Select Mapping ID to add :</option>
+                    <option disabled >Select Mapping ID to add :</option>
                     <ng-container
                       *ngFor="let mappingId of filterMappingIds(item, 'licenses')">
                       <option [value]="mappingId">{{ mappingId }}</option>
@@ -169,12 +169,11 @@
                   </select>
                 </ng-container>
                 <button
-                  (click)="AddMappingId(item.id, item, 'licenses')">Mapping</button>
-                <button (click)="deleteMappingId(item.id)">Delete Mapping
-                  ID</button>
+                  (click)="AddMappingId(item.id, item, 'licenses')">Map</button>
+                <button (click)="deleteMappingId(item.id)">Delete</button>
                 <button *ngIf="item.modified"
                   (click)="openFeedbackAfterUndolicense(item)">Undo</button>
-                <button (click)="deleteLicense(item.id)">Delete Record</button>
+                <button (click)="deleteLicense(item.id)">Delete row</button>
               </td>
               <td (mouseenter)="showCommentTooltip(item)"
                 (mouseleave)="hideCommentTooltip(item)" *ngIf="showAdminBoard">

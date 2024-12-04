@@ -101,7 +101,11 @@ export class LicenseTableComponent implements OnInit {
   showPopup: boolean = false;
   showAdminBoard = false;
   showModeratorBoard = false;
-
+  item = {
+    id: 'Mapping Id',
+    selectedMappingId: 'Mapping Id '  // initialize with empty string to show the placeholder
+  };
+form: any;
   constructor(private connectionService: ConnectionService, private http: HttpClient,private dialog: MatDialog,private timelineConnection : TimelineService,private roleService: RoleService) {}
 
   ngOnInit(): void {
