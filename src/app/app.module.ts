@@ -13,7 +13,7 @@ import { SpiderChartComponent } from './spider-chart/spider-chart.component';
 import { AdvMobileComponent } from './adv-mobile/adv-mobile.component';
 import { AudiovisualComponent } from './audiovisual/audiovisual.component';
 import { TopDownComponent } from './top-down/top-down.component';
-import { SpiderChartResultComponent } from './spider-chart-result/spider-chart-result.component'; 
+import { SpiderChartResultComponent } from './spider-chart-result/spider-chart-result.component';
 import { DataSharingService } from './data-sharing-service.service';
 import { BottomUpComponent } from './bottom-up/bottom-up.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -39,13 +39,13 @@ import { KeysPipe } from './keys.pipe';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { EquationsPaymentsComponent } from './equations-payments/equations-payments.component';
 import { KnownlicensesComponent } from './knownlicenses/knownlicenses.component';
-import {CloudinaryModule} from '@cloudinary/ng';
+import { CloudinaryModule } from '@cloudinary/ng';
 import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-revenues.component';
-
-
+import { SafePipe } from './safe-pipe.pipe';
+import { LIBComponent } from './lib/lib.component';
 
 @NgModule({
-  declarations: [	
+  declarations: [
     AppComponent,
     HomeComponent,
     FarLicencesComponent,
@@ -75,10 +75,12 @@ import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-reven
     KeysPipe,
     NotFoundComponent,
     EquationsPaymentsComponent,
-      KnownlicensesComponent,
-      QuarterlyRevenuesComponent
-   ],
-  
+    KnownlicensesComponent,
+    QuarterlyRevenuesComponent,
+    LIBComponent,
+    SafePipe,
+  ],
+
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -86,15 +88,12 @@ import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-reven
     BrowserAnimationsModule,
     MatTabsModule,
     MatDialogModule,
-    FormsModule, 
-    HttpClientModule, 
+    FormsModule,
+    HttpClientModule,
     NgxExtendedPdfViewerModule,
-    CloudinaryModule
-
-  
+    CloudinaryModule,
   ],
-  providers: [ DataSharingService ,    LicenseTableComponent 
-],
-  bootstrap: [AppComponent]
+  providers: [DataSharingService, LicenseTableComponent],
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

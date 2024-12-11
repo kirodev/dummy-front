@@ -31,6 +31,7 @@ import { LibraryComponent } from './library/library.component';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { EquationsPaymentsComponent } from './equations-payments/equations-payments.component';
 import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-revenues.component';
+import { LIBComponent } from './lib/lib.component';
 
 const routes: Routes = [
 
@@ -71,6 +72,8 @@ const routes: Routes = [
   { path: 'sales', component: SalesComponent },
   { path: 'revenues', component: RevenuesComponent },
   { path: 'quarterly-revenues', component: QuarterlyRevenuesComponent },
+
+  { path: 'lib', component: LIBComponent },
 
   { path: 'library', component: LibraryComponent },
   { path: 'equations', component: EquationsPaymentsComponent },

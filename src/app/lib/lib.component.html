@@ -1,0 +1,36 @@
+<div *ngIf="isLoading" class="loading-indicator">
+  Loading files, please wait...
+</div>
+
+<div *ngIf="!isLoading">
+  <div class="search-container">
+    <!-- Search Input -->
+    <input
+      type="text"
+      [(ngModel)]="searchQuery"
+      placeholder="Search by Title..."
+    />
+
+    <button (click)="searchFiles()">Search</button>
+
+    <!-- Year Filter -->
+    <label>Search by Year:</label>
+    <select [(ngModel)]="selectedYear" (change)="searchFiles()">
+      <option value="">All Years</option>
+      <option *ngFor="let year of uniqueYears" [value]="year">
+        {{ year }}
+      </option>
+    </select>
+
+    <button (click)="resetFilters()">Reset Filters</button>
+  </div>
+
+  <!-- Card Container -->
+  <div class="card-container">
+    <div class="card" *ngFor="let file of filteredPdfFiles">
+      <h3>{{ file.title }}</h3>
+      <p>Year: {{ file.year }}</p>
+      <button (click)="redirectToLink(file.sharedLink)">View PDF</button>
+    </div>
+  </div>
+</div>
