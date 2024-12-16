@@ -41,7 +41,7 @@ export class PdfLibraryService {
 
   // Fetch and check files from Dropbox
   checkDropboxFiles(): Observable<PdfFile[]> {
-    return this.http.get<PdfFile[]>(`${this.url}lib`);
+    return this.http.get<PdfFile[]>(`${this.url}lib`, { headers: this.getHeaders() });
   }
   getFilesFromDatabase(): Observable<PdfFile[]> {
     const endpoint = `${this.url}lib`; // Update the endpoint to fetch all files
