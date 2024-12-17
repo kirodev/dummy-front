@@ -417,8 +417,8 @@ plotData(): void {
 
   // Process annual revenue data
   this.annualRevenues.forEach((revenue) => {
-    if (revenue.year && typeof revenue.total_revenue === 'number' && !isNaN(revenue.total_revenue)) {
-      yearRevenuesMap.set(revenue.year, revenue.total_revenue);
+    if (revenue.year && typeof revenue.licensing_revenue === 'number' && !isNaN(revenue.licensing_revenue)) {
+      yearRevenuesMap.set(revenue.year, revenue.licensing_revenue);
     }
   });
 
@@ -1097,10 +1097,10 @@ plotData(): void {
         );
 
         if (matchingRevenue && payment.coef) {
-          const totalRevenue = matchingRevenue.total_revenue;
+          const totalRevenue = matchingRevenue.licensing_revenue;
           const coef = parseFloat(payment.coef);
 
-          // Perform the calculation: coef * total_revenue
+          // Perform the calculation: coef * licensing_revenue
           payment.results = coef * totalRevenue;
 
         } else {

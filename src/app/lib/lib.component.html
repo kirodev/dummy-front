@@ -28,7 +28,7 @@
   <!-- Card Container -->
   <div class="card-container">
     <div class="card" *ngFor="let file of filteredPdfFiles">
-      <h3>{{ file.title }}</h3>
+      <h3>{{ file.title | titlecase }}</h3>
       <p>Year: {{ file.year }}</p>
       <button (click)="redirectToLink(file.sharedLink)">View PDF</button>
     </div>
