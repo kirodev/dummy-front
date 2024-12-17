@@ -25,6 +25,7 @@ export class LIBComponent implements OnInit {
   ngOnInit(): void {
     this.loadExistingFiles();
         this.fetchLibraryFiles();
+        this.populateUniqueYears();
 
   }
 
@@ -99,6 +100,17 @@ export class LIBComponent implements OnInit {
     this.filteredPdfFiles = [...this.pdfFiles];
   }
 
+  populateUniqueYears(): void {
+    // Extract years from your files
+    const allYears = this.pdfFiles.map(file => Number(file.year)); // or simply +file.year
+    const minYear = Math.min(...allYears);
+    const maxYear = Math.max(...allYears);
 
+    // Build an array of all years from max down to min
+    this.uniqueYears = [];
+    for (let year = maxYear; year >= minYear; year--) {
+      this.uniqueYears.push(year.toString());
+    }
 
-}
+}}
+
