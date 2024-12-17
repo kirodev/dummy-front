@@ -3,7 +3,7 @@
 </div>
 
 <div *ngIf="!isLoading">
-  <div class="search-container">
+  <div class="card-container">
     <!-- Search Input -->
     <input
       type="text"
@@ -11,7 +11,7 @@
       placeholder="Search by Title..."
     />
 
-    <button (click)="searchFiles()">Search</button>
+    <button (click)="searchFiles()" >Search</button>
 
     <!-- Year Filter -->
     <label>Search by Year:</label>
