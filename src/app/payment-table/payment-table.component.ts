@@ -455,7 +455,6 @@ plotData(): void {
 
       if (value !== undefined) {
         yearPaymentsMap.set(numericYear, { value, isResult, rowData: data.primary });
-        console.log(`Stored primary payment for year ${numericYear}:`, value, `isResult:`, isResult);
       }
     }
   });
@@ -464,7 +463,6 @@ plotData(): void {
   const quarterlyPaymentsMap = new Map<number, { sum: number; count: number }>();
 
   this.filteredMultiplePayments.forEach((item) => {
-    console.log(`Processing filteredMultiplePayments item:`, item);
     const numericYear = parseInt(item.year, 10);
     const eqType = item.eq_type?.toUpperCase();
 
@@ -484,12 +482,10 @@ plotData(): void {
         const parsedCoef = parseFloat(item.coef);
         paymentAmount = parsedCoef * annualRevenue;
         isResult = true; // Indicate that the payment is calculated
-        console.log(`Calculated paymentAmount for year ${numericYear} using coef:`, paymentAmount);
       } else {
         // Fallback to results if both payment_amount and coef are unavailable
         paymentAmount = item.results ?? null;
         isResult = true;
-        console.log(`Fallback paymentAmount for year ${numericYear} using results:`, paymentAmount);
       }
 
       if (paymentAmount !== null && !isNaN(paymentAmount)) {
@@ -522,7 +518,6 @@ plotData(): void {
           if (typeof quarterlyValue === 'number' && !isNaN(quarterlyValue)) {
             quarterlyData.sum += quarterlyValue;
             quarterlyData.count += 1;
-            console.log(`Updated quarterlyPaymentsMap for year ${numericYear}:`, quarterlyData);
           }
         }
 
@@ -531,7 +526,6 @@ plotData(): void {
           const value = item.payment_amount ?? item.results ?? 0;
           if (typeof value === 'number' && !isNaN(value)) {
             yearMPOthersMinTPYMap.set(numericYear, (yearMPOthersMinTPYMap.get(numericYear) || 0) + value);
-            console.log(`Updated yearMPOthersMinTPYMap for year ${numericYear}:`, value);
           }
         }
       }
@@ -553,7 +547,6 @@ plotData(): void {
 
   // Process payments minTPY data and sum for "Others MinTPY"
   this.paymentData.forEach((item) => {
-    console.log(`Processing paymentData item:`, item);
     const numericYear = parseInt(item.year, 10);
     const eqType = item.eq_type?.toUpperCase();
     if (
@@ -572,19 +565,16 @@ plotData(): void {
         const parsedCoef = parseFloat(item.coef);
         paymentAmount = parsedCoef * annualRevenue;
         isResult = true; // Indicate that the payment is calculated
-        console.log(`Calculated paymentAmount for year ${numericYear} using coef:`, paymentAmount);
       } else {
         // Fallback to results if both payment_amount and coef are unavailable
         paymentAmount = item.results ?? null;
         isResult = true;
-        console.log(`Fallback paymentAmount for year ${numericYear} using results:`, paymentAmount);
       }
 
       if (paymentAmount !== null && !isNaN(paymentAmount)) {
         // Check if eq_type matches PSPY, FFPY, RPYI, LSPY or their prefixed versions
         if (['PSPY', 'FFPY', 'RPYI', 'LSPY'].some((type) => eqType?.endsWith(type))) {
           yearOthersMinTPYMap.set(numericYear, (yearOthersMinTPYMap.get(numericYear) || 0) + paymentAmount);
-          console.log(`Updated yearOthersMinTPYMap for year ${numericYear}:`, paymentAmount);
         } else if (eqType === 'TPQ') {
           // For payments minTPY data
           if (!yearPaymentsMinTPYMap.has(numericYear)) {
@@ -593,7 +583,6 @@ plotData(): void {
           } else {
             const currentSum = yearPaymentsMinTPYMap.get(numericYear)!;
             yearPaymentsMinTPYMap.set(numericYear, currentSum + paymentAmount);
-            console.log(`Updated TPQ payment for year ${numericYear}:`, currentSum + paymentAmount);
           }
         } else if (eqType === 'MAXTPY') { // Handling maxTPY
           if (!yearPaymentsMap.has(numericYear)) {
@@ -1065,7 +1054,7 @@ plotData(): void {
         this.initializeUniquePayments();
 
         // Call performRevenueCalculations to calculate results for adv_eq_type 'TRY'
-        this.performRevenueCalculations();  // <-- This is where we add the calculation for `TRY`
+        this.performPaymentResultsCalculations();  // <-- This is where we add the calculation for `TRY`
       },
       (error) => {
         console.error('Error fetching data for multiple licensees:', error);
@@ -1073,18 +1062,20 @@ plotData(): void {
     );
   }
 
-  performRevenueCalculations(): void {
+  performPaymentResultsCalculations(): void {
     if (!this.annualRevenues || this.annualRevenues.length === 0) {
-      console.error('No annual revenues data available.');
+      console.error('No annual revenues data available for Payment calculations.');
       return;
     }
 
     const updates: Observable<any>[] = [];
 
-    this.filteredMultiplePayments.forEach(payment => {
-      if (payment.adv_eq_type === 'TRY') {
+    this.paymentData.forEach(payment => {
+      // Check for eq_type or adv_eq_type conditions that require results calculation
+      // For example: if payment.adv_eq_type === 'TRY' or payment.eq_type === 'TRY'
+      if (payment.adv_eq_type === 'TRY' || payment.eq_type === 'TRY') {
         const matchingRevenue = this.annualRevenues.find(revenue =>
-          revenue.licensor === payment.licensor && revenue.year === payment.year
+          revenue.licensor === payment.licensor && revenue.year === parseInt(payment.year, 10)
         );
 
         if (matchingRevenue && payment.coef) {
@@ -1094,9 +1085,9 @@ plotData(): void {
           // Perform the calculation: coef * licensing_revenue
           payment.results = coef * totalRevenue;
 
-          // Update the results in the database if we have an ID and results is a valid number
+          // If you want to persist this to the backend:
           if (payment.id && !isNaN(payment.results)) {
-            const updateObs = this.paymentConnection.updateMultiplePaymentResults(payment.id, payment.results);
+            const updateObs = this.paymentConnection.updatePaymentResults(payment.id, payment.results);
             updates.push(updateObs);
           }
         } else {
@@ -1106,14 +1097,7 @@ plotData(): void {
     });
 
     if (updates.length > 0) {
-      // Optionally wait until all updates complete before re-plotting:
-      // Example using forkJoin:
-      // forkJoin(updates).subscribe({
-      //   next: () => this.plotData(),
-      //   error: (err) => console.error('Error updating some results:', err)
-      // });
-
-      // Or handle them one by one:
+      // Wait until all updates complete before re-plotting
       let completed = 0;
       updates.forEach(obs => {
         obs.subscribe({
@@ -1124,7 +1108,7 @@ plotData(): void {
               this.plotData();
             }
           },
-          error: err => console.error('Error updating a multiple payment result:', err)
+          error: err => console.error('Error updating payment result:', err)
         });
       });
     } else {

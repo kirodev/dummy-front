@@ -208,5 +208,11 @@ updateMultiplePaymentResults(id: number, results: number): Observable<any> {
   return this.http.put(url, results, { headers })
     .pipe(catchError(this.handleError));
 }
+updatePaymentResults(id: number, results: number): Observable<any> {
+  const url = `${this.baseUrl}/${id}/results`;
+  const headers = this.getHeaders();
+  return this.http.put(url, results, { headers })
+    .pipe(catchError(this.handleError));
+}
 
 }

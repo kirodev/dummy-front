@@ -3,17 +3,26 @@
 <h1>{{ dynamicTitle }}</h1>
 
 <!-- Tab Navigation -->
+<!-- Tab Navigation -->
 <ul class="nav nav-tabs custom-tabs">
   <li class="nav-item">
-    <a class="nav-link" routerLink="/license"
-      routerLinkActive="active">Licenses</a>
+    <a class="nav-link" routerLink="/license" routerLinkActive="active">Licenses</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" routerLink="/payment"
-      routerLinkActive="active">Payments</a>
+    <a class="nav-link" routerLink="/payment" routerLinkActive="active">Payments</a>
   </li>
-
+  <li class="nav-item">
+    <a class="nav-link active" data-bs-toggle="tab" href="#chart-tab">Chart</a>
+  </li>
 </ul>
+
+<!-- Content for the Chart Tab -->
+<div class="tab-content">
+  <div id="chart-tab" class="tab-pane fade show active">
+    <h3>Licensing Revenues vs Payments</h3>
+    <div id="licensorChart"></div>
+  </div>
+</div>
 
 <div *ngIf="showAdminBoard || showModeratorBoard">
   <div id='myDiv'></div>

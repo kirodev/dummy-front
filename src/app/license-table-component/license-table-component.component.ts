@@ -152,6 +152,68 @@ form: any;
   toggleDetails(item: any): void {
     item.showDetails = !item.showDetails;
   }
+  annualRevenues: any[] = [];
+  paymentData: any[] = [];
+
+  plotLicensorData(): void {
+    const years: number[] = [];
+    const paymentsByLicensee: { [licensee: string]: number[] } = {};
+    const revenues: number[] = [];
+
+    // Process licensing revenues
+    this.annualRevenues.forEach((revenue: any) => {
+      if (revenue.year && typeof revenue.licensing_revenue === 'number') {
+        years.push(revenue.year);
+        revenues.push(revenue.licensing_revenue);
+      }
+    });
+
+    // Process licensee payments (TPY)
+    this.paymentData.forEach((item: any) => {
+      if (item.eq_type === 'TPY' && item.licensor === this.licensorName) {
+        const year = parseInt(item.year, 10);
+        const payment = item.payment_amount || item.results || 0;
+
+        if (!paymentsByLicensee[item.licensee]) {
+          paymentsByLicensee[item.licensee] = Array(years.length).fill(0);
+        }
+
+        const index = years.indexOf(year);
+        if (index !== -1) {
+          paymentsByLicensee[item.licensee][index] += payment;
+        }
+      }
+    });
+
+    // Prepare traces for Plotly
+    const traces = Object.keys(paymentsByLicensee).map(licensee => ({
+      x: years,
+      y: paymentsByLicensee[licensee],
+      type: 'bar',
+      name: `${licensee} (TPY)`
+    }));
+    
+    traces.push({
+      x: years,
+      y: revenues,
+      type: 'scatter',
+      mode: 'lines', // Use mode for line graphs
+      name: 'Licensor Revenue',
+      line: { color: 'rgba(0, 123, 255, 1)', width: 3 }
+    } as any);
+
+
+    // Plot the data
+    const layout = {
+      title: `${this.licensorName} Licensing Revenues and TPY Payments`,
+      xaxis: { title: 'Year' },
+      yaxis: { title: 'Amount', tickformat: ',d' },
+      barmode: 'stack',
+      height: 600
+    };
+
+    Plotly.newPlot('licensorChart', traces, layout);
+  }
 
   fetchLicenseData(): void {
     this.connectionService.getData().subscribe(
