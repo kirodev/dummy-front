@@ -6,8 +6,12 @@ import { environment } from 'env/environment';
 const AUTH_API = environment.baseUrl;
 
 const httpOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+  headers: new HttpHeaders({
+    'Content-Type': 'application/json'
+  }),
+  withCredentials: true // If your backend requires cookies
 };
+
 
 
 @Injectable({

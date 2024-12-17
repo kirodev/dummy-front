@@ -36,12 +36,12 @@ export class PdfLibraryService {
   }
   // Fetch all files from the database
   getExistingFiles(): Observable<PdfFile[]> {
-    return this.http.get<PdfFile[]>(`${this.url}lib/all`);
-  }
+    const endpoint = `${this.url}lib/all`; // Update the endpoint to fetch all files
+    return this.http.get<PdfFile[]>(endpoint, { headers: this.getHeaders() });  }
 
   // Fetch and check files from Dropbox
   checkDropboxFiles(): Observable<PdfFile[]> {
-    return this.http.get<PdfFile[]>(`${this.url}lib`);
+    return this.http.get<PdfFile[]>(`${this.url}lib`, { headers: this.getHeaders() });
   }
   getFilesFromDatabase(): Observable<PdfFile[]> {
     const endpoint = `${this.url}lib`; // Update the endpoint to fetch all files

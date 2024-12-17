@@ -24,13 +24,45 @@ export class LIBComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadExistingFiles();
+        this.fetchLibraryFiles();
+
   }
 
   loadExistingFiles(): void {
     this.isLoading = true;
+    this.pdfLibraryService.getExistingFiles().subscribe({
+      next: (files: PdfFile[]) => {
+        this.pdfFiles = files;
 
+        // Populate uniqueYears
+        this.uniqueYears = Array.from(new Set(this.pdfFiles.map((file) => file.year))).sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
+
+        // Initially set filtered files to all files
+        this.filteredPdfFiles = [...this.pdfFiles];
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading existing files:', err);
+        this.isLoading = false;
+      },
+    });
   }
+  fetchLibraryFiles(): void {
+    this.isLoading = true;
 
+    // Fetch and update library files from Dropbox
+    this.pdfLibraryService.checkDropboxFiles().subscribe({
+      next: (files) => {
+        this.pdfFiles = files;
+        console.log('Fetched and updated library files:', files);
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error fetching library files:', err);
+        this.isLoading = false;
+      }
+    });
+  }
   searchFiles(): void {
     const query = this.searchQuery.toLowerCase().trim();
 
