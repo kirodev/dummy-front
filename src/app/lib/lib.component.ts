@@ -88,8 +88,11 @@ export class LIBComponent implements OnInit {
 
 
   redirectToLink(link: string): void {
-    window.open(link, '_blank');
+    // Open a new window with minimal UI (no menubar, toolbar, location bar, etc.)
+    const windowFeatures = 'menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes,width=800,height=600';
+    window.open(link, '', windowFeatures);
   }
+
 
   resetFilters(): void {
     this.searchQuery = '';
