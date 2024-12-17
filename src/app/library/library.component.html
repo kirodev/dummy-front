@@ -68,9 +68,12 @@
       <button (click)="openPDFViewer(file, $event)">View</button>
 
       <!-- Toggle Button for Details -->
-      <button *ngIf="!searchByTitle && !searchByDetails && file.details" (click)="toggleDetails(file, $event)">
-        Toggle Details
-      </button>
+      <button
+      *ngIf="!searchByTitle && !searchByDetails && file.details"
+      (click)="toggleDetails(file, $event)">
+      <span *ngIf="!file.showDetails">&#9662; Highlights</span><!-- Down arrow (▼) when closed -->
+      <span *ngIf="file.showDetails">&#9652; Highlights</span><!-- Up arrow (▲) when open -->
+    </button>
 
       <!-- Display matching details in a table format if showDetails is true -->
       <div *ngIf="file.showDetails">

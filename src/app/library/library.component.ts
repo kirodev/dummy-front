@@ -103,6 +103,7 @@ export class LibraryComponent implements OnInit {
           } else {
             return file;
           }
+
         });
 
         // Unique dates and sorting logic
@@ -122,13 +123,27 @@ export class LibraryComponent implements OnInit {
           }
         });
 
-        // Combine details and sort files by date
         this.pdfFiles = Array.from(uniqueFilesMap.values()).map(groupedFiles => {
           const baseFile = groupedFiles[0];
-          const combinedDetails = groupedFiles
-            .map(f => f.details)
-            .filter(Boolean)
-            .join('\n---\n');
+
+          // Collect all detail lines from each file.
+          const allLines: string[] = [];
+          for (const file of groupedFiles) {
+            if (file.details) {
+              const lines = file.details
+                .split('\n---\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+              allLines.push(...lines);
+            }
+          }
+
+          // Remove duplicates using a Set
+          const uniqueLines = Array.from(new Set(allLines));
+
+          // Join back into a single string
+          const combinedDetails = uniqueLines.join('\n---\n');
+
           return {
             ...baseFile,
             details: combinedDetails || baseFile.details,
@@ -136,6 +151,7 @@ export class LibraryComponent implements OnInit {
           };
         });
 
+        // Optional: If you previously sorted the files by date, retain that logic here.
         this.pdfFiles.sort((a, b) => {
           if (a.date === 'Unknown Year' && b.date !== 'Unknown Year') return 1;
           if (b.date === 'Unknown Year' && a.date !== 'Unknown Year') return -1;
@@ -143,6 +159,7 @@ export class LibraryComponent implements OnInit {
           const yearB = parseInt(b.date ?? '0', 10);
           return yearB - yearA;
         });
+
 
         this.filteredPdfFiles = this.pdfFiles;
       },
@@ -279,14 +296,22 @@ export class LibraryComponent implements OnInit {
     file.showDetails = !file.showDetails;
 
     if (file.showDetails) {
+      // If no search-by-details or highlightedDetails from search, we process lines here
       if (!this.searchByDetails || !file.highlightedDetails || file.highlightedDetails.length === 0) {
-        const detailRows = (file.details || '').split('\n---\n');
-        file.highlightedDetails = detailRows.map(row =>
-          this.highlightMatchingDetails(row, this.searchQuery.toLowerCase().split(/\s+/))
+        const detailRows = (file.details || '').split('\n---\n').map(line => line.trim()).filter(line => line.length > 0);
+
+        // Remove duplicates again here to be safe
+        const uniqueRows = Array.from(new Set(detailRows));
+
+        // Highlight matching details if there's a search query
+        const searchTerms = this.searchQuery.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+        file.highlightedDetails = uniqueRows.map(row =>
+          this.highlightMatchingDetails(row, searchTerms)
         );
       }
     } else {
       file.highlightedDetails = [];
     }
   }
+
 }
