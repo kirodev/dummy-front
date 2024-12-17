@@ -420,7 +420,7 @@
                 <ng-container *ngIf="uniqueLicenses.length > 0">
                   <select [(ngModel)]="item.selectedMappingId"
                     [id]="'mappingIdSelect-' + item.id">
-                    <option value selected>Select Mapping ID to add :</option>
+                    <option value disabled>Select Mapping ID to add :</option>
                     <ng-container
                       *ngFor="let mappingId of filterMappingIds(item, 'multipleLicenses')">
                       <option [value]="mappingId">{{ mappingId }}</option>

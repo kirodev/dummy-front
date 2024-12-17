@@ -200,4 +200,13 @@ getAnnualRevenues(): Observable<any[]> {
     catchError(this.handleError)
   );
 }
+
+
+updateMultiplePaymentResults(id: number, results: number): Observable<any> {
+  const url = `${this.baseUrlMP}/${id}/results`;
+  const headers = this.getHeaders();
+  return this.http.put(url, results, { headers })
+    .pipe(catchError(this.handleError));
+}
+
 }

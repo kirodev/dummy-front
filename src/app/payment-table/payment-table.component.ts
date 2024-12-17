@@ -239,7 +239,7 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
     normalizedPath = pathParts.map(encodeURIComponent).join('/') + '/' + formattedFilename;
 
     // Step 6: Construct the Cloudinary URL
-    return `https://res.cloudinary.com/himbuyrbv/image/upload/${normalizedPath}`;
+    return `https://res.cloudinary.com/hgljhe0wl/image/upload/${normalizedPath}`;
   }
 
 
@@ -713,17 +713,7 @@ plotData(): void {
     revenues.push(revenue);
   });
 
-  console.log('Payments:', payments);
-  console.log('Results:', results);
-  console.log('PaymentsMinTPY:', paymentsMinTPY);
-  console.log('OthersMinTPY:', othersMinTPY);
-  console.log('FilteredMultiplePaymentsGreen:', filteredMultiplePaymentsGreen);
-  console.log('FilteredMultiplePaymentsYellow:', filteredMultiplePaymentsYellow);
-  console.log('FilteredMultiplePaymentsMax:', filteredMultiplePaymentsMax);
-  console.log('FilteredMultiplePaymentsMaxCalculated:', filteredMultiplePaymentsMaxCalculated);
-  console.log('MPminTPY:', MPminTPY);
-  console.log('mpOthersMinTPY:', mpOthersMinTPY);
-  console.log('Revenues:', revenues);
+
 
   // Define Plotly traces with unique offsetgroups, except for the two to overlay
   const revenueTrace = {
@@ -1089,8 +1079,9 @@ plotData(): void {
       return;
     }
 
+    const updates: Observable<any>[] = [];
+
     this.filteredMultiplePayments.forEach(payment => {
-      // Check if adv_eq_type is 'TRY'
       if (payment.adv_eq_type === 'TRY') {
         const matchingRevenue = this.annualRevenues.find(revenue =>
           revenue.licensor === payment.licensor && revenue.year === payment.year
@@ -1103,14 +1094,47 @@ plotData(): void {
           // Perform the calculation: coef * licensing_revenue
           payment.results = coef * totalRevenue;
 
+          // Update the results in the database if we have an ID and results is a valid number
+          if (payment.id && !isNaN(payment.results)) {
+            const updateObs = this.paymentConnection.updateMultiplePaymentResults(payment.id, payment.results);
+            updates.push(updateObs);
+          }
         } else {
           console.log(`No matching revenue found for ${payment.licensor} (${payment.year}) or coefficient is missing.`);
         }
       }
     });
 
-    this.plotData();  // Re-plot the data to include the new results
+    if (updates.length > 0) {
+      // Optionally wait until all updates complete before re-plotting:
+      // Example using forkJoin:
+      // forkJoin(updates).subscribe({
+      //   next: () => this.plotData(),
+      //   error: (err) => console.error('Error updating some results:', err)
+      // });
+
+      // Or handle them one by one:
+      let completed = 0;
+      updates.forEach(obs => {
+        obs.subscribe({
+          next: () => {
+            completed++;
+            if (completed === updates.length) {
+              // All updates done, now re-plot
+              this.plotData();
+            }
+          },
+          error: err => console.error('Error updating a multiple payment result:', err)
+        });
+      });
+    } else {
+      // No updates needed, just re-plot
+      this.plotData();
+    }
   }
+
+
+
 
   initializeUniquePayments(): void {
     const uniquePayments = this.multiplePayments.reduce((acc: string[], curr: any) => {

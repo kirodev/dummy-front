@@ -232,7 +232,7 @@ form: any;
     normalizedPath = pathParts.map(encodeURIComponent).join('/') + '/' + formattedFilename;
 
     // Step 6: Construct the Cloudinary URL
-    return `https://res.cloudinary.com/himbuyrbv/image/upload/${normalizedPath}`;
+    return `https://res.cloudinary.com/hgljhe0wl/image/upload/${normalizedPath}`;
   }
 
 

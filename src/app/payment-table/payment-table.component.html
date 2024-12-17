@@ -308,7 +308,7 @@
             <ng-container *ngIf="uniquePayments.length > 0">
               <select [(ngModel)]="item.selectedMappingId"
                 [id]="'mappingIdSelect-' + item.id">
-                <option value selected>Select Mapping ID to add :</option>
+                <option value disabled>Select Mapping ID to add :</option>
                 <!-- Iterate over the filteredMappingIds array -->
                 <ng-container
                   *ngFor="let mappingId of filterMappingIds(item, 'payments')">
@@ -541,7 +541,7 @@
             <ng-container *ngIf="uniquePayments.length > 0">
               <select [(ngModel)]="item.selectedMappingId"
                 [id]="'mappingIdSelect-' + item.id">
-                <option value selected>Select Mapping ID to add :</option>
+                <option value disabled>Select Mapping ID to add :</option>
                 <!-- Iterate over the filteredMappingIds array -->
                 <ng-container
                   *ngFor="let mappingId of filterMappingIds(item, 'multiplePayments')">
