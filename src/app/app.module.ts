@@ -43,6 +43,7 @@ import { CloudinaryModule } from '@cloudinary/ng';
 import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-revenues.component';
 import { SafePipe } from './safe-pipe.pipe';
 import { LIBComponent } from './lib/lib.component';
+import { LicensingRevenuesComponent } from './licensing-revenues/licensing-revenues.component';
 
 @NgModule({
   declarations: [
@@ -79,6 +80,7 @@ import { LIBComponent } from './lib/lib.component';
     QuarterlyRevenuesComponent,
     LIBComponent,
     SafePipe,
+    LicensingRevenuesComponent,
   ],
 
   imports: [

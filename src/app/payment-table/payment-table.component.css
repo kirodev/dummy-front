@@ -304,6 +304,7 @@ td {
   margin-bottom: 0; /* Remove space below tabs */
   margin-left: -0.5px; /* Adjust this value to align the tabs with the plot */
   border-bottom: 1px solid #ccc;
+  
 }
 
 

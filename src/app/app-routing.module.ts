@@ -32,6 +32,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
 import { EquationsPaymentsComponent } from './equations-payments/equations-payments.component';
 import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-revenues.component';
 import { LIBComponent } from './lib/lib.component';
+import { LicensingRevenuesComponent } from './licensing-revenues/licensing-revenues.component';
 
 const routes: Routes = [
 
@@ -74,6 +75,7 @@ const routes: Routes = [
   { path: 'quarterly-revenues', component: QuarterlyRevenuesComponent },
 
   { path: 'lib', component: LIBComponent },
+  { path: 'licensing-revenues', component: LicensingRevenuesComponent },
 
   { path: 'library', component: LibraryComponent },
   { path: 'equations', component: EquationsPaymentsComponent },

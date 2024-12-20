@@ -11,18 +11,10 @@
   <li class="nav-item">
     <a class="nav-link" routerLink="/payment" routerLinkActive="active">Payments</a>
   </li>
-  <li class="nav-item">
-    <a class="nav-link active" data-bs-toggle="tab" href="#chart-tab">Chart</a>
-  </li>
+
 </ul>
 
-<!-- Content for the Chart Tab -->
-<div class="tab-content">
-  <div id="chart-tab" class="tab-pane fade show active">
-    <h3>Licensing Revenues vs Payments</h3>
-    <div id="licensorChart"></div>
-  </div>
-</div>
+
 
 <div *ngIf="showAdminBoard || showModeratorBoard">
   <div id='myDiv'></div>
@@ -113,8 +105,7 @@
               (mouseenter)="group.showTooltip = true"
               (mouseleave)="group.showTooltip = false">
             <div class="tooltip" [class.active]="group.showTooltip">
-              This is a summary grouped into a single insight based on multiple
-              statements. Please refer to the records below for more details.
+              This summary encapsulates several statements into a unified insight. Click "Show" to view the underlying records for further details.
             </div>
           </td>
 
@@ -170,7 +161,7 @@
                 <ng-container *ngIf="uniqueLicenses.length > 0">
                   <select [(ngModel)]="item.selectedMappingId"
                     [id]="'mappingIdSelect-' + item.id">
-                    <option disabled >Select Mapping ID to add :</option>
+                    <option value=""  disabled>Select Mapping ID to add :</option>
                     <ng-container
                       *ngFor="let mappingId of filterMappingIds(item, 'licenses')">
                       <option [value]="mappingId">{{ mappingId }}</option>

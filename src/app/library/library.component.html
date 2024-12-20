@@ -43,7 +43,7 @@
   <div class="report-type-select">
     <label for="reportType">Select Report Type:</label>
     <select id="reportType" [(ngModel)]="selectedReportType" (change)="searchFiles()">
-      <option value="">All Types</option>
+      <option value="" disabled>All Types</option>
       <option value="Annual report">Annual Report</option>
       <option value="Quarterly report">Quarterly Report</option>
       <option value="Press Release">Press Release</option>
@@ -54,7 +54,7 @@
 
   <label>Search by Year: </label>
   <select [(ngModel)]="selectedDate" (change)="searchFiles()">
-    <option value="">All Years</option>
+    <option value="" disabled>All Years</option>
     <option *ngFor="let date of uniqueDates" [value]="date">{{ date }}</option>
   </select>
 </div>

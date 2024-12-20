@@ -6,6 +6,7 @@
   gap: 16px; /* Space between items */
   flex-wrap: wrap; /* Wrap items if necessary */
   margin: 16px 0;
+
 }
 
 /* Ensure that inputs and options are centered properly */
@@ -49,6 +50,7 @@ select {
   gap: 16px; /* Space between cards */
   padding: 16px;
   justify-content: center; /* Center the cards horizontally */
+
 }
 
 /* Individual card styling */
@@ -183,6 +185,8 @@ select {
   margin-bottom: 0;
   margin-left: -0.1px;
   border-bottom: 1px solid #ccc;
+  padding-top: 60px;
+
 }
 
 .custom-tabs .nav-item {
@@ -229,4 +233,7 @@ select {
   border-radius: 0 0 10px 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   margin-top: 0;
+}
+.container {
+  padding-top: 60px; /* Equal to navbar height */
 }

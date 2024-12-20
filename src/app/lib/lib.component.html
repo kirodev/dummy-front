@@ -25,7 +25,7 @@
     <!-- Year Filter -->
     <label>Search by Year:</label>
     <select [(ngModel)]="selectedYear" (change)="searchFiles()">
-      <option value="">All Years</option>
+      <option value="" disabled>All Years</option>
       <option *ngFor="let year of uniqueYears" [value]="year">
         {{ year }}
       </option>

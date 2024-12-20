@@ -1,14 +1,20 @@
 /* Navbar */
 .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
-    border-radius: 8px;
-    position: relative;
-    z-index: 10;
-    background-color: #DED8C4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 0; /* Remove border-radius for full-width effect */
+  position:fixed; /* Fix navbar at the top */
+  top: 0;
+  left: 0;
+  width: 100%; /* Ensure full width */
+  z-index: 1000; /* Ensure it stays above other elements */
+  background-color: #DED8C4;
+  box-sizing: border-box; /* Include padding in width calculations */
 }
+
+
 
 .logo img {
     width: 197px;
@@ -97,3 +103,6 @@
     display: flex;
     align-items: center; /* Vertically center items */
   }
+  .container {
+    padding-top: 60px; /* Equal to navbar height */
+}

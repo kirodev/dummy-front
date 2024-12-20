@@ -37,7 +37,13 @@ export class PaymentConnection {
     console.error(errorMessage);
     return throwError(errorMessage);
   }
-
+  getLicensors(): Observable<string[]> {
+    return this.http.get<any[]>(this.baseUrlaRev, { headers: this.getHeaders() })
+      .pipe(
+        map(data => Array.from(new Set(data.map(item => item.licensor))).filter(licensor => licensor)),
+        catchError(this.handleError)
+      );
+  }
   getPayments(): Observable<any[]> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
     return this.http.get<any[]>(`${this.baseUrl}`, { headers }).pipe(

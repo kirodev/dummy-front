@@ -207,6 +207,8 @@
 .custom-tabs {
   margin-bottom: 0; /* Remove space between tabs and content */
   border-bottom: 1px solid #ccc; /* Optional border for visual clarity */
+  padding-top: 60px;
+
 }
 
 .custom-tabs .nav-item {

@@ -1,0 +1,17 @@
+/* licensing-revenues.component.css */
+.licensing-revenues-container {
+  max-width: 900px;
+  margin: 0 auto; /* Center the container */
+  padding: 20px;
+  text-align: center;
+}
+
+.licensing-revenues-container h2 {
+  margin-bottom: 20px;
+  color: #555555;
+}
+
+.plot-container {
+  width: 100%;
+  height: 500px;
+}
