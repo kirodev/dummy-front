@@ -1,48 +1,13 @@
 <!-- licensing-revenues.component.html -->
-
-<div class="licensing-revenues-container">
+<div>
   <h2>Licensing Revenues</h2>
 
-  <!-- Licensor Selection Dropdown -->
-  <div class="licensor-select" *ngIf="licensors.length > 0">
-    <label for="licensor">Select Licensor:</label>
-    <select id="licensor" [(ngModel)]="selectedLicensor" (change)="onLicensorChange()" aria-label="Select Licensor">
-      <option *ngFor="let licensor of licensors" [value]="licensor">
-        {{ licensor }}
-      </option>
-    </select>
-  </div>
+  <!-- Dropdown for Licensor Selection -->
+  <label for="licensor">Select Licensor:</label>
+  <select id="licensor" [(ngModel)]="selectedLicensor" (change)="onLicensorChange()">
+    <option *ngFor="let licensor of licensors" [value]="licensor">{{ licensor }}</option>
+  </select>
 
-  <!-- Loading Indicator for Licensors -->
-  <div *ngIf="isLoadingLicensors && !fetchError">
-    <p>Loading licensors...</p>
-  </div>
-
-  <!-- Error Message for Licensors -->
-  <div *ngIf="fetchError">
-    <p class="error">An error occurred while fetching licensors. Please try again later.</p>
-  </div>
-
-  <!-- Message if no licensors are available -->
-  <div *ngIf="!isLoadingLicensors && !fetchError && licensors.length === 0">
-    <p>No licensors available to display.</p>
-  </div>
-
-  <!-- Loading Indicator for Revenues -->
-  <div *ngIf="isLoadingRevenues && !fetchError">
-    <p>Loading licensing revenues...</p>
-  </div>
-
-  <!-- Error Message for Revenues -->
-  <div *ngIf="!isLoadingRevenues && annualRevenues.length === 0 && licensors.length > 0">
-    <p>No licensing revenues available for the selected licensor.</p>
-  </div>
-
-  <!-- Chart Container -->
-  <div
-    id="licensingRevenuesDiv"
-    class="plot-container"
-    *ngIf="!isLoadingRevenues && sortedYears.length > 0"
-    #licensingRevenuesDiv
-  ></div>
+  <!-- Plot Container -->
+  <div id="licensorPaymentsPlot" style="height: 600px; width: 100%;"></div>
 </div>

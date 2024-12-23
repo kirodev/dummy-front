@@ -1,407 +1,254 @@
-// licensing-revenues.component.ts
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
-import { PaymentConnection } from '../payment-connection.service'; // Adjust the path as necessary
-import { Subscription, forkJoin } from 'rxjs';
-import { NgxSpinnerService } from 'ngx-spinner'; // If using ngx-spinner for loading indicators
+import { Component, OnInit } from '@angular/core';
+import { PaymentConnection } from '../payment-connection.service'; // Adjust import as needed
 declare var Plotly: any;
 
-// Helper function to generate random HEX colors
-function getRandomColor(): string {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
+interface PaymentEntry {
+  year: number;
+  payment: number;
 }
 
 @Component({
   selector: 'app-licensing-revenues',
   templateUrl: './licensing-revenues.component.html',
-  styleUrls: ['./licensing-revenues.component.css']
+  styleUrls: ['./licensing-revenues.component.css'],
 })
-export class LicensingRevenuesComponent implements OnInit, AfterViewInit, OnDestroy {
-  licensors: string[] = []; // List of licensors for the dropdown
-  selectedLicensor: string = ''; // Currently selected licensor
-  annualRevenues: any[] = []; // Raw data fetched
-  payments: any[] = []; // Data from payments table
-  multiplePayments: any[] = []; // Data from multiple_payments table
+export class LicensingRevenuesComponent implements OnInit {
+  licensors: string[] = [];
+  selectedLicensor: string = '';
+  paymentData: any[] = [];
+  annualRevenues: any[] = [];
+  filteredPayments: any[] = [];
 
-  yearRevenuesMap: Map<number, number> = new Map(); // Maps year to licensing_revenue
-  licenseeRevenuesMap: Map<string, Map<number, number>> = new Map(); // Maps licensee to year to payment_amount
-  sortedYears: number[] = []; // Sorted list of years
-  uniqueLicensees: string[] = []; // Unique licensees for the selected licensor
+  // Updated Map to store payment entries by licensee
+  licenseeData: Map<string, PaymentEntry[]> = new Map();
 
-  licenseeTotalPaymentsMap: Map<string, number> = new Map(); // Maps licensee to total payments
+  // Define a color palette for licensees
+  colorPalette: string[] = [
+    '#1f77b4', '#ff7f0e', '#2ca02c',
+    '#d62728', '#9467bd', '#8c564b',
+    '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+  ];
 
-  isLoadingLicensors: boolean = false;
-  isLoadingRevenues: boolean = false;
-  fetchError: boolean = false;
+  // Store initial total revenue per year
+  initialTotalRevenuePerYear: { [year: number]: number } = {};
 
-  // ViewChild to get the div element
-  @ViewChild('licensingRevenuesDiv') licensingRevenuesDiv!: ElementRef;
+  // Flag to prevent infinite loops in event listener
+  private isUpdating: boolean = false;
 
-  // To manage subscriptions
-  private subscriptions: Subscription = new Subscription();
-
-  // Map to store licensee-color associations
-  licenseeColorMap: Map<string, string> = new Map();
-
-  constructor(private paymentConnection: PaymentConnection, private spinner: NgxSpinnerService) { }
+  constructor(private paymentConnection: PaymentConnection) {}
 
   ngOnInit(): void {
+    this.fetchLicensors();
+    this.fetchPayments();
     this.loadPlotlyScript().then(() => {
-      console.log('Plotly.js script loaded successfully');
-      this.fetchLicensors(); // Fetch licensors first
-    }).catch(error => {
-      console.error('Error loading Plotly.js script:', error);
+      console.log('Plotly.js loaded successfully');
+    }).catch(() => {
+      console.error('Failed to load Plotly.js');
     });
   }
 
-  ngAfterViewInit(): void {
-    // Plot will be called after data is fetched
-  }
+  /**
+   * Fetch the list of licensors from the payment data.
+   */
+  fetchLicensors(): void {
+    this.paymentConnection.getAnnualRevenues().subscribe((data: any[]) => {
+      this.annualRevenues = data;
+      // Extract unique licensors from annual revenues
+      this.licensors = [...new Set(data.map((item) => item.licensor))];
 
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
+      // Sort licensors alphabetically for better UX
+      this.licensors.sort();
+
+      console.log('Licensors from annual revenues:', this.licensors);
+    });
+  }
+  fetchPayments(): void {
+    this.paymentConnection.getPayments().subscribe((data: any[]) => {
+      this.paymentData = data;
+
+      // Log all fetched payments
+      console.log('Fetched Payments:', this.paymentData);
+    });
   }
 
   /**
-   * Dynamically loads the Plotly.js script.
-   * @returns A Promise that resolves when the script is loaded.
+   * Handler for when a licensor is selected.
+   */
+  onLicensorChange(): void {
+    if (!this.selectedLicensor) return;
+
+    console.log(`Selected Licensor: ${this.selectedLicensor}`);
+
+    // Normalize selected licensor name for comparison
+    const normalizedSelectedLicensor = normalizeLicensorName(this.selectedLicensor);
+
+    // Filter payments for the selected licensor
+    this.filteredPayments = this.paymentData.filter(
+      (item) => normalizeLicensorName(item.licensor) === normalizedSelectedLicensor && item.adv_eq_type === 'TPY'
+    );
+
+    console.log('Filtered Payments:', this.filteredPayments);
+
+    // Filter the annual revenues for the selected licensor
+    const selectedLicensorRevenues = this.annualRevenues.filter(
+      (item) => normalizeLicensorName(item.licensor) === normalizedSelectedLicensor
+    );
+
+    console.log('Selected Licensor Revenues:', selectedLicensorRevenues);
+
+    // Call the method to process the data and plot it
+    this.processDataAndPlot(selectedLicensorRevenues);
+  }
+
+
+  /**
+   * Process the payment and revenue data, then plot using Plotly.
+   */
+  processDataAndPlot(selectedLicensorRevenues: any[]): void {
+    // Clear existing data
+    this.licenseeData.clear();
+
+    if (this.filteredPayments.length === 0) {
+      console.warn('No payments found for selected licensor.');
+    }
+
+    // Group payments by licensee and year
+    this.filteredPayments.forEach((item) => {
+      const year = typeof item.year === 'string' ? parseInt(item.year, 10) : item.year;
+      const payment = item.payment_amount ?? item.results ?? 0;
+      const licensee = item.licensee;
+
+      if (!Number.isNaN(year) && isFinite(year) && isFinite(payment)) {
+        if (!this.licenseeData.has(licensee)) {
+          this.licenseeData.set(licensee, []);
+        }
+        this.licenseeData.get(licensee)!.push({ year, payment });
+      }
+    });
+
+    // Extract unique and sorted years from both payments and revenues
+    const yearsSet = new Set<number>();
+    this.licenseeData.forEach((data) => {
+      data.forEach((entry) => yearsSet.add(entry.year));
+    });
+    selectedLicensorRevenues.forEach((item) => {
+      const year = typeof item.year === 'string' ? parseInt(item.year, 10) : item.year;
+      if (!isNaN(year) && isFinite(year)) {
+        yearsSet.add(year);
+      }
+    });
+    const years = Array.from(yearsSet).sort((a, b) => a - b);
+
+    // Prepare revenue data using the licensing_revenue column from annualRevenues
+    const revenueData = years.map((year) => {
+      const revenueItem = selectedLicensorRevenues.find(
+        (item) => (typeof item.year === 'string' ? parseInt(item.year, 10) : item.year) === year
+      );
+
+      // Use licensing_revenue directly as it is
+      const revenue = revenueItem?.licensing_revenue
+        ? parseFloat(revenueItem.licensing_revenue.toString().replace(/,/g, '')) // Remove commas
+        : 0;
+
+      return revenue;
+    });
+
+    console.log('Using Licensing Revenue Data:', revenueData);
+
+    // Create payment traces for each licensee
+    const paymentTraces = Array.from(this.licenseeData.entries()).map(
+      ([licensee, data], index) => {
+        const color = this.colorPalette[index % this.colorPalette.length];
+        const yValues = years.map(
+          (year) => data.find((entry) => entry.year === year)?.payment || 0
+        );
+
+        return {
+          x: years,
+          y: yValues,
+          type: 'bar',
+          name: licensee,
+          marker: { color },
+        };
+      }
+    );
+
+    // Calculate total payments for each year
+    const totalPaymentsPerYear = years.map((year) => {
+      return paymentTraces.reduce((sum, trace) => {
+        const value = trace.y![years.indexOf(year)]; // Get the payment value for this year
+        return sum + (typeof value === 'number' ? value : 0);
+      }, 0);
+    });
+
+    console.log('Total Payments Per Year:', totalPaymentsPerYear);
+
+    // Calculate remaining revenue for each year: licensing_revenue - total payments
+    const remainingRevenue = years.map((year, index) => {
+      const totalRevenue = revenueData[index]; // Get the licensing_revenue for this year
+      const totalPayments = totalPaymentsPerYear[index]; // Get the total payments for this year
+      return Math.max(0, totalRevenue - totalPayments); // Calculate remaining revenue
+    });
+
+    console.log('Remaining Revenue:', remainingRevenue);
+
+    // Create remaining revenue trace
+    const remainingRevenueTrace = {
+      x: years,
+      y: remainingRevenue,  // Calculated remaining revenue
+      type: 'bar',
+      name: 'Remaining Revenue',
+      marker: { color: 'lightgrey' },
+      hovertemplate: `
+        <b>Year:</b> %{x}<br>
+        <b>Remaining Revenue:</b> %{y}<br>
+        <b>Licensing Revenue:</b> %{customdata} <extra></extra>
+      `,
+      customdata: revenueData,  // Attach licensing revenue as custom data for hover
+    };
+
+    // Combine all traces (payment traces and licensing revenue trace)
+    const traces = [...paymentTraces, remainingRevenueTrace];
+
+    // Plot layout
+    const layout = {
+      title: `Licensing Revenues for ${this.selectedLicensor}`,
+      barmode: 'stack', // Stack all bars
+      xaxis: { title: 'Year', type: 'category' },
+      yaxis: {
+        title: 'Amount',
+        tickformat: ',d',  // Full number format (no scientific notation)
+      },
+      height: 600,
+    };
+
+    // Render the plot
+    const plotDiv = document.getElementById('licensorPaymentsPlot');
+    if (plotDiv) {
+      Plotly.react(plotDiv, traces, layout);
+    }
+  }
+
+
+
+  /**
+   * Helper method to load Plotly.js
    */
   loadPlotlyScript(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      // Check if Plotly is already loaded
       if (typeof Plotly !== 'undefined') {
         resolve();
         return;
       }
 
-      const scriptElement = document.createElement('script');
-      scriptElement.src = 'https://cdn.plot.ly/plotly-2.25.2.min.js';
-      scriptElement.type = 'text/javascript';
-      scriptElement.onload = () => {
-        resolve();
-      };
-      scriptElement.onerror = (event: Event | string) => {
-        reject(event);
-      };
-      document.head.appendChild(scriptElement);
+      const script = document.createElement('script');
+      script.src = 'https://cdn.plot.ly/plotly-2.25.2.min.js';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Plotly.js'));
+      document.head.appendChild(script);
     });
   }
-
-  /**
-   * Fetches the list of licensors using the PaymentConnection service.
-   */
-  fetchLicensors(): void {
-    this.isLoadingLicensors = true;
-    this.spinner.show(); // Show spinner
-    const licensorSub = this.paymentConnection.getLicensors().subscribe(
-      (data: string[]) => {
-        this.licensors = data;
-        console.log("Fetched Licensors:", this.licensors);
-        // Set default licensor (e.g., the first in the list)
-        if (this.licensors.length > 0) {
-          this.selectedLicensor = this.licensors[0];
-          this.fetchAnnualRevenues();
-        }
-        this.isLoadingLicensors = false;
-        this.spinner.hide(); // Hide spinner
-      },
-      (error) => {
-        console.error('Error fetching licensors:', error);
-        this.isLoadingLicensors = false;
-        this.spinner.hide(); // Hide spinner
-        this.fetchError = true;
-      }
-    );
-    this.subscriptions.add(licensorSub);
-  }
-
-  /**
-   * Fetches annual revenues, payments, and multiple payments based on the selected licensor.
-   * Filters payments to include only those with specific eq_type values.
-   * Includes payments from multiple_payments with eq_type == 'TPY'.
-   */
-  fetchAnnualRevenues(): void {
-    this.isLoadingRevenues = true;
-    this.spinner.show(); // Show spinner
-
-    // Define API calls
-    const annualRevenues$ = this.paymentConnection.getAnnualRevenues();
-    const payments$ = this.paymentConnection.getPayments();
-    const multiplePayments$ = this.paymentConnection.getMultiplePayments();
-
-    // Fetch all data concurrently
-    const combined$ = forkJoin([annualRevenues$, payments$, multiplePayments$]);
-
-    const revenueSub = combined$.subscribe(
-      ([annualRevenues, payments, multiplePayments]) => {
-        // Log raw results from the payments table
-        console.log('Results values from payments table:', payments.map(payment => payment.results));
-
-        // Filter annualRevenues based on selectedLicensor
-        this.annualRevenues = annualRevenues.filter(item => item.licensor === this.selectedLicensor);
-        console.log(`Annual Revenues for ${this.selectedLicensor}:`, this.annualRevenues);
-
-        // Define desired eq_type values for payments
-        const desiredEqTypes = ['TPY', 'MaxTPY', 'MinTPY', 'TPQ', 'PSPY', 'FFPY', 'RPYI', 'LSPY'];
-
-        // Filter payments based on selectedLicensor and desired eq_type values
-        this.payments = payments.filter(
-          item => item.licensor === this.selectedLicensor && desiredEqTypes.includes(item.eq_type)
-        );
-
-        // Filter multiplePayments to include only eq_type == 'TPY'
-        this.multiplePayments = multiplePayments.filter(
-          item => item.licensor === this.selectedLicensor && item.eq_type === 'TPY'
-        );
-
-        console.log(`Filtered Payments for ${this.selectedLicensor}:`, this.payments);
-        console.log(`Filtered Multiple Payments for ${this.selectedLicensor}:`, this.multiplePayments);
-
-        this.prepareYearlyData();
-        this.isLoadingRevenues = false;
-        this.fetchError = false;
-        this.spinner.hide(); // Hide spinner
-        // Plot after the view has been updated
-        setTimeout(() => {
-          this.plotData();
-        }, 0);
-      },
-      (error) => {
-        console.error('Error fetching data:', error);
-        this.isLoadingRevenues = false;
-        this.fetchError = true;
-        this.spinner.hide(); // Hide spinner
-      }
-    );
-
-    this.subscriptions.add(revenueSub);
-  }
-
-
-  /**
-   * Prepares yearly data by mapping year to licensing revenue and payment amounts per licensee.
-   * Includes 'payment_amount' from both payments and multiple_payments tables.
-   * Uses 'results' from payments table only when 'payment_amount' is empty or null.
-   * Excludes 'results' from multiple_payments.
-   */
-  prepareYearlyData(): void {
-    // Clear previous data
-    this.yearRevenuesMap.clear();
-    this.uniqueLicensees = [];
-
-    const DEFAULT_LICENSEE = 'Unknown Licensee';
-
-    // Process annualRevenues to map year to licensing_revenue
-    this.annualRevenues.forEach((revenue) => {
-        const { year, licensing_revenue } = revenue;
-        if (year && typeof licensing_revenue === 'number' && !isNaN(licensing_revenue)) {
-            this.yearRevenuesMap.set(year, licensing_revenue);
-        }
-    });
-
-    // Collect unique licensees directly from payments
-    this.uniqueLicensees = Array.from(
-        new Set(
-            this.payments
-                .map((payment) => payment.licensee?.trim() || DEFAULT_LICENSEE)
-                .filter(Boolean)
-        )
-    );
-
-    // Log the processed data for debugging
-    console.log('Processed years:', Array.from(this.yearRevenuesMap.keys()));
-    console.log('Unique licensees:', this.uniqueLicensees);
-
-    // Collect all unique years from annualRevenues and payments
-    const allYears = new Set<number>();
-    this.yearRevenuesMap.forEach((_, year) => allYears.add(year));
-    this.payments.forEach((payment) => {
-        if (payment.year) {
-            allYears.add(payment.year);
-        }
-    });
-
-    this.sortedYears = Array.from(allYears).sort((a, b) => a - b);
-    console.log('Sorted years:', this.sortedYears);
 }
-
-
-
-  /**
-   * Formats a number with commas as thousand separators.
-   * @param num The number to format.
-   * @returns A string representing the formatted number.
-   */
-  formatNumber(num: number): string {
-    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  /**
-   * Returns a unique color for each licensee.
-   * Generates a random color if the licensee doesn't have one assigned yet.
-   * @param licensee The name of the licensee.
-   * @returns A color string in HEX format.
-   */
-  getLicenseeColor(licensee: string): string {
-    // Assign a fixed color to "Unknown Licensee"
-    if (licensee === 'Unknown Licensee') {
-      return '#808080'; // Grey color
-    }
-
-    // Check if the licensee already has an assigned color
-    if (this.licenseeColorMap.has(licensee)) {
-      return this.licenseeColorMap.get(licensee)!;
-    }
-
-    // Determine the index of the licensee
-    const index = this.uniqueLicensees.indexOf(licensee);
-
-    // Generate a distinct color based on index and total licensees
-    const distinctColor = this.getDistinctColor(index, this.uniqueLicensees.length);
-
-    // Assign the generated color to the licensee
-    this.licenseeColorMap.set(licensee, distinctColor);
-
-    return distinctColor;
-  }
-
-  /**
-  * Generates a distinct HEX color based on the index.
-  * @param index The index of the licensee.
-  * @param total The total number of licensees.
-  * @returns A HEX color string.
-  */
-  getDistinctColor(index: number, total: number): string {
-    const hue = index * (360 / total);
-    return `hsl(${hue}, 70%, 50%)`;
-  }
-
-  /**
-   * Handles changes in the licensor selection dropdown.
-   */
-  onLicensorChange(): void {
-    console.log('Selected Licensor:', this.selectedLicensor);
-    this.fetchAnnualRevenues();
-  }
-
-  /**
-   * Plots the licensing revenues and payment amounts using Plotly.js as stacked bars with an "Others" trace.
-   * Implements dynamic updating of the "Others" trace based on the visibility of licensee traces.
-   */
-  plotData(): void {
-    if (!this.licensingRevenuesDiv) {
-        console.warn('Plot container not found.');
-        return;
-    }
-
-    if (this.sortedYears.length === 0) {
-        console.warn('No data available to plot.');
-        Plotly.purge(this.licensingRevenuesDiv.nativeElement);
-        return;
-    }
-
-    // Licensing Revenue Trace - Background bar
-    const licensingRevenueTrace = {
-        x: this.sortedYears,
-        y: this.sortedYears.map(year => this.yearRevenuesMap.get(year) || 0),
-        type: 'bar',
-        name: 'Licensing Revenue',
-        marker: { color: 'rgba(128, 128, 128, 0.6)' }, // Grey color with 60% opacity
-        hoverinfo: 'text',
-        hovertext: this.sortedYears.map(year =>
-            `Year: ${year}<br>Licensing Revenue: $${this.formatNumber(this.yearRevenuesMap.get(year) || 0)}`
-        ),
-        offsetgroup: '0', // Unique group for background
-        base: 0, // Start at zero
-        showlegend: true,
-    };
-
-    const data: any[] = [licensingRevenueTrace];
-
-    // Add Payment Amounts or Results per Licensee
-    if (this.uniqueLicensees.length > 0) {
-        const paymentTraces = this.uniqueLicensees.map(licensee => {
-            const yData = this.sortedYears.map(year => {
-                const payment = this.payments.find(
-                    p => p.licensee === licensee && p.year === year
-                );
-
-                if (!payment) return 0;
-
-                // Use `payment_amount` if it's truthy; otherwise, fallback to `results`
-                return payment.payment_amount
-                    ? payment.payment_amount
-                    : payment.results || 0;
-            });
-
-            return {
-                x: this.sortedYears,
-                y: yData,
-                type: 'bar',
-                name: licensee,
-                marker: { color: this.getLicenseeColor(licensee) },
-                hoverinfo: 'text',
-                hovertext: this.sortedYears.map((year, i) =>
-                    `Year: ${year}<br>Licensee: ${licensee}<br>Amount: $${this.formatNumber(yData[i])}`
-                ),
-                offsetgroup: '1', // Unique offset for stacking
-                showlegend: true,
-            };
-        });
-
-        data.push(...paymentTraces);
-    }
-
-    const layout = {
-        title: `Licensing Revenues and Payment Amounts for ${this.selectedLicensor}`,
-        xaxis: {
-            title: 'Year',
-            type: 'category',
-            tickangle: -45,
-        },
-        yaxis: {
-            title: 'Amount (in USD)',
-            tickformat: ',d',
-            type: 'linear',
-            rangemode: 'tozero',
-        },
-        barmode: 'stack', // Enable stacking
-        height: 600,
-        width: 900,
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff',
-        font: {
-            family: 'Arial, sans-serif',
-            size: 12,
-            color: '#000000',
-        },
-        legend: {
-            orientation: 'h',
-            y: 1.1,
-            x: 0.5,
-            xanchor: 'center',
-        },
-        hovermode: 'closest',
-    };
-
-    Plotly.newPlot(this.licensingRevenuesDiv.nativeElement, data, layout).then(() => {
-        console.log('Licensing Revenues graph plotted successfully');
-    }).catch((error: any) => {
-        console.error('Error plotting licensing revenues graph:', error);
-    });
-
-    window.onresize = () => {
-        Plotly.Plots.resize(this.licensingRevenuesDiv.nativeElement);
-    };
-}
-
-
-
-
-
-
+function normalizeLicensorName(name: string): string {
+  return name.trim().toLowerCase().replace(/[^\w\s]/gi, ''); // Remove special characters
 }

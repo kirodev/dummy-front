@@ -657,4 +657,7 @@ export class MobileComponent implements OnInit {
       (normalized) => this.normalizedToOriginalLicenseeMap.get(normalized) || normalized
     );
   }
+
+
+
 }

@@ -1054,7 +1054,7 @@ plotData(): void {
         this.initializeUniquePayments();
 
         // Call performRevenueCalculations to calculate results for adv_eq_type 'TRY'
-        this.performPaymentResultsCalculations();  // <-- This is where we add the calculation for `TRY`
+        this.performRevenueCalculations();  // <-- This is where we add the calculation for `TRY`
       },
       (error) => {
         console.error('Error fetching data for multiple licensees:', error);
@@ -1062,20 +1062,18 @@ plotData(): void {
     );
   }
 
-  performPaymentResultsCalculations(): void {
+  performRevenueCalculations(): void {
     if (!this.annualRevenues || this.annualRevenues.length === 0) {
-      console.error('No annual revenues data available for Payment calculations.');
+      console.error('No annual revenues data available.');
       return;
     }
 
     const updates: Observable<any>[] = [];
 
-    this.paymentData.forEach(payment => {
-      // Check for eq_type or adv_eq_type conditions that require results calculation
-      // For example: if payment.adv_eq_type === 'TRY' or payment.eq_type === 'TRY'
-      if (payment.adv_eq_type === 'TRY' || payment.eq_type === 'TRY') {
+    this.filteredMultiplePayments.forEach(payment => {
+      if (payment.adv_eq_type === 'TRY') {
         const matchingRevenue = this.annualRevenues.find(revenue =>
-          revenue.licensor === payment.licensor && revenue.year === parseInt(payment.year, 10)
+          revenue.licensor === payment.licensor && revenue.year === payment.year
         );
 
         if (matchingRevenue && payment.coef) {
@@ -1085,9 +1083,9 @@ plotData(): void {
           // Perform the calculation: coef * licensing_revenue
           payment.results = coef * totalRevenue;
 
-          // If you want to persist this to the backend:
+          // Update the results in the database if we have an ID and results is a valid number
           if (payment.id && !isNaN(payment.results)) {
-            const updateObs = this.paymentConnection.updatePaymentResults(payment.id, payment.results);
+            const updateObs = this.paymentConnection.updateMultiplePaymentResults(payment.id, payment.results);
             updates.push(updateObs);
           }
         } else {
@@ -1097,7 +1095,14 @@ plotData(): void {
     });
 
     if (updates.length > 0) {
-      // Wait until all updates complete before re-plotting
+      // Optionally wait until all updates complete before re-plotting:
+      // Example using forkJoin:
+      // forkJoin(updates).subscribe({
+      //   next: () => this.plotData(),
+      //   error: (err) => console.error('Error updating some results:', err)
+      // });
+
+      // Or handle them one by one:
       let completed = 0;
       updates.forEach(obs => {
         obs.subscribe({
@@ -1108,7 +1113,7 @@ plotData(): void {
               this.plotData();
             }
           },
-          error: err => console.error('Error updating payment result:', err)
+          error: err => console.error('Error updating a multiple payment result:', err)
         });
       });
     } else {
