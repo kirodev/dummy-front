@@ -62,6 +62,7 @@ export class LicensingRevenuesComponent implements OnInit {
       console.log('Licensors from annual revenues:', this.licensors);
     });
   }
+
   fetchPayments(): void {
     this.paymentConnection.getPayments().subscribe((data: any[]) => {
       this.paymentData = data;
@@ -79,23 +80,31 @@ export class LicensingRevenuesComponent implements OnInit {
 
     console.log(`Selected Licensor: ${this.selectedLicensor}`);
 
+    // Normalize selected licensor name for comparison
     const normalizedSelectedLicensor = normalizeLicensorName(this.selectedLicensor);
 
-    // Filter payments for the normalized licensor
+    // Filter payments for the selected licensor
     this.filteredPayments = this.paymentData.filter(
       (item) => normalizeLicensorName(item.licensor) === normalizedSelectedLicensor && item.adv_eq_type === 'TPY'
     );
 
     console.log('Filtered Payments:', this.filteredPayments);
 
-    this.processDataAndPlot();
-  }
+    // Filter the annual revenues for the selected licensor
+    const selectedLicensorRevenues = this.annualRevenues.filter(
+      (item) => normalizeLicensorName(item.licensor) === normalizedSelectedLicensor
+    );
 
+    console.log('Selected Licensor Revenues:', selectedLicensorRevenues);
+
+    // Call the method to process the data and plot it
+    this.processDataAndPlot(selectedLicensorRevenues);
+  }
 
   /**
    * Process the payment and revenue data, then plot using Plotly.
    */
-  processDataAndPlot(): void {
+  processDataAndPlot(selectedLicensorRevenues: any[]): void {
     // Clear existing data
     this.licenseeData.clear();
 
@@ -122,7 +131,7 @@ export class LicensingRevenuesComponent implements OnInit {
     this.licenseeData.forEach((data) => {
       data.forEach((entry) => yearsSet.add(entry.year));
     });
-    this.annualRevenues.forEach((item) => {
+    selectedLicensorRevenues.forEach((item) => {
       const year = typeof item.year === 'string' ? parseInt(item.year, 10) : item.year;
       if (!isNaN(year) && isFinite(year)) {
         yearsSet.add(year);
@@ -130,20 +139,21 @@ export class LicensingRevenuesComponent implements OnInit {
     });
     const years = Array.from(yearsSet).sort((a, b) => a - b);
 
-    // Prepare revenue data using the licensing_revenues column
+    // Prepare revenue data using the licensing_revenue column from annualRevenues
     const revenueData = years.map((year) => {
-      const revenueItem = this.annualRevenues.find(
+      const revenueItem = selectedLicensorRevenues.find(
         (item) => (typeof item.year === 'string' ? parseInt(item.year, 10) : item.year) === year
       );
 
-      // Parse licensing_revenue to a number, removing commas
+      // Use licensing_revenue directly as it is
       const revenue = revenueItem?.licensing_revenue
-        ? parseFloat(revenueItem.licensing_revenue.toString().replace(/,/g, ''))
+        ? parseFloat(revenueItem.licensing_revenue.toString().replace(/,/g, '')) // Remove commas
         : 0;
 
       return revenue;
     });
 
+    console.log('Using Licensing Revenue Data:', revenueData);
 
     // Create payment traces for each licensee
     const paymentTraces = Array.from(this.licenseeData.entries()).map(
@@ -163,34 +173,52 @@ export class LicensingRevenuesComponent implements OnInit {
       }
     );
 
-    // Calculate remaining revenue for each year
-    const remainingRevenue = years.map((year, index) => {
-      const totalRevenue = revenueData[index];
-      const sumOfPayments = paymentTraces.reduce((sum, trace) => {
-        const value = trace.y![index];
+    // Calculate total payments for each year
+    const totalPaymentsPerYear = years.map((year) => {
+      return paymentTraces.reduce((sum, trace) => {
+        const value = trace.y![years.indexOf(year)]; // Get the payment value for this year
         return sum + (typeof value === 'number' ? value : 0);
       }, 0);
-      return Math.max(0, totalRevenue - sumOfPayments); // Ensure non-negative values
     });
+
+    console.log('Total Payments Per Year:', totalPaymentsPerYear);
+
+    // Calculate remaining revenue for each year: licensing_revenue - total payments
+    const remainingRevenue = years.map((year, index) => {
+      const totalRevenue = revenueData[index]; // Get the licensing_revenue for this year
+      const totalPayments = totalPaymentsPerYear[index]; // Get the total payments for this year
+      return Math.max(0, totalRevenue - totalPayments); // Calculate remaining revenue
+    });
+
+    console.log('Remaining Revenue:', remainingRevenue);
 
     // Create remaining revenue trace
     const remainingRevenueTrace = {
       x: years,
-      y: remainingRevenue,
+      y: remainingRevenue,  // Calculated remaining revenue
       type: 'bar',
       name: 'Remaining Revenue',
       marker: { color: 'lightgrey' },
+      hovertemplate: `
+        <b>Year:</b> %{x}<br>
+        <b>Remaining Revenue:</b> %{y}<br>
+        <b>Licensing Revenue:</b> %{customdata} <extra></extra>
+      `,
+      customdata: revenueData,  // Attach licensing revenue as custom data for hover
     };
 
-    // Combine all traces with payment traces first
+    // Combine all traces (payment traces and licensing revenue trace)
     const traces = [...paymentTraces, remainingRevenueTrace];
 
     // Plot layout
     const layout = {
       title: `Licensing Revenues for ${this.selectedLicensor}`,
-      barmode: 'stack', // Stack all bars, including remaining revenue
+      barmode: 'stack', // Stack all bars
       xaxis: { title: 'Year', type: 'category' },
-      yaxis: { title: 'Amount', tickformat: ',d' },
+      yaxis: {
+        title: 'Amount',
+        tickformat: ',d',  // Full number format (no scientific notation)
+      },
       height: 600,
     };
 
@@ -200,7 +228,6 @@ export class LicensingRevenuesComponent implements OnInit {
       Plotly.react(plotDiv, traces, layout);
     }
   }
-
 
   /**
    * Helper method to load Plotly.js
@@ -220,6 +247,7 @@ export class LicensingRevenuesComponent implements OnInit {
     });
   }
 }
+
 function normalizeLicensorName(name: string): string {
   return name.trim().toLowerCase().replace(/[^\w\s]/gi, ''); // Remove special characters
 }
