@@ -1,4 +1,3 @@
-
 <!-- Tab Navigation -->
 <ul class="nav nav-tabs custom-tabs">
   <li class="nav-item">
@@ -15,6 +14,16 @@
 <!-- End of Tab Navigation -->
 
 <!-- Content Container -->
-<div class="tab-content">
-  <div id="annualRevenuesChart" style="width: 100%; height: 600px;"></div>
+<!-- Content Container -->
+<!-- Content Container -->
+
+<!-- Popup Overlay -->
+<div id="plotDiv" style="width: 100%; height: 600px;"></div>
+
+<div *ngIf="isPopupVisible" class="popup-overlay">
+  <div class="popup-content">
+    <button class="btn-close" (click)="hidePopup()">&#x2715;</button>
+    <div class="popup-text" [innerHTML]="popupText"></div>
+  </div>
 </div>
+
