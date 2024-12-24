@@ -1,22 +1,13 @@
-<div *ngIf="isLoading" class="loading-spinner">Loading...</div>
-<div *ngIf="!isLoading">
-  <label for="licensorSelect">Select Licensor:</label>
-  <select
-    id="licensorSelect"
-    [(ngModel)]="selectedLicensor"
-    (change)="onLicensorChange()"
-  >
-    <option *ngFor="let licensor of licensors" [value]="licensor">
-      {{ licensor }}
-    </option>
+<!-- licensing-revenues.component.html -->
+<div>
+  <h2>Licensing Revenues</h2>
+
+  <!-- Dropdown for Licensor Selection -->
+  <label for="licensor">Select Licensor:</label>
+  <select id="licensor" [(ngModel)]="selectedLicensor" (change)="onLicensorChange()">
+    <option *ngFor="let licensor of licensors" [value]="licensor">{{ licensor }}</option>
   </select>
-  <div id="annualRevenuesChart" style="width: 100%; height: 600px;"></div>
-</div>
 
-
-<div *ngIf="isPopupVisible" class="popup">
-  <div class="popup-content">
-    <span class="close-button" (click)="hidePopup()">&times;</span>
-    <div [innerHTML]="popupText"></div>
-  </div>
+  <!-- Plot Container -->
+  <div id="licensorPaymentsPlot" style="height: 600px; width: 100%;"></div>
 </div>
