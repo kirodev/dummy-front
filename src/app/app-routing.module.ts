@@ -81,7 +81,7 @@ const routes: Routes = [
   { path: 'equations', component: EquationsPaymentsComponent },
 
 
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '', redirectTo: '/404', pathMatch: 'full' },
   { path: '**', component: NotFoundComponent }
 ];
 
