@@ -145,12 +145,14 @@ updateMLDetails(id: number, updatedDetails: string): Observable<any> {
     }
 
 
-  getDataByLicensor(licensorName: string): Observable<any[]> {
-    const params = new HttpParams().set('licensor', licensorName);
-    return this.http.get<any[]>(`${this.baseUrl}`, { params }).pipe(
-      catchError(this.handleError)
-    );
-  }
+    getDataByLicensor(licensorName: string): Observable<any[]> {
+      const params = new HttpParams().set('licensor', licensorName);
+      const headers = this.getHeaders(); // Include JWT token
+      return this.http.get<any[]>(`${this.baseUrl}`, { params, headers }).pipe(
+        catchError(this.handleError)
+      );
+    }
+
 
 
   createMultipleLicensee(newLicense: any): Observable<any> {

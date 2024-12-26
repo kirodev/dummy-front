@@ -1,0 +1,27 @@
+<div>
+  <h2>Licensing Overview</h2>
+
+  <!-- Dropdown for Licensor Selection -->
+  <label for="licensor">Select Licensor:</label>
+  <select id="licensor" [(ngModel)]="selectedLicensor" (change)="onLicensorChange()">
+    <option *ngFor="let licensor of licensors" [value]="licensor">{{ licensor }}</option>
+  </select>
+
+  <!-- Check if groupedLicenseData has data -->
+  <div *ngIf="groupedLicenseData$ | async as groupedLicenseData; else loading">
+    <div *ngIf="groupedLicenseData.length > 0">
+      <!-- Plot for Licensing Revenues (Payments and Remaining Revenue) -->
+      <div id="licensorPaymentsPlot" style="height: 600px; width: 100%;"></div>
+
+      <!-- Plot for Overall Data (Timeline) -->
+      <div id="overallDiv" style="height: 600px; width: 100%;"></div>
+    </div>
+    <div *ngIf="groupedLicenseData.length === 0">
+      <p>No data available for this licensor.</p>
+    </div>
+  </div>
+
+  <ng-template #loading>
+    <p>Loading...</p>
+  </ng-template>
+</div>

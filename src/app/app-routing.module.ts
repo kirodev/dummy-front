@@ -33,6 +33,7 @@ import { EquationsPaymentsComponent } from './equations-payments/equations-payme
 import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-revenues.component';
 import { LIBComponent } from './lib/lib.component';
 import { LicensingRevenuesComponent } from './licensing-revenues/licensing-revenues.component';
+import { TimelineOverviewComponent } from './timelineoverview/timelineoverview.component';
 
 const routes: Routes = [
 
@@ -79,10 +80,14 @@ const routes: Routes = [
 
   { path: 'library', component: LibraryComponent },
   { path: 'equations', component: EquationsPaymentsComponent },
+  { path: 'timeline-overview', component: TimelineOverviewComponent },
 
 
-  { path: '', redirectTo: '/404', pathMatch: 'full' },
-  { path: '**', component: NotFoundComponent }
+
+    // Set default route to login or home
+    { path: '', redirectTo: '/login', pathMatch: 'full' },
+    // Wildcard route for 404 page
+    { path: '**', component: NotFoundComponent }
 ];
 
 @NgModule({

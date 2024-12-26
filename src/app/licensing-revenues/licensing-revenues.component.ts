@@ -246,8 +246,19 @@ export class LicensingRevenuesComponent implements OnInit {
       document.head.appendChild(script);
     });
   }
+
+
+
+
+
 }
 
 function normalizeLicensorName(name: string): string {
   return name.trim().toLowerCase().replace(/[^\w\s]/gi, ''); // Remove special characters
+
+
+
+
+
+
 }

@@ -44,6 +44,7 @@ import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-reven
 import { SafePipe } from './safe-pipe.pipe';
 import { LIBComponent } from './lib/lib.component';
 import { LicensingRevenuesComponent } from './licensing-revenues/licensing-revenues.component';
+import { TimelineOverviewComponent } from './timelineoverview/timelineoverview.component';
 
 @NgModule({
   declarations: [
@@ -81,6 +82,7 @@ import { LicensingRevenuesComponent } from './licensing-revenues/licensing-reven
     LIBComponent,
     SafePipe,
     LicensingRevenuesComponent,
+    TimelineOverviewComponent,
   ],
 
   imports: [
