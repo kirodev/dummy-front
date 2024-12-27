@@ -7,28 +7,26 @@ import { MatDialog } from '@angular/material/dialog';
 import { Observable, forkJoin, map, of } from 'rxjs';
 import { TimelineService } from '../timeline-service.service';
 import { RoleService } from '../role.service';
-import { TimelineOverviewComponent } from '../timelineoverview/timelineoverview.component';
 
 
 
 declare var Plotly: any;
 
 
-export  interface GroupedLicense {
+export interface GroupedLicense {
   mapping_id: string;
   licenses: any[];
   isExpanded: boolean;
   showTooltip?: boolean;
-
 }
 
-export interface GroupedMlLicense {
+interface GroupedMlLicense {
   mapping_id: string;
   Mlicenses: any[];
   isExpanded: boolean;
   showTooltip?: boolean;
 }
-export interface License {
+interface License {
   id: string;
   snippet_id: string;
   signed_date: string;
@@ -51,7 +49,7 @@ export interface License {
   geographical_scope: string;
 }
 
-export interface MLicense {
+interface MLicense {
   id: string;
   snippet_id: string;
   signed_date: string;
@@ -108,20 +106,21 @@ export class LicenseTableComponent implements OnInit {
     selectedMappingId: 'Mapping Id '  // initialize with empty string to show the placeholder
   };
 form: any;
-  constructor(private connectionService: ConnectionService, private http: HttpClient,private dialog: MatDialog,private roleService: RoleService,    private timelineOverviewComponent: TimelineOverviewComponent // Inject TimelineOverviewComponent
-  ) {}
+  constructor(private connectionService: ConnectionService, private http: HttpClient,private dialog: MatDialog,private timelineConnection : TimelineService,private roleService: RoleService) {}
 
   ngOnInit(): void {
     this.licensorName = localStorage.getItem('licensorName') || 'Licensor Name';
     this.licenseeName = localStorage.getItem('licenseeName') || 'licenseeName';
     this.dynamicTitle = `${this.licensorName} vs ${this.licenseeName}`;
     this.fetchLicenseData();
+    this.fetchTimelineData();
     this.fetchMultipleLicensesData();
     this.fetchDistinctLicenses();
     this.populateUniqueMappingIds();
 
     this.loadPlotlyScript().then(() => {
       console.log('Plotly.js script loaded successfully');
+      this.fetchTimelineData();
       this.plotData();
     }).catch(error => {
       console.error('Error loading Plotly.js script:', error);
@@ -158,24 +157,18 @@ form: any;
     this.connectionService.getData().subscribe(
       (data: any[]) => {
         this.licenseData = data;
-        const matchingRowsDefined = this.licenseData.filter(
-          (item) =>
-            item.licensor === this.licensorName &&
-            item.licensee === this.licenseeName
-        );
+        const matchingRowsDefined = this.licenseData.filter(item => item.licensor === this.licensorName && item.licensee === this.licenseeName);
+        const matchingRowsUnknown = this.licenseData.filter(item => item.licensor === this.licensorName && item.licensee === 'Unknown');
         this.filteredDataDefined = matchingRowsDefined;
+        this.filteredDataUnknown = matchingRowsUnknown;
         this.groupLicenseData(this.filteredDataDefined);
-
-        // Update groupedLicenseData in TimelineOverviewComponent
-  
+        this.plotData();
       },
       (error) => {
         console.error('Error fetching data:', error);
       }
     );
   }
-
-
   deleteLicense(id: any): void {
     this.connectionService.deleteLicense(id).subscribe(
       () => {
@@ -366,7 +359,20 @@ openPDFViewerPopup(directory_path: string, details: string): void {
   timelineData: any[] = [];
 
 
-
+fetchTimelineData(): void {
+  this.timelineConnection.getTimelineData().subscribe(
+    (data: any[]) => {
+      this.timelineData = data;
+      this.filteredTimelineData = this.timelineData.filter(
+        item => item.licensor === this.licensorName && item.licensee === this.licenseeName
+      );
+      this.plotData(); // <-- Plot the data after fetching
+    },
+    (error) => {
+      console.error('Error fetching data:', error);
+    }
+  );
+}
  plotData(): void {
   const data: any[] = [];
   const idToColor: Map<string, string> = new Map();
@@ -1253,18 +1259,3 @@ toggleMlGroupExpansion(group: GroupedMlLicense): void {
 
 
 
-export function checkYearConsistency(dates: string[]): boolean {
-  if (dates.length === 0) return true;
-  const years = dates.map((d) => d.split('-')[0]);
-  return years.every((y) => y === years[0]);
-}
-
-export function formatDate(dates: string[]): string | null {
-  const fullDate = dates.find((d) => /^\d{4}-\d{2}-\d{2}$/.test(d));
-  return fullDate || dates.find((d) => /^\d{4}$/.test(d)) || null;
-}
-
-export function getMlUniqueValues(Mlicenses: any[], key: string): string[] {
-  const values = Mlicenses.map((license) => license[key]).filter(Boolean);
-  return Array.from(new Set(values));
-}
