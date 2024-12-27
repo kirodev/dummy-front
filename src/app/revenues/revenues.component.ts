@@ -12,7 +12,7 @@ interface AnnualRevenue {
   net_sales_path: string;
   licensing_revenue: number;
   net_sales_source: string;
-  net_licenses_usd_1: number | string;  // Handle both number and string types
+  net_licenses_usd_1: number | string; // Handle both number and string types
   source_1: string;
   path_1: string;
   net_licenses_usd_2: string;
@@ -24,14 +24,13 @@ interface AnnualRevenue {
   net_licenses_usd_4: string;
   source_4: string;
   path_4: string;
-  net_licenses_usd_5: number | string;  // Handle both number and string types
+  net_licenses_usd_5: number | string; // Handle both number and string types
   source_5: string;
   path_5: string;
   net_licenses_usd_6: string;
   source_6: string;
   path_6: string;
 }
-
 
 @Component({
   selector: 'app-revenues',
@@ -80,62 +79,54 @@ export class RevenuesComponent implements OnInit {
     });
   }
 
-  /**
-   * Match shared link from PdfLibrary using normalized path and year
-   */
-  normalizePath(path: string): string {
+  extractYearFromPath(path: string | null): number | null {
+    if (!path) return null; // Return null if the path is null or undefined
+    const match = path.match(/\[(\d{4})\]/); // Extract year in brackets, e.g., [2016]
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  extractTitleFromPath(path: string): string {
     if (!path) return '';
 
-    // Remove the file extension (.pdf) and special characters like brackets, spaces, etc.
-    return path.toLowerCase()
-      .replace(/[\[\]()-]/g, '') // Remove square brackets, parentheses, hyphens
-      .replace(/\\| /g, '')       // Remove backslashes and spaces
-      .replace('.pdf', '')        // Remove the file extension
-      .trim();
+    // Extract portion after [year] and before .pdf
+    const match = path.match(/\[\d{4}\]\s*(.*)\.pdf$/i);
+    const extractedTitle = match && match[1] ? match[1].trim() : '';
+
+    // Normalize extracted title
+    return extractedTitle.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
   }
 
   normalizeTitle(title: string): string {
     if (!title) return '';
-    return title.toLowerCase()
-      .replace(/[\[\]()-]/g, '') // Remove square brackets, parentheses, hyphens
-      .replace(/\s/g, '')         // Remove all spaces
+    return title
+      .toLowerCase()
+      .replace(/[\[\](){}-]/g, '') // Remove brackets, parentheses, braces, hyphens
+      .replace(/\s+/g, ' ')        // Normalize multiple spaces to a single space
       .trim();
   }
 
+  getSharedLink(path: string | null, year: number, source: string): string | null {
+    if (!this.pdfLibrary) return null;
 
+    const extractedTitle = path ? this.extractTitleFromPath(path) : null;
 
-
-  getSharedLink(path: string, year: number): string | null {
-    if (!path || !this.pdfLibrary) return null;
-
-    // Normalize both the path and the title from the database and the PDF library
-    const normalizedPath = this.normalizePath(path);
-
-    // Match against the library
     const match = this.pdfLibrary.find(file => {
-      const normalizedLibraryTitle = this.normalizeTitle(file.title);
-      const normalizedLibraryPath = this.normalizePath(file.path);  // Normalize the path in the library
+      const normalizedLibraryTitle = file.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
 
       return (
-        normalizedPath.includes(normalizedLibraryPath) && // Compare normalized paths
-        year.toString() === file.year.toString()           // Compare years
+        year.toString() === file.year.toString() && // Match by year
+        extractedTitle && normalizedLibraryTitle === extractedTitle // Match by title
       );
     });
 
     if (match) {
+      console.log(`Match Found: ${match.sharedLink}`);
       return match.sharedLink;
     } else {
+      console.warn(`No match found for Path: ${path}, Source: ${source}, Year: ${year}`);
       return null;
     }
   }
-
-
-
-  /**
-   * Normalize a given path to extract a comparable title
-   */
-
-  pdfLink: string = ''; // Add this property to store the link
 
   plotData(): void {
     if (!this.annualRevenues || this.annualRevenues.length === 0 || !this.pdfLibrary || this.pdfLibrary.length === 0) {
@@ -170,33 +161,37 @@ export class RevenuesComponent implements OnInit {
       const x = data.map(d => d.year);
       const y = data.map(d => d.licensing_revenue);
 
-      // Add all fields to customData
-      const customData = data.map(d => [
-        d.licensor,
-        d.year,
-        d.licensing_revenue,
-        d.net_sales_source,
-        d.path_1,
-        this.getSharedLink(d.path_1, d.year) ?? 'N/A',
-        d.net_licenses_usd_1, // Include net_licenses_usd_1
-        d.source_1,           // Include source_1
-        d.path_1,             // Include path_1
-        d.net_licenses_usd_2, // Include net_licenses_usd_2
-        d.source_2,           // Include source_2
-        d.path_2,             // Include path_2
-        d.net_licenses_usd_3, // Include net_licenses_usd_3
-        d.source_3,           // Include source_3
-        d.path_3,             // Include path_3
-        d.net_licenses_usd_4, // Include net_licenses_usd_4
-        d.source_4,           // Include source_4
-        d.path_4,             // Include path_4
-        d.net_licenses_usd_5, // Include net_licenses_usd_5
-        d.source_5,           // Include source_5
-        d.path_5,             // Include path_5
-        d.net_licenses_usd_6, // Include net_licenses_usd_6
-        d.source_6,           // Include source_6
-        d.path_6              // Include path_6
-      ]);
+      const customData = data.map(d => {
+        const extractedYear = this.extractYearFromPath(d.path_1);
+        const yearToUse = extractedYear || d.year;
+        console.log(`Path: ${d.path_1}, Extracted Year: ${extractedYear}, Year to Use: ${yearToUse}`);
+        return [
+          d.licensor,
+          d.year,
+          d.licensing_revenue,
+          d.net_sales_source,
+          d.path_1,
+          this.getSharedLink(d.path_1, yearToUse, d.source_1 || '') ?? 'N/A',
+          d.net_licenses_usd_1,
+          d.source_1,
+          d.path_1,
+          d.net_licenses_usd_2,
+          d.source_2,
+          d.path_2,
+          d.net_licenses_usd_3,
+          d.source_3,
+          d.path_3,
+          d.net_licenses_usd_4,
+          d.source_4,
+          d.path_4,
+          d.net_licenses_usd_5,
+          d.source_5,
+          d.path_5,
+          d.net_licenses_usd_6,
+          d.source_6,
+          d.path_6
+        ];
+      });
 
       traces.push({
         x,
@@ -205,13 +200,13 @@ export class RevenuesComponent implements OnInit {
         type: 'scatter',
         name: licensor,
         marker: { color: licensorColors.get(licensor) },
-        customdata: customData, // Correct structure for Plotly
+        customdata: customData,
         hovertemplate: `
           <b>Licensor:</b> %{customdata[0]}<br>
           <b>Year:</b> %{customdata[1]}<br>
           <b>Licensing Revenue:</b> %{customdata[2]}<br>
           <b>Net Sales Source:</b> %{customdata[3]}<br>
-          <extra>* Click To See More !</extra>
+          <extra>* Click To See More!</extra>
         `
       });
     });
@@ -220,18 +215,9 @@ export class RevenuesComponent implements OnInit {
       height: 600,
       autosize: true,
       title: 'Annual Revenues Over Time',
-      xaxis: {
-        title: 'Year',
-        tickangle: -45,
-        type: 'category'
-      },
-      yaxis: {
-        title: 'Licensing Revenue (in thousands)',
-        rangemode: 'tozero'
-      },
-      legend: {
-        traceorder: 'normal'
-      }
+      xaxis: { title: 'Year', tickangle: -45, type: 'category' },
+      yaxis: { title: 'Licensing Revenue (in thousands)', rangemode: 'tozero' },
+      legend: { traceorder: 'normal' }
     };
 
     Plotly.newPlot('plotDiv', traces, layout).then(() => {
@@ -245,7 +231,7 @@ export class RevenuesComponent implements OnInit {
     const point = data.points[0];
     const customData = point.customdata;
 
-    console.log('Custom Data:', customData);  // Log to verify the structure
+    console.log('Custom Data:', customData);
 
     if (!customData) {
       console.error('No custom data found for this point.');
@@ -257,29 +243,22 @@ export class RevenuesComponent implements OnInit {
         ? customData[2].toFixed(2)
         : 'N/A';
 
-    const year = customData[1]; // Get the year from customData
-    const licensor = customData[0]; // Get the licensor
+    const year = customData[1];
+    const licensor = customData[0];
 
-    // Dynamically generate the infoText for each net_licenses_usd with corresponding source, path, and shared link
     const licensesData = [
       { netLicenses: customData[6], source: customData[7], path: customData[8] },
       { netLicenses: customData[9], source: customData[10], path: customData[11] },
       { netLicenses: customData[12], source: customData[13], path: customData[14] },
       { netLicenses: customData[15], source: customData[16], path: customData[17] },
       { netLicenses: customData[18], source: customData[19], path: customData[20] },
-      { netLicenses: customData[21], source: customData[22], path: customData[23] },
-      { netLicenses: customData[24], source: customData[25], path: customData[26] },
-      { netLicenses: customData[27], source: customData[28], path: customData[29] },
-      { netLicenses: customData[30], source: customData[31], path: customData[32] },
-      { netLicenses: customData[33], source: customData[34], path: customData[35] },
-      { netLicenses: customData[36], source: customData[37], path: customData[38] },
-      { netLicenses: customData[39], source: customData[40], path: customData[41] }
+      { netLicenses: customData[21], source: customData[22], path: customData[23] }
     ];
 
     let licensesHtml = '';
     licensesData.forEach((item, index) => {
       if (item.netLicenses && item.source && item.path) {
-        const sharedLink = this.getSharedLink(item.path, customData[1]); // Pass path and year to get the shared link
+        const sharedLink = this.getSharedLink(item.path, this.extractYearFromPath(item.path) || year, item.source || '');
         licensesHtml += `
           <div>
             <strong>Net Licenses USD ${index + 1}:</strong> ${item.netLicenses || 'N/A'}<br>
@@ -292,7 +271,6 @@ export class RevenuesComponent implements OnInit {
       }
     });
 
-    // Create the popup content including licensing data
     const infoText = `
       <div style="text-align: left;">
         <div>
@@ -302,14 +280,13 @@ export class RevenuesComponent implements OnInit {
           <strong>Net Sales Source:</strong> ${this.sanitizeHtml(customData[3] || 'N/A')}<br>
         </div>
         <div class="center-button">
-          ${licensesHtml} <!-- Add dynamically generated license data here -->
+          ${licensesHtml}
         </div>
       </div>
     `;
 
-    this.showPopup(infoText); // Show the popup with generated content
+    this.showPopup(infoText);
   }
-
 
   showPopup(infoText: string): void {
     this.popupText = infoText;
@@ -321,8 +298,8 @@ export class RevenuesComponent implements OnInit {
   }
 
   private sanitizeHtml(input: string | undefined): string {
-    if (!input) return ''; // Return empty string for undefined or null
-    return input.replace(/[&<>"']/g, (char) => {
+    if (!input) return '';
+    return input.replace(/[&<>"']/g, char => {
       const entities: { [key: string]: string } = {
         '&': '&amp;',
         '<': '&lt;',
