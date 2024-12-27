@@ -138,6 +138,30 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
 
     Plotly.newPlot(plotDiv, data, layout);
   }
+onLicensorSelect(): void {
+  if (!this.selectedLicensor) {
+    console.warn('No licensor selected.');
+    return;
+  }
+
+  console.log(`Selected Licensor: ${this.selectedLicensor}`);
+
+  // Fetch all required data and ensure synchronization
+  Promise.all([
+    this.filterAndGroupDataForLicensor(),
+    this.fetchPayments()
+  ])
+    .then(() => {
+      const normalizedSelectedLicensor = normalizeLicensorName(this.selectedLicensor);
+
+      const selectedLicensorRevenues = this.annualRevenues.filter(
+        (item) => normalizeLicensorName(item.licensor) === normalizedSelectedLicensor
+      );
+
+      this.processDataAndPlot(selectedLicensorRevenues); // Process and plot revenues
+    })
+    .catch((error) => console.error('Error fetching data:', error));
+}
 
   getGroupDates(group: any): { signed: string | null; expiration: string | null } {
     const signedDates = group.licenses.map((l: any) => l.signed_date).filter(Boolean);

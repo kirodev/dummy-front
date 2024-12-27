@@ -6,6 +6,7 @@
   <select id="licensor" [(ngModel)]="selectedLicensor" (change)="onLicensorChange()">
     <option *ngFor="let licensor of licensors" [value]="licensor">{{ licensor }}</option>
   </select>
+  <button (click)="onLicensorSelect()">Fetch Data</button>
 
   <!-- Check if groupedLicenseData has data -->
   <div *ngIf="groupedLicenseData$ | async as groupedLicenseData; else loading">
