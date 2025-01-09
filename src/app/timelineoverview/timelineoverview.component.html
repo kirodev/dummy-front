@@ -8,16 +8,20 @@
   </select>
   <button (click)="onLicensorChange()">Fetch Licensor Data</button>
 
-  <!-- Check if groupedLicenseData has data -->
+  <!-- Plot Containers -->
+  <div class="plot-container">
+    <div id="licensorPaymentsPlot"></div>
+  </div>
+  <div class="plot-container">
+    <div id="overallDiv"></div>
+  </div>
 
-      <div id="licensorPaymentsPlot"></div>
-      <div id="overallDiv"></div>
+  <!-- No Data Message -->
+  <div *ngIf="groupedLicenseData.length === 0">
+    <p>No data available for this licensor.</p>
+  </div>
 
-    <div *ngIf="groupedLicenseData.length === 0">
-      <p>No data available for this licensor.</p>
-    </div>
-
-
+  <!-- Loading Template -->
   <ng-template #loading>
     <p>Loading...</p>
   </ng-template>

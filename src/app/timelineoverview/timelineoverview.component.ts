@@ -295,26 +295,17 @@ plotOverallDataByLicensor(): void {
     return;
   }
 
-  const data: any[] = [];
   const categories = ['_2G', '_3G', '_4G', '_5G', '_6G', 'wifi'];
-  const plottedMappingIds = new Set<string>(); // Track already plotted `mapping_id`s
-  const techCombinationsSet = new Set<string>(); // To track unique combinations
-
-  // Aggregate records by mapping_id
-  const aggregatedData = new Map<string, any>();
+  const techCombinationsMap = new Map<string, { x: (string | null)[]; y: (string | null)[]; text: (string | null)[] }>();
+  const data: any[] = [];
   let earliestYear = Number.MAX_SAFE_INTEGER;
   let latestYear = Number.MIN_SAFE_INTEGER;
 
+  // Aggregate data by technology combination
   this.groupedLicenseData.forEach((group) => {
     group.licenses.forEach((license: any) => {
-      const { mapping_id, signed_date, expiration_date } = license;
+      const { signed_date, expiration_date, licensee } = license;
 
-      if (!mapping_id) {
-        console.warn('Skipping license with missing mapping_id:', license);
-        return;
-      }
-
-      // Calculate the earliest and latest years for the axis
       if (signed_date) {
         const year = new Date(signed_date).getFullYear();
         earliestYear = Math.min(earliestYear, year);
@@ -324,111 +315,116 @@ plotOverallDataByLicensor(): void {
         latestYear = Math.max(latestYear, year);
       }
 
-      // Initialize or update aggregated record
-      if (!aggregatedData.has(mapping_id)) {
-        aggregatedData.set(mapping_id, {
-          mapping_id,
-          earliestSignedDate: signed_date,
-          latestExpirationDate: expiration_date,
-          technologies: new Set<string>(), // Use Set to prevent duplicates
-          licensee: license.licensee, // Use any licensee for labeling
-        });
+      const techCombination = categories
+        .filter((category) => license[category]?.toUpperCase() === 'Y')
+        .map((category) => category.replace('_', '').toUpperCase())
+        .join(', ') || 'NO TECHNOLOGIES';
+
+      if (!techCombinationsMap.has(techCombination)) {
+        techCombinationsMap.set(techCombination, { x: [], y: [], text: [] });
+      }
+
+      const traces = techCombinationsMap.get(techCombination);
+      const truncatedLicensee =
+        licensee?.length > 12 ? `${licensee.slice(0, 12)}...` : licensee;
+
+      const hoverText = `
+        Licensee: ${licensee || 'N/A'}<br>
+        Signed: ${signed_date || 'Not Available'}<br>
+        Expiration: ${expiration_date || 'Not Available'}<br>
+        Technologies: ${techCombination}
+      `;
+
+      if (signed_date && expiration_date) {
+        // Add data points for licenses with both dates
+        traces?.x.push(signed_date, expiration_date, null); // Null separates different licensees
+        traces?.y.push(truncatedLicensee, truncatedLicensee, null);
+        traces?.text.push(hoverText, hoverText, null);
       } else {
-        const agg = aggregatedData.get(mapping_id);
-        agg.earliestSignedDate = this.getEarliestDate(agg.earliestSignedDate, signed_date);
-        agg.latestExpirationDate = this.getLatestDate(agg.latestExpirationDate, expiration_date);
-        categories.forEach((category) => {
-          if (license[category]?.toUpperCase() === 'Y') {
-            agg.technologies.add(category.replace('_', '').toUpperCase());
-          }
-        });
+        const singleDate = signed_date || expiration_date;
+        if (singleDate) {
+          traces?.x.push(singleDate, null); // Null separates different licensees
+          traces?.y.push(truncatedLicensee, null);
+          traces?.text.push(hoverText, null);
+        }
       }
     });
   });
 
-  // Plot aggregated data
-  aggregatedData.forEach((agg) => {
-    if (plottedMappingIds.has(agg.mapping_id)) {
-      return; // Skip if already plotted
-    }
-    plottedMappingIds.add(agg.mapping_id); // Mark as plotted
-
-    const techCombination = Array.from(agg.technologies).join(', ') || 'NO TECHNOLOGIES'; // Fallback label
-    techCombinationsSet.add(techCombination);
-
-    const color = this.colorPalette[data.length % this.colorPalette.length];
-    const hoverText = `
-      Mapping ID: ${agg.mapping_id}<br>
-      Licensee: ${agg.licensee || 'N/A'}<br>
-      Signed: ${agg.earliestSignedDate || 'Not Available'}<br>
-      Expiration: ${agg.latestExpirationDate || 'Not Available'}<br>
-      Technologies: ${techCombination}
-    `;
-
-    if (agg.earliestSignedDate && agg.latestExpirationDate) {
-      // Plot line + marker trace for licenses with both signed and expiration dates
-      data.push({
-        x: [agg.earliestSignedDate, agg.latestExpirationDate],
-        y: [agg.licensee, agg.licensee],
-        type: 'scatter',
-        mode: 'lines+markers',
-        line: { color },
-        marker: { size: 8 },
-        text: [hoverText, hoverText],
-        hoverinfo: 'text',
-        name: techCombination, // Use combination as legend label
-        showlegend: !data.some((d) => d.name === techCombination), // Show legend only once per combination
-      });
-    } else {
-      // Plot marker for licenses with only one date (either signed or expiration)
-      const singleDate = agg.earliestSignedDate || agg.latestExpirationDate;
-      if (singleDate) {
-        data.push({
-          x: [singleDate],
-          y: [agg.licensee],
-          type: 'scatter',
-          mode: 'markers',
-          marker: { size: 8, color },
-          text: [hoverText],
-          hoverinfo: 'text',
-          name: techCombination, // Use combination as legend label
-          showlegend: !data.some((d) => d.name === techCombination), // Show legend only once per combination
-        });
-      }
-    }
+  // Create traces for each technology combination
+  let colorIndex = 0;
+  techCombinationsMap.forEach((traces, techCombination) => {
+    data.push({
+      x: traces.x,
+      y: traces.y,
+      type: 'scatter',
+      mode: 'lines+markers', // Add lines between points within same licensee
+      line: { color: this.colorPalette[colorIndex % this.colorPalette.length] },
+      marker: { size: 8 },
+      text: traces.text,
+      hoverinfo: 'text',
+      name: techCombination, // Legend label for the combination
+      showlegend: true,
+      connectgaps: false, // Prevent lines from connecting across nulls
+    });
+    colorIndex++;
   });
 
-  // Dynamically calculate plot height based on the number of unique licensees
-  const numLicensees = new Set(
-    this.groupedLicenseData.flatMap((group) =>
-      group.licenses.map((license: any) => license.licensee)
-    )
-  ).size;
-  const baseHeight = 200; // Base height for the plot
-  const additionalHeightPerLicensee = 30; // Height added per licensee
-  const plotHeight = baseHeight + numLicensees * additionalHeightPerLicensee;
-
-  // Define a range of years from the earliest to the latest
   const yearRange = [];
   for (let year = earliestYear; year <= latestYear; year++) {
     yearRange.push(year.toString());
   }
 
+  // **Calculate Dynamic Height Based on Number of Licensees**
+  const licenseeSet = new Set<string>();
+  data.forEach((trace: any) => {
+    trace.y.forEach((licensee: string | null) => {
+      if (licensee) licenseeSet.add(licensee);
+    });
+  });
+  const licenseeList = Array.from(licenseeSet);
+  const numberOfLicensees = licenseeList.length;
+
+  // Define height per licensee (e.g., 30px per licensee)
+  const heightPerLicensee = 30; // Adjust as needed
+  const baseHeight = 600; // Base height for the plot
+  const dynamicHeight = baseHeight + (numberOfLicensees * heightPerLicensee);
+
+  console.log(`Number of Licensees: ${numberOfLicensees}`);
+  console.log(`Dynamic Plot Height: ${dynamicHeight}px`);
+
+  // Define layout with synchronized x-axis and margins
   const layout = {
     title: `Overall Timeline for Licensor: ${this.selectedLicensor}`,
     xaxis: {
-      title: 'Date',
-      type: 'date',
+      title: 'Year',
+      type: 'date', // Ensure 'date' type for alignment
       automargin: true,
-      tickvals: yearRange.map((year) => `${year}-01-01`), // Use January 1st of each year
-      ticktext: yearRange, // Show only the year
+      tickvals: yearRange.map((year) => `${year}-01-01`), // Align tickvals
+      ticktext: yearRange.map(String), // Ensure ticktext is string
+      tickangle: -45, // Rotate labels to avoid crowding
     },
-    yaxis: { title: 'Licensee', automargin: true },
+    yaxis: {
+      title: 'Licensee',
+      automargin: true,
+      tickmode: 'array',
+      tickvals: licenseeList,
+      ticktext: licenseeList.map((lic) => (lic && lic.length > 12 ? `${lic.slice(0, 12)}...` : lic)),
+      tickfont: {
+        size: 12, // Adjust tick font size for readability
+      },
+    },
     showlegend: true,
-    height: plotHeight, // Dynamically set the height
+    height: dynamicHeight, // Set dynamic height
+    margin: {
+      t: 50,  // Top margin
+      l: 200, // Increased left margin to accommodate longer labels
+      r: 50,  // Right margin
+      b: 200, // Increased bottom margin for x-axis label space
+    },
   };
 
-  console.log('Data for Plot:', data);
+  console.log('Layout Configuration:', layout);
 
   if (data.length === 0) {
     console.warn('No data available for plotting.');
@@ -436,6 +432,10 @@ plotOverallDataByLicensor(): void {
 
   Plotly.newPlot(plotDiv, data, layout);
 }
+
+
+
+
 
 // Helper function to find the earliest date
 getEarliestDate(date1: string | null, date2: string | null): string | null {
@@ -511,133 +511,204 @@ getLatestDate(date1: string | null, date2: string | null): string | null {
       xaxis: { title: 'Year', type: 'category' },
       yaxis: { title: 'Revenue', tickformat: ',d' },
       height: 600,
+
     };
 
     console.warn('Displaying revenue-only chart for', this.selectedLicensor);
     Plotly.newPlot(plotDiv, [revenueTrace], layout);
   }
 
-processDataAndPlot(selectedLicensorRevenues: any[]): void {
-  this.licenseeData.clear();
+  processDataAndPlot(selectedLicensorRevenues: any[]): void {
+    this.licenseeData.clear();
 
-  // Add licensee data
-  this.filteredPayments.forEach((item) => {
-    const year =
-      typeof item.year === 'string' ? parseInt(item.year, 10) : item.year;
+    // 1. Calculate a unified range of years once, ensuring consistency
+    let unifiedYears = this.calculateUnifiedYearRange(); // Ensure this returns a sorted array of unique years
+    console.log('Original Unified Years:', unifiedYears);
 
-    const payment =
-      item.payment_amount != null && !isNaN(parseFloat(item.payment_amount))
-        ? parseFloat(item.payment_amount)
-        : (item.adv_eq_type?.trim().toUpperCase() === 'TPY' ||
-            item.eq_type?.trim().toUpperCase() === 'TPY') &&
-          item.results != null &&
-          !isNaN(parseFloat(item.results))
-        ? parseFloat(item.results)
-        : 0;
+    // 2. Exclude 0 from unifiedYears if present
+    unifiedYears = unifiedYears.filter(year => year !== 0);
+    console.log('Filtered Unified Years (No 0):', unifiedYears);
 
-    if (!Number.isNaN(year) && isFinite(year) && payment >= 0) {
-      if (!this.licenseeData.has(item.licensee)) {
-        this.licenseeData.set(item.licensee, []);
-      }
-      this.licenseeData.get(item.licensee)!.push({ year, payment });
-    }
-  });
+    const unifiedYearsStr = unifiedYears.map(String); // Convert to strings for Plotly
 
-  const yearsSet = new Set<number>();
-  this.licenseeData.forEach((data) =>
-    data.forEach((entry) => yearsSet.add(entry.year))
-  );
-
-  selectedLicensorRevenues.forEach((item) => {
-    const year =
-      typeof item.year === 'string' ? parseInt(item.year, 10) : item.year;
-    if (!isNaN(year)) {
-      yearsSet.add(year);
-    }
-  });
-
-  const years = Array.from(yearsSet).sort((a, b) => a - b);
-
-  const revenueData = years.map((year) => {
-    const revenueItem = selectedLicensorRevenues.find((rev) => {
-      const revYear =
-        typeof rev.year === 'string' ? parseInt(rev.year, 10) : rev.year;
-      return revYear === year;
+    // 3. Prepare revenue data aligned with unifiedYears
+    const revenueData = unifiedYears.map((year) => {
+      const revenueItem = selectedLicensorRevenues.find((rev) => {
+        const revYear = typeof rev.year === 'string' ? parseInt(rev.year.slice(0, 4), 10) : rev.year;
+        return revYear === year;
+      });
+      return revenueItem?.licensing_revenue
+        ? parseFloat(revenueItem.licensing_revenue.toString().replace(/,/g, ''))
+        : 0; // Fill missing years with 0
     });
-    return revenueItem?.licensing_revenue
-      ? parseFloat(revenueItem.licensing_revenue.toString().replace(/,/g, ''))
-      : 0;
-  });
+    console.log('Revenue Data:', revenueData);
 
-  const paymentTraces = Array.from(this.licenseeData.entries()).map(
-    ([licensee, data], index) => {
-      const color = this.colorPalette[index % this.colorPalette.length];
-      const yValues = years.map(
-        (yr) => data.find((entry) => entry.year === yr)?.payment || 0
-      );
+    // 4. Map payments to unifiedYears
+    this.filteredPayments.forEach((item) => {
+      const year = item.year
+        ? parseInt(item.year.toString().slice(0, 4), 10)
+        : null;
 
-      return {
-        x: years,
-        y: yValues,
-        type: 'bar',
-        name: licensee,
-        marker: { color },
-      };
-    }
-  );
+      const payment = this.computePaymentValue(item);
 
-  const remainingRevenueTrace = {
-    x: years,
-    y: revenueData.map((total, idx) => {
-      const totalPayments = paymentTraces.reduce(
-        (sum, trace) => sum + (trace.y![idx] || 0),
-        0
-      );
-      return Math.max(0, total - totalPayments);
-    }),
-    type: 'bar',
-    name: 'Remaining Revenue',
-    marker: { color: 'lightgrey' },
-  };
+      // **IMPORTANT FIX**: Exclude year=0 here to prevent it from being added to licenseeData
+      if (
+        year !== null &&
+        !Number.isNaN(year) &&
+        isFinite(year) &&
+        payment >= 0 &&
+        year !== 0 // Exclude year=0
+      ) {
+        if (!this.licenseeData.has(item.licensee)) {
+          this.licenseeData.set(item.licensee, []);
+        }
+        this.licenseeData.get(item.licensee)!.push({ year, payment });
+      } else if (year === 0) {
+        console.warn('Found payment with year = 0 and excluded it:', item);
+      }
+    });
 
-  const traces = [...paymentTraces, remainingRevenueTrace];
-  const layout = {
-    title: `Licensing Revenues for ${this.selectedLicensor}`,
-    barmode: 'stack',
-    xaxis: { title: 'Year', type: 'category' },
-    yaxis: { title: 'Amount', tickformat: ',d' },
-    height: 600,
-  };
+    // 5. Create payment traces, ensuring all traces align with unifiedYears
+    const paymentTraces = Array.from(this.licenseeData.entries()).map(
+      ([licensee, data], index) => {
+        const color = this.colorPalette[index % this.colorPalette.length];
+        const yValues = unifiedYears.map(
+          (yr) => data.find((entry) => entry.year === yr)?.payment || 0
+        );
 
-  const plotDiv = document.getElementById('licensorPaymentsPlot') as any;
+        return {
+          x: unifiedYearsStr.map((year) => `${year}-01-01`), // Align x with 'date' type
+          y: yValues,
+          type: 'bar',
+          name: licensee,
+          marker: { color },
+          visible: true, // Initially, all traces are visible
+        };
+      }
+    );
+    console.log('Payment Traces:', paymentTraces);
 
-  if (plotDiv) {
-    Plotly.react(plotDiv, traces, layout).then(() => {
-      plotDiv.on('plotly_restyle', (eventData: any) => {
-        const updatedTraces = plotDiv.data;
-        const remainingRevenue = years.map((_, idx) => {
-          const totalRevenue = revenueData[idx];
-          let visibleSum = 0;
+    // 6. Function to calculate Remaining Revenues based on visibility
+    const calculateRemainingRevenues = (visibleTraces: boolean[]): number[] => {
+      return revenueData.map((total, idx) => {
+        const totalPayments = paymentTraces.reduce((sum, trace, traceIdx) => {
+          if (visibleTraces[traceIdx]) {
+            return sum + (trace.y![idx] || 0);
+          }
+          return sum;
+        }, 0);
+        return Math.max(0, total - totalPayments);
+      });
+    };
 
-          updatedTraces.forEach((trace: any, traceIndex: number) => {
-            // Check if the trace is not hidden
-            if (traceIndex < updatedTraces.length - 1 && trace.visible !== 'legendonly') {
-              visibleSum += trace.y[idx] || 0;
-            }
+    // 7. Initial calculation of Remaining Revenues assuming all payment traces are visible
+    const initialVisibility = paymentTraces.map(() => true);
+    let remainingRevenues = calculateRemainingRevenues(initialVisibility);
+    console.log('Initial Remaining Revenues:', remainingRevenues);
+
+    // 8. Create the Remaining Revenue trace
+    const remainingRevenueTrace = {
+      x: unifiedYearsStr.map((year) => `${year}-01-01`), // Align x with 'date' type
+      y: remainingRevenues,
+      type: 'bar',
+      name: 'Remaining Revenue',
+      marker: { color: 'lightgrey' },
+      uid: 'remaining-revenue', // Unique identifier for easy reference
+    };
+    console.log('Remaining Revenue Trace:', remainingRevenueTrace);
+
+    // 9. Combine all traces
+    const traces = [...paymentTraces, remainingRevenueTrace];
+    console.log('All Traces to Plot:', traces);
+
+    const layout = {
+      title: `Licensing Revenues for ${this.selectedLicensor}`,
+      barmode: 'stack',
+      xaxis: {
+        title: 'Year',
+        type: 'date', // Ensure 'date' type for alignment
+        tickvals: unifiedYears.map((year) => `${year}-01-01`), // Align tickvals as dates
+        ticktext: unifiedYears.map(String), // Ensure ticktext is string
+        showgrid: true, // Keep gridlines for x-axis
+        gridcolor: '#e0e0e0', // Set gridline color
+        showline: false, // Hide the x-axis line
+        automargin: true, // Prevent label overlap
+        tickangle: -45, // Tilt x-axis labels for better readability
+      },
+      yaxis: {
+        title: 'Amount',
+        tickformat: ',d',
+        showgrid: true, // Keep gridlines for y-axis
+        gridcolor: '#e0e0e0', // Set gridline color
+        zeroline: false, // Remove the y=0 line
+        showline: false, // Hide the y-axis line
+        rangemode: 'nonnegative', // Ensure no forced range including 0 unless data demands
+        range: [
+          Math.min(...revenueData.concat(...paymentTraces.map((t) => t.y)).filter((v) => v > 0)),
+          Math.max(...revenueData),
+        ], // Dynamic range based on data
+      },
+      height: 600,
+      margin: {
+        t: 50,  // Top margin
+        l: 200, // Increased left margin to accommodate longer labels
+        r: 50,  // Right margin
+        b: 200, // Increased bottom margin for x-axis label space
+      },
+    };
+
+    console.log('Layout Configuration:', layout);
+
+    // 11. Get the plot div
+    const plotDiv = document.getElementById('licensorPaymentsPlot') as any;
+
+    if (plotDiv) {
+      // 12. Initial plot using Plotly.newPlot for better event handling
+      Plotly.newPlot(plotDiv, traces, layout).then(() => {
+        // 13. Flag to prevent recursive updates
+        let isUpdating = false;
+
+        // 14. Add event listener for toggling traces
+        plotDiv.on('plotly_restyle', (eventData: any) => {
+          if (isUpdating) return; // Prevent recursion
+
+          // 15. Retrieve all current traces
+          const allTraces = plotDiv.data;
+
+          // 16. Identify the Remaining Revenue trace by UID
+          const remainingRevenueIndex = allTraces.findIndex(
+            (trace: any) => trace.uid === 'remaining-revenue'
+          );
+
+          if (remainingRevenueIndex === -1) {
+            console.error('Remaining Revenue trace not found.');
+            return;
+          }
+
+          // 17. Determine visibility of each payment trace
+          const visibleTraces = paymentTraces.map((_, idx) => {
+            const trace = allTraces[idx];
+            return trace.visible === true || trace.visible === undefined;
           });
 
-          return Math.max(0, totalRevenue - visibleSum);
+          // 18. Recalculate Remaining Revenues based on visible traces
+          const updatedRemainingRevenues = calculateRemainingRevenues(visibleTraces);
+          console.log('Updated Remaining Revenues:', updatedRemainingRevenues);
+
+          // 19. Update the Remaining Revenue trace using Plotly.restyle
+          isUpdating = true; // Set flag to prevent recursion
+          Plotly.restyle(plotDiv, { y: [updatedRemainingRevenues] }, [remainingRevenueIndex])
+            .then(() => {
+              isUpdating = false; // Reset flag after update
+            })
+            .catch((err: any) => {
+              console.error('Error updating Remaining Revenue trace:', err);
+              isUpdating = false;
+            });
         });
-
-        // Update Remaining Revenue trace
-        updatedTraces[updatedTraces.length - 1].y = remainingRevenue;
-
-        // Redraw the plot
-        Plotly.redraw(plotDiv);
       });
-    });
+    }
   }
-}
 
 
 
@@ -659,6 +730,45 @@ groupLicenseData(data: any[]): any[] {
     licenses,
     isExpanded: false,
   }));
+}
+calculateUnifiedYearRange(): number[] {
+  let earliestYear = Number.MAX_SAFE_INTEGER;
+  let latestYear = Number.MIN_SAFE_INTEGER;
+
+  // Check years in grouped license data
+  this.groupedLicenseData.forEach((group) => {
+    group.licenses.forEach((license: any) => {
+      const signedYear = license.signed_date
+        ? parseInt(license.signed_date.slice(0, 4), 10)
+        : null;
+      const expirationYear = license.expiration_date
+        ? parseInt(license.expiration_date.slice(0, 4), 10)
+        : null;
+
+      if (signedYear !== null) {
+        earliestYear = Math.min(earliestYear, signedYear);
+      }
+      if (expirationYear !== null) {
+        latestYear = Math.max(latestYear, expirationYear);
+      }
+    });
+  });
+
+  // Check years in filtered payment data
+  this.filteredPayments.forEach((item) => {
+    const year = item.year
+      ? parseInt(item.year.toString().slice(0, 4), 10)
+      : null;
+    if (year !== null) {
+      earliestYear = Math.min(earliestYear, year);
+      latestYear = Math.max(latestYear, year);
+    }
+  });
+
+  return Array.from(
+    { length: latestYear - earliestYear + 1 },
+    (_, i) => earliestYear + i
+  );
 }
 
 
