@@ -6,21 +6,17 @@
   <select id="licensor" [(ngModel)]="selectedLicensor" (change)="onLicensorChange()">
     <option *ngFor="let licensor of licensors" [value]="licensor">{{ licensor }}</option>
   </select>
-  <button (click)="onLicensorSelect()">Fetch Data</button>
+  <button (click)="onLicensorChange()">Fetch Licensor Data</button>
 
   <!-- Check if groupedLicenseData has data -->
-  <div *ngIf="groupedLicenseData$ | async as groupedLicenseData; else loading">
-    <div *ngIf="groupedLicenseData.length > 0">
-      <!-- Plot for Licensing Revenues (Payments and Remaining Revenue) -->
-      <div id="licensorPaymentsPlot" style="height: 600px; width: 100%;"></div>
 
-      <!-- Plot for Overall Data (Timeline) -->
-      <div id="overallDiv" style="height: 600px; width: 100%;"></div>
-    </div>
+      <div id="licensorPaymentsPlot"></div>
+      <div id="overallDiv"></div>
+
     <div *ngIf="groupedLicenseData.length === 0">
       <p>No data available for this licensor.</p>
     </div>
-  </div>
+
 
   <ng-template #loading>
     <p>Loading...</p>
