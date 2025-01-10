@@ -13,64 +13,58 @@ export class LIBComponent implements OnInit {
 
   // Filters and Search
   searchQuery: string = '';
-  searchByTitle: boolean = false;
-  searchByDetails: boolean = false;
-  selectedReportType: string = '';
   selectedYear: string = '';
   uniqueYears: string[] = [];
-  uniqueReportTypes: string[] = ['Annual Report', 'Quarterly Report', 'Press Release', 'Judicial Documents', 'Licensing Programs'];
+  uniqueReportTypes: string[] = [
+    'Annual Report',
+    'Quarterly Report',
+    'Press Release',
+    'Judicial Documents',
+    'Licensing Programs',
+  ];
 
   constructor(private pdfLibraryService: PdfLibraryService) {}
 
   ngOnInit(): void {
-    this.loadExistingFiles();
-        this.fetchLibraryFiles();
-        this.populateUniqueYears();
-
+    this.loadAndSyncFiles();
   }
 
-  loadExistingFiles(): void {
+  loadAndSyncFiles(): void {
     this.isLoading = true;
+
+    // First, fetch existing files
     this.pdfLibraryService.getExistingFiles().subscribe({
       next: (files: PdfFile[]) => {
         this.pdfFiles = files;
-
-        // Populate uniqueYears
-        this.uniqueYears = Array.from(new Set(this.pdfFiles.map((file) => file.year))).sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
-
-        // Initially set filtered files to all files
         this.filteredPdfFiles = [...this.pdfFiles];
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading existing files:', err);
-        this.isLoading = false;
-      },
-    });
-  }
-  fetchLibraryFiles(): void {
-    this.isLoading = true;
+        this.populateUniqueYears();
 
-    // Fetch and update library files from Dropbox
-    this.pdfLibraryService.checkDropboxFiles().subscribe({
-      next: (files) => {
-        this.pdfFiles = files;
-        console.log('Fetched and updated library files:', files);
-        this.isLoading = false;
+        // Then, sync with Dropbox
+        this.pdfLibraryService.checkDropboxFiles().subscribe({
+          next: (syncedFiles: PdfFile[]) => {
+            this.pdfFiles = syncedFiles;
+            this.filteredPdfFiles = [...this.pdfFiles];
+            this.populateUniqueYears();
+            this.isLoading = false;
+            console.log('Synchronization complete:', syncedFiles);
+          },
+          error: (err) => {
+            console.error('Error during synchronization:', err);
+            this.isLoading = false;
+          },
+        });
       },
       error: (err) => {
-        console.error('Error fetching library files:', err);
+        console.error('Error fetching existing files:', err);
         this.isLoading = false;
-      }
+      },
     });
   }
+
   searchFiles(): void {
     const query = this.searchQuery.toLowerCase().trim();
 
     this.filteredPdfFiles = this.pdfFiles.filter((file) => {
-      // Filter by report type
-
-
       // Filter by year
       if (this.selectedYear && file.year !== this.selectedYear) {
         return false;
@@ -85,27 +79,35 @@ export class LIBComponent implements OnInit {
     });
   }
 
-
-
   redirectToLink(link: string): void {
     // Open a new window with minimal UI (no menubar, toolbar, location bar, etc.)
-    const windowFeatures = 'menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes,width=800,height=600';
-    window.open(link, '', windowFeatures);
+    const windowFeatures =
+      'menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes,width=800,height=600';
+    window.open(link, '_blank', windowFeatures);
   }
-
 
   resetFilters(): void {
     this.searchQuery = '';
-    this.searchByTitle = false;
-    this.searchByDetails = false;
-    this.selectedReportType = '';
     this.selectedYear = '';
     this.filteredPdfFiles = [...this.pdfFiles];
   }
 
   populateUniqueYears(): void {
-    // Extract years from your files
-    const allYears = this.pdfFiles.map(file => Number(file.year)); // or simply +file.year
+    if (this.pdfFiles.length === 0) {
+      this.uniqueYears = [];
+      return;
+    }
+
+    // Convert 'year' to numbers and filter out NaN values
+    const allYears = this.pdfFiles
+      .map(file => Number(file.year))
+      .filter(value => !Number.isNaN(value)); // Corrected filter usage
+
+    if (allYears.length === 0) {
+      this.uniqueYears = [];
+      return;
+    }
+
     const minYear = Math.min(...allYears);
     const maxYear = Math.max(...allYears);
 
@@ -114,6 +116,5 @@ export class LIBComponent implements OnInit {
     for (let year = maxYear; year >= minYear; year--) {
       this.uniqueYears.push(year.toString());
     }
-
-}}
-
+  }
+}

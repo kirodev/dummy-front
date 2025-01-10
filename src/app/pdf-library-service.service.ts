@@ -36,21 +36,24 @@ export class PdfLibraryService {
     });
   }
 
-  private buildQueryString(params: Record<string, string | number>): string {
-    return Object.entries(params)
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-      .join('&');
+  getExistingFiles(): Observable<PdfFile[]> {
+    return this.http.get<PdfFile[]>(`${this.url}lib/all`, {
+      headers: this.getHeaders(),
+    });
   }
 
-    // Fetch all files from the database
-    getExistingFiles(): Observable<PdfFile[]> {
-      const endpoint = `${this.url}lib/all`; // Update the endpoint to fetch all files
-      return this.http.get<PdfFile[]>(endpoint, { headers: this.getHeaders() });  }
-
-    // Fetch and check files from Dropbox
-    checkDropboxFiles(): Observable<PdfFile[]> {
-      return this.http.get<PdfFile[]>(`${this.url}lib`, { headers: this.getHeaders() });
+  // Sync Dropbox files with the database
+  checkDropboxFiles(folderPath?: string): Observable<PdfFile[]> {
+    let url = `${this.url}lib/sync`;
+    if (folderPath) {
+      url += `?folderPath=${encodeURIComponent(folderPath)}`;
     }
+    return this.http.get<PdfFile[]>(url, {
+      headers: this.getHeaders(),
+    });
+  }
+    // Fetch all files from the database
+
     getFilesFromDatabase(): Observable<PdfFile[]> {
       const endpoint = `${this.url}lib`; // Update the endpoint to fetch all files
       return this.http.get<PdfFile[]>(endpoint, { headers: this.getHeaders() });

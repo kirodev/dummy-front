@@ -1,5 +1,4 @@
 <ul class="nav nav-tabs custom-tabs">
-
   <li class="nav-item">
     <a class="nav-link" routerLink="/library" routerLinkActive="active">Local Library</a>
   </li>
@@ -7,6 +6,7 @@
     <a class="nav-link" routerLink="/lib" routerLinkActive="active">Global Library</a>
   </li>
 </ul>
+
 <div *ngIf="isLoading" class="loading-indicator">
   Loading files, please wait...
 </div>
@@ -18,19 +18,17 @@
       type="text"
       [(ngModel)]="searchQuery"
       placeholder="Search by Title..."
+      (input)="searchFiles()"
     />
-
-    <button (click)="searchFiles()" >Search</button>
 
     <!-- Year Filter -->
     <label>Search by Year:</label>
     <select [(ngModel)]="selectedYear" (change)="searchFiles()">
-      <option value="" disabled>All Years</option>
+      <option value="">All Years</option>
       <option *ngFor="let year of uniqueYears" [value]="year">
         {{ year }}
       </option>
     </select>
-
 
     <button (click)="resetFilters()">Reset Filters</button>
   </div>
