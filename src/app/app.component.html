@@ -39,8 +39,20 @@
       <li class="nav-item" *ngIf="showModeratorBoard">
         <a href="/sechome" class="nav-link" routerLink="sechome">Home</a>
       </li>
-      <li class="nav-item">
-        <a href="/user" class="nav-link" *ngIf="isLoggedIn" routerLink="user">Tools</a>
+      <li class="nav-item" *ngIf="showAdminBoard">
+         <div class="dropdown">
+        <a>Services</a>
+        <div class="dropdown-content">
+          <a routerLink="/mobile">Known Licenses</a>
+          <a routerLink="/revenues">Licensing Revenues</a>
+          <a routerLink="/sales">Product Market Sales</a>
+          <a routerLink="/library">Documents Library</a>
+          <a routerLink="/timeline-overview">Timeline</a>
+        </div>
+      </div>
+      </li>
+      <li class="nav-item" >
+        <a href="/support" class="nav-link" routerLink="sechome">Support</a>
       </li>
     </ul>
 
