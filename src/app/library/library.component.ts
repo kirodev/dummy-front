@@ -36,6 +36,7 @@ export class LibraryComponent implements OnInit {
   selectedDate: string = '';
   searchByTitle: boolean = false;
   searchByDetails: boolean = false;
+  selectedYear: string = '';
 
   showPopup: boolean = false;
   showPDFViewer: boolean = false;
@@ -313,6 +314,12 @@ export class LibraryComponent implements OnInit {
       file.highlightedDetails = [];
     }
   }
-  
+  resetFilters(): void {
+    this.searchQuery = '';
+    this.selectedYear = '';
+    this.selectedReportType = '';
+    this.filteredPdfFiles = [...this.pdfFiles];
+  }
+
 
 }

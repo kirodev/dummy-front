@@ -50,7 +50,20 @@
         </option>
       </select>
     </div>
-
+    <!-- Judicial Subcategory Filter -->
+    <div class="judicial-subcategory-filter" *ngIf="selectedReportType === 'Judicial Documents'">
+      <label class="form-label">Select Subcategory:</label>
+      <div *ngFor="let subCategory of uniqueJudicialSubCategories" class="subcategory-option">
+        <input
+          type="checkbox"
+          [id]="subCategory"
+          [value]="subCategory"
+          [checked]="selectedJudicialSubCategories.includes(subCategory)"
+          (change)="onSubCategoryChange($event, subCategory)"
+        />
+        <label [for]="subCategory">{{ subCategory }}</label>
+      </div>
+    </div>
     <!-- Year Filter -->
     <div class="year-filter">
       <label for="yearFilter" class="form-label">Search by Year:</label>
@@ -66,6 +79,8 @@
         </option>
       </select>
     </div>
+
+
 
     <!-- Reset Filters Button -->
     <div class="reset-button">
@@ -88,7 +103,7 @@
 
   <!-- Card Container -->
   <div class="card-container mt-4">
-    <div class="card mb-3" *ngFor="let file of filteredPdfFiles">
+    <div class="card mb-3" *ngFor="let file of filteredPdfFiles; trackBy: trackByPath">
       <div class="card-body">
         <!-- Details Container -->
         <div class="card-details">

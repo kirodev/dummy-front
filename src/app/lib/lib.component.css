@@ -3,7 +3,7 @@
 /* Container for search inputs and options */
 .filter-container {
   display: flex;
-  align-items: flex-end; /* Align items vertically at the bottom */
+  align-items: flex-start; /* Align items at the top */
   justify-content: center; /* Center items horizontally */
   gap: 16px; /* Space between filter items */
   flex-wrap: wrap; /* Allow items to wrap on smaller screens */
@@ -14,7 +14,8 @@
 .search-input,
 .report-type-select,
 .year-filter,
-.reset-button {
+.reset-button,
+.judicial-subcategory-filter {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -36,7 +37,30 @@
   border-radius: 4px;
 }
 
+/* Judicial Subcategory Filter Styling */
+.judicial-subcategory-filter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 8px; /* Space above the subcategory filter */
+  flex-basis: 100%; /* Occupy full width to appear on a new row */
+}
+
+.subcategory-option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px; /* Space between checkboxes */
+}
+
+.subcategory-option input {
+  margin-right: 8px; /* Space between checkbox and label */
+}
+
 /* Reset button styling */
+.reset-button {
+  flex-basis: 100%; /* Reset button takes full width */
+}
+
 .reset-button button {
   width: 150px; /* Adjust as needed */
   padding: 8px 16px;
@@ -116,7 +140,7 @@
   width: 100%; /* Take full width of the card */
   display: flex;
   justify-content: center; /* Center the button horizontally */
-  margin-top: 8px; /* Reduced space */
+  margin-top: 8px; /* Reduced space above the button */
 }
 
 .button-container .btn {
@@ -148,7 +172,8 @@
   .search-input,
   .report-type-select,
   .year-filter,
-  .reset-button {
+  .reset-button,
+  .judicial-subcategory-filter {
     flex: 1 1 auto;
   }
 }
@@ -158,7 +183,8 @@
   .search-input,
   .report-type-select,
   .year-filter,
-  .reset-button {
+  .reset-button,
+  .judicial-subcategory-filter {
     flex: 1 1 100%;
   }
 

@@ -34,6 +34,10 @@ export class LIBComponent implements OnInit {
     'Papers'
   ];
 
+  // Judicial Subcategories
+  uniqueJudicialSubCategories: string[] = [];
+  selectedJudicialSubCategories: string[] = [];
+
   // For Debounced Search
   searchSubject: Subject<string> = new Subject();
 
@@ -66,8 +70,7 @@ export class LIBComponent implements OnInit {
         this.pdfFiles = mappedFiles;
         this.filteredPdfFiles = [...this.pdfFiles];
         this.populateUniqueYears();
-        // uniqueReportTypes are predefined; no need to populate dynamically here
-
+        this.populateUniqueJudicialSubCategories(); // Populate subcategories
         this.isLoading = false;
 
         // Start synchronizing with Dropbox after loading existing files
@@ -97,18 +100,16 @@ export class LIBComponent implements OnInit {
         console.log('Mapped Synced Files:', mappedSyncedFiles);
 
         // Avoid duplicates by checking if the file already exists
-        mappedSyncedFiles.forEach((syncedFile) => {
-          const exists = this.pdfFiles.some(
-            (existingFile) => existingFile.path === syncedFile.path
-          );
-          if (!exists) {
-            this.pdfFiles.push(syncedFile);
-            this.filteredPdfFiles.push(syncedFile);
-          }
-        });
+        const newFiles = mappedSyncedFiles.filter(syncedFile =>
+          !this.pdfFiles.some(existingFile => existingFile.path === syncedFile.path)
+        );
 
-        this.populateUniqueYears();
-        // If uniqueReportTypes are dynamic, update them here
+        if (newFiles.length > 0) {
+          this.pdfFiles.push(...newFiles);
+          this.filteredPdfFiles.push(...newFiles);
+          this.populateUniqueYears();
+          this.populateUniqueJudicialSubCategories(); // Update subcategories
+        }
 
         this.isSyncing = false;
         console.log('Synchronization complete:', mappedSyncedFiles);
@@ -172,9 +173,8 @@ export class LIBComponent implements OnInit {
       'report': 'Reports',
       'papers': 'Papers',
       'paper': 'Papers',
-      'current reports':'Current reports',
-      'current report':'Current reports',
-
+      'current reports': 'Current reports',
+      'current report': 'Current reports',
     };
 
     // Convert to lowercase for case-insensitive mapping
@@ -246,7 +246,27 @@ export class LIBComponent implements OnInit {
   }
 
   /**
-   * Filters the pdfFiles array based on search query, selected year, and selected report type.
+   * Populates the uniqueJudicialSubCategories array based on the pdfFiles.
+   */
+  populateUniqueJudicialSubCategories(): void {
+    const judicialSubCategories = this.pdfFiles
+      .filter(file => file.type === 'Judicial Documents')
+      .map(file => {
+        if (file.path) {
+          const parts = file.path.split('\\');
+          if (parts.length >= 2) {
+            return parts[1].trim(); // Extract the subcategory
+          }
+        }
+        return 'Unknown';
+      });
+
+    // Remove duplicates and sort alphabetically
+    this.uniqueJudicialSubCategories = Array.from(new Set(judicialSubCategories)).sort();
+  }
+
+  /**
+   * Filters the pdfFiles array based on search query, selected year, selected report type, and selected subcategories.
    */
   searchFiles(): void {
     const query = this.searchQuery.toLowerCase().trim();
@@ -260,6 +280,20 @@ export class LIBComponent implements OnInit {
       // Filter by report type
       if (this.selectedReportType && file.type !== this.selectedReportType) {
         return false;
+      }
+
+      // If report type is Judicial Documents, filter by subcategories
+      if (this.selectedReportType === 'Judicial Documents' && this.selectedJudicialSubCategories.length > 0) {
+        if (!file.path) return false;
+        const parts = file.path.split('\\');
+        if (parts.length >= 2) {
+          const subCategory = parts[1].trim();
+          if (!this.selectedJudicialSubCategories.includes(subCategory)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
       }
 
       // Search by title
@@ -293,6 +327,7 @@ export class LIBComponent implements OnInit {
     this.searchQuery = '';
     this.selectedYear = '';
     this.selectedReportType = '';
+    this.selectedJudicialSubCategories = [];
     this.filteredPdfFiles = [...this.pdfFiles];
   }
 
@@ -304,5 +339,32 @@ export class LIBComponent implements OnInit {
     const target = event.target as HTMLInputElement | null;
     const value = target ? target.value : '';
     this.searchSubject.next(value);
+  }
+
+  /**
+   * Handles changes in the subcategory checkboxes.
+   * @param event The change event from the checkbox.
+   * @param subCategory The subcategory associated with the checkbox.
+   */
+  onSubCategoryChange(event: Event, subCategory: string): void {
+    const checkbox = event.target as HTMLInputElement;
+    if (checkbox.checked) {
+      if (!this.selectedJudicialSubCategories.includes(subCategory)) {
+        this.selectedJudicialSubCategories.push(subCategory);
+      }
+    } else {
+      this.selectedJudicialSubCategories = this.selectedJudicialSubCategories.filter(sc => sc !== subCategory);
+    }
+    this.searchFiles();
+  }
+
+  /**
+   * TrackBy function for ngFor to improve performance.
+   * @param index The index of the item.
+   * @param file The PdfFile object.
+   * @returns The unique identifier for the PdfFile.
+   */
+  trackByPath(index: number, file: PdfFile): string {
+    return file.path; // Assuming 'path' is unique
   }
 }
