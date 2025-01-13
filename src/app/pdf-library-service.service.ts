@@ -13,6 +13,8 @@ sharedLink: string;
   name: string;
   details?: string;
   directory_path?: string;
+  type?: string; // Added 'type' property
+
 }
 
 @Injectable({
@@ -39,7 +41,9 @@ export class PdfLibraryService {
   getExistingFiles(): Observable<PdfFile[]> {
     return this.http.get<PdfFile[]>(`${this.url}lib/all`, {
       headers: this.getHeaders(),
-    });
+    }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   // Sync Dropbox files with the database

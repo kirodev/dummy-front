@@ -1,3 +1,5 @@
+<!-- src/app/lib/lib.component.html -->
+
 <ul class="nav nav-tabs custom-tabs">
   <li class="nav-item">
     <a class="nav-link" routerLink="/library" routerLinkActive="active">Local Library</a>
@@ -7,38 +9,100 @@
   </li>
 </ul>
 
-<div *ngIf="isLoading" class="loading-indicator">
+<!-- Error Message Display -->
+<div *ngIf="errorMessage" class="alert alert-danger mt-3">
+  {{ errorMessage }}
+</div>
+
+<!-- Loading Indicator for Existing Files -->
+<div *ngIf="isLoading" class="alert alert-info mt-3">
   Loading files, please wait...
 </div>
 
+<!-- Main Content -->
 <div *ngIf="!isLoading">
-  <div class="card-container">
+  <div class="filter-container mt-3">
     <!-- Search Input -->
-    <input
-      type="text"
-      [(ngModel)]="searchQuery"
-      placeholder="Search by Title..."
-      (input)="searchFiles()"
-    />
+    <div class="search-input">
+      <label for="searchInput" class="form-label">Search by Title:</label>
+      <input
+        id="searchInput"
+        type="text"
+        class="form-control"
+        [(ngModel)]="searchQuery"
+        placeholder="Enter title..."
+        (input)="onSearchInputChange($event)"
+      />
+    </div>
+
+    <!-- Report Type Filter -->
+    <div class="report-type-select">
+      <label for="reportType" class="form-label">Select Report Type:</label>
+      <select
+        id="reportType"
+        class="form-select"
+        [(ngModel)]="selectedReportType"
+        (change)="searchFiles()"
+      >
+        <option value="">All Types</option>
+        <option *ngFor="let type of uniqueReportTypes" [value]="type">
+          {{ type }}
+        </option>
+      </select>
+    </div>
 
     <!-- Year Filter -->
-    <label>Search by Year:</label>
-    <select [(ngModel)]="selectedYear" (change)="searchFiles()">
-      <option value="">All Years</option>
-      <option *ngFor="let year of uniqueYears" [value]="year">
-        {{ year }}
-      </option>
-    </select>
+    <div class="year-filter">
+      <label for="yearFilter" class="form-label">Search by Year:</label>
+      <select
+        id="yearFilter"
+        class="form-select"
+        [(ngModel)]="selectedYear"
+        (change)="searchFiles()"
+      >
+        <option value="">All Years</option>
+        <option *ngFor="let year of uniqueYears" [value]="year">
+          {{ year }}
+        </option>
+      </select>
+    </div>
 
-    <button (click)="resetFilters()">Reset Filters</button>
+    <!-- Reset Filters Button -->
+    <div class="reset-button">
+      <button class="btn btn-secondary" (click)="resetFilters()">
+        Reset Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Synchronization Indicator with Spinner -->
+  <div *ngIf="isSyncing" class="alert alert-warning mt-3 d-flex align-items-center">
+    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+    <span>Synchronizing with Dropbox...</span>
+  </div>
+
+  <!-- Optional: Display message when no files match -->
+  <div *ngIf="filteredPdfFiles.length === 0" class="alert alert-warning mt-3">
+    No files found matching the selected criteria.
   </div>
 
   <!-- Card Container -->
-  <div class="card-container">
-    <div class="card" *ngFor="let file of filteredPdfFiles">
-      <h3>{{ file.title | titlecase }}</h3>
-      <p>Year: {{ file.year }}</p>
-      <button (click)="redirectToLink(file.sharedLink)">View PDF</button>
+  <div class="card-container mt-4">
+    <div class="card mb-3" *ngFor="let file of filteredPdfFiles">
+      <div class="card-body">
+        <!-- Details Container -->
+        <div class="card-details">
+          <p><strong>Title:</strong> {{ file.title | titlecase }}</p>
+          <p><strong>Year:</strong> {{ file.year }}</p>
+          <p><strong>Type:</strong> {{ file.type }}</p>
+        </div>
+        <!-- View PDF Button -->
+        <div class="button-container">
+          <button class="btn btn-primary" (click)="redirectToLink(file.sharedLink)">
+            View PDF
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -313,5 +313,6 @@ export class LibraryComponent implements OnInit {
       file.highlightedDetails = [];
     }
   }
+  
 
 }
