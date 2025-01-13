@@ -60,7 +60,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
         this.isLoginFailed = true;
       }
     );
-  
+
   }
 
   reloadPage(): void {

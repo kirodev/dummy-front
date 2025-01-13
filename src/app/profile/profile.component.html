@@ -1,25 +1,123 @@
-<div class="container">
-  <header class="jumbotron">
-    <h3>
-      <strong>{{ currentUser?.username }}</strong> Profile <!-- Using optional chaining to prevent errors -->
-    </h3>
-  </header>
-  <p>
-    <strong>Token:</strong>
-    {{ currentUser?.accessToken}} 
-  </p>
-  <p>
-    <strong>Email:</strong>
-    {{ currentUser?.email }}
-  </p>
-  <strong>Roles:</strong>
-  <ul>
-    <li>
-      {{ currentUser?.role }}
-    </li>
-  </ul>
-</div>
+<div class="container mt-5">
+  <ng-container *ngIf="currentUser; else loggedOut">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0 text-center">
+          <strong>{{ currentUser.username }}</strong>'s Profile
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="mb-3 text-center">
+          <img
+            *ngIf="currentUser.avatarUrl"
+            [src]="currentUser.avatarUrl"
+            alt="User Avatar"
+            class="rounded-circle"
+            width="120"
+            height="120"
+          />
+          <div *ngIf="!currentUser.avatarUrl" class="avatar-placeholder">
+            <i class="fa fa-user-circle fa-5x text-secondary"></i>
+          </div>
+        </div>
+        <div class="mb-3">
+          <strong>Username:</strong> {{ currentUser.username }}
+        </div>
+        <div class="mb-3">
+          <strong>Email:</strong> {{ currentUser.email || 'Not provided' }}
+        </div>
+        <div class="mb-3">
+          <strong>Token:</strong>
+          <input
+            type="text"
+            class="form-control"
+            readonly
+            [value]="currentUser.accessToken"
+            title="Access Token"
+          />
+        </div>
+        <div class="mb-3">
+          <strong>Roles:</strong>
+          <ul class="list-unstyled">
+            <li *ngFor="let role of currentUser.roles">
+              <span class="badge bg-secondary">{{ role }}</span>
+            </li>
+          </ul>
+        </div>
+        <!-- Buttons -->
+        <div class="text-center">
 
-<ng-template #loggedOut>
-  Please login.
-</ng-template>
+          <button id="center-button" (click)="openPopup()">Change Password</button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #loggedOut>
+    <div class="alert alert-warning text-center" role="alert">
+      Please <a routerLink="/login" class="alert-link">login</a> to view your profile.
+    </div>
+  </ng-template>
+
+  <!-- Change Password Modal -->
+  <div
+    class="modal fade"
+    id="changePasswordModal"
+    tabindex="-1"
+    aria-labelledby="changePasswordModalLabel"
+    aria-hidden="true"
+  >
+
+  </div>
+
+  <!-- Custom Popup -->
+  <div class="popup-overlay" *ngIf="showPopup">
+    <div class="popup-content">
+      <h2>Change Password</h2>
+      <form (submit)="changePassword()">
+        <div class="mb-3">
+          <label for="currentPassword" class="form-label">Current Password</label>
+          <input
+            type="password"
+            id="currentPassword"
+            class="form-control"
+            [(ngModel)]="passwordForm.currentPassword"
+            name="currentPassword"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="newPassword" class="form-label">New Password</label>
+          <input
+            type="password"
+            id="newPassword"
+            class="form-control"
+            [(ngModel)]="passwordForm.newPassword"
+            name="newPassword"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="confirmPassword" class="form-label">Confirm Password</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            class="form-control"
+            [(ngModel)]="passwordForm.confirmPassword"
+            name="confirmPassword"
+            required
+          />
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary close-button"
+            (click)="closePopup()"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-secondary close-button">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>

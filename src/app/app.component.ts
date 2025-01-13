@@ -52,7 +52,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Unsubscribe to prevent memory leaks²
+    // Unsubscribe to prevent memory leaks
     this.roleSubscriptions.forEach(sub => sub.unsubscribe());
   }
 }

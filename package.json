@@ -46,6 +46,7 @@
     "ngx-bootstrap": "^11.0.2",
     "ngx-extended-pdf-viewer": "^18.1.14",
     "ngx-spinner": "^17.0.0",
+    "ngx-toastr": "^19.0.0",
     "openai": "^4.55.4",
     "pdfjs-dist": "^3.10.111",
     "plotly.js": "^2.25.2",

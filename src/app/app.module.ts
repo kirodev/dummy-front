@@ -45,6 +45,9 @@ import { SafePipe } from './safe-pipe.pipe';
 import { LIBComponent } from './lib/lib.component';
 import { LicensingRevenuesComponent } from './licensing-revenues/licensing-revenues.component';
 import { TimelineOverviewComponent } from './timelineoverview/timelineoverview.component';
+import { ToastrModule } from 'ngx-toastr';
+import { ClipboardModule } from '@angular/cdk/clipboard';
+import { ProfileComponent } from './profile/profile.component';
 
 @NgModule({
   declarations: [
@@ -83,6 +86,7 @@ import { TimelineOverviewComponent } from './timelineoverview/timelineoverview.c
     SafePipe,
     LicensingRevenuesComponent,
     TimelineOverviewComponent,
+    ProfileComponent,
   ],
 
   imports: [
@@ -96,6 +100,10 @@ import { TimelineOverviewComponent } from './timelineoverview/timelineoverview.c
     HttpClientModule,
     NgxExtendedPdfViewerModule,
     CloudinaryModule,
+    BrowserAnimationsModule,
+    ToastrModule.forRoot(), // ToastrModule added with forRoot()
+    ClipboardModule,
+
   ],
   providers: [DataSharingService, LicenseTableComponent],
   bootstrap: [AppComponent],
