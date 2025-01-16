@@ -2,11 +2,23 @@
   <h2>Licensing Overview</h2>
 
   <!-- Dropdown for Licensor Selection -->
-  <label for="licensor">Select Licensor:</label>
-  <select id="licensor" [(ngModel)]="selectedLicensor" (change)="onLicensorChange()">
-    <option *ngFor="let licensor of licensors" [value]="licensor">{{ licensor }}</option>
-  </select>
-  <button (click)="onLicensorChange()">Fetch Licensor Data</button>
+  <div class="licensing-revenues-container">
+    <select
+      id="licensor"
+      class="shared-input-style"
+      [(ngModel)]="selectedLicensor"
+      (change)="onLicensorChange()"
+    >
+      <option value="" disabled selected>Select Licensor</option>
+      <option *ngFor="let licensor of licensors" [value]="licensor">{{ licensor }}</option>
+    </select>
+    <button
+      class="shared-button-style"
+      (click)="onLicensorChange()"
+    >
+    🔍
+    </button>
+  </div>
 
   <!-- Plot Containers -->
   <div class="plot-container">

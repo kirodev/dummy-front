@@ -14,6 +14,13 @@
 </ul>
 <!-- End of Tab Navigation -->
 
+<div class="chart-controls">
+  <label for="chartType">Select Chart Type:</label>
+  <select id="chartType" [(ngModel)]="currentPlotType" (change)="plotData()">
+    <option value="line">Line</option>
+    <option value="bar">Stacked Bar</option>
+  </select>
+</div>
 <!-- Content Container -->
 <div class="tab-content">
   <div id="quarterlyRevenuesChart" style="width: 100%; height: 600px;"></div>

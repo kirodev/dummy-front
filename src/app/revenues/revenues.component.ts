@@ -12,7 +12,7 @@ interface AnnualRevenue {
   net_sales_path: string;
   licensing_revenue: number;
   net_sales_source: string;
-  net_licenses_usd_1: number | string; // Handle both number and string types
+  net_licenses_usd_1: number | string;
   source_1: string;
   path_1: string;
   net_licenses_usd_2: string;
@@ -24,7 +24,7 @@ interface AnnualRevenue {
   net_licenses_usd_4: string;
   source_4: string;
   path_4: string;
-  net_licenses_usd_5: number | string; // Handle both number and string types
+  net_licenses_usd_5: number | string;
   source_5: string;
   path_5: string;
   net_licenses_usd_6: string;
@@ -35,13 +35,14 @@ interface AnnualRevenue {
 @Component({
   selector: 'app-revenues',
   templateUrl: './revenues.component.html',
-  styleUrls: ['./revenues.component.css']
+  styleUrls: ['./revenues.component.css'],
 })
 export class RevenuesComponent implements OnInit {
   annualRevenues: AnnualRevenue[] = [];
   pdfLibrary: PdfFile[] = [];
   isPopupVisible = false;
   popupText = '';
+  currentPlotType: 'line' | 'stackedBar' = 'stackedBar'; // Default to stackedBar
 
   constructor(
     private paymentConnection: PaymentConnection,
@@ -79,55 +80,10 @@ export class RevenuesComponent implements OnInit {
     });
   }
 
-  extractYearFromPath(path: string | null): number | null {
-    if (!path) return null; // Return null if the path is null or undefined
-    const match = path.match(/\[(\d{4})\]/); // Extract year in brackets, e.g., [2016]
-    return match ? parseInt(match[1], 10) : null;
+  switchPlotType(type: 'line' | 'stackedBar' ): void {
+    this.currentPlotType = type;
+    this.plotData(); // Re-plot data with the selected type
   }
-
-  extractTitleFromPath(path: string): string {
-    if (!path) return '';
-
-    // Extract portion after [year] and before .pdf
-    const match = path.match(/\[\d{4}\]\s*(.*)\.pdf$/i);
-    const extractedTitle = match && match[1] ? match[1].trim() : '';
-
-    // Normalize extracted title
-    return extractedTitle.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
-  }
-
-  normalizeTitle(title: string): string {
-    if (!title) return '';
-    return title
-      .toLowerCase()
-      .replace(/[\[\](){}-]/g, '') // Remove brackets, parentheses, braces, hyphens
-      .replace(/\s+/g, ' ')        // Normalize multiple spaces to a single space
-      .trim();
-  }
-
-  getSharedLink(path: string | null, year: number, source: string): string | null {
-    if (!this.pdfLibrary) return null;
-
-    const extractedTitle = path ? this.extractTitleFromPath(path) : null;
-
-    const match = this.pdfLibrary.find(file => {
-      const normalizedLibraryTitle = file.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
-
-      return (
-        year.toString() === file.year.toString() && // Match by year
-        extractedTitle && normalizedLibraryTitle === extractedTitle // Match by title
-      );
-    });
-
-    if (match) {
-      console.log(`Match Found: ${match.sharedLink}`);
-      return match.sharedLink;
-    } else {
-      console.warn(`No match found for Path: ${path}, Source: ${source}, Year: ${year}`);
-      return null;
-    }
-  }
-
   plotData(): void {
     if (!this.annualRevenues || this.annualRevenues.length === 0 || !this.pdfLibrary || this.pdfLibrary.length === 0) {
       console.warn('No data available to plot or library data is missing.');
@@ -161,17 +117,19 @@ export class RevenuesComponent implements OnInit {
       const x = data.map(d => d.year);
       const y = data.map(d => d.licensing_revenue);
 
+      // Prepare customData for the popup
       const customData = data.map(d => {
         const extractedYear = this.extractYearFromPath(d.path_1);
         const yearToUse = extractedYear || d.year;
-        console.log(`Path: ${d.path_1}, Extracted Year: ${extractedYear}, Year to Use: ${yearToUse}`);
+        const sharedLink = this.getSharedLink(d.path_1, yearToUse, d.source_1 || '');
+
         return [
           d.licensor,
           d.year,
           d.licensing_revenue,
           d.net_sales_source,
           d.path_1,
-          this.getSharedLink(d.path_1, yearToUse, d.source_1 || '') ?? 'N/A',
+          sharedLink, // Correctly fetch the shared link
           d.net_licenses_usd_1,
           d.source_1,
           d.path_1,
@@ -196,8 +154,8 @@ export class RevenuesComponent implements OnInit {
       traces.push({
         x,
         y,
-        mode: 'lines+markers',
-        type: 'scatter',
+        type: this.currentPlotType === 'stackedBar' ? 'bar' : 'scatter',
+        mode: this.currentPlotType === 'line' ? 'lines+markers' : undefined,
         name: licensor,
         marker: { color: licensorColors.get(licensor) },
         customdata: customData,
@@ -217,7 +175,8 @@ export class RevenuesComponent implements OnInit {
       title: 'Annual Revenues Over Time',
       xaxis: { title: 'Year', tickangle: -45, type: 'category' },
       yaxis: { title: 'Licensing Revenue (in thousands)', rangemode: 'tozero' },
-      legend: { traceorder: 'normal' }
+      legend: { traceorder: 'normal' },
+      barmode: this.currentPlotType === 'stackedBar' ? 'stack' : undefined
     };
 
     Plotly.newPlot('plotDiv', traces, layout).then(() => {
@@ -227,11 +186,14 @@ export class RevenuesComponent implements OnInit {
     });
   }
 
+
+
+
+
+
   handlePointClick(data: any): void {
     const point = data.points[0];
     const customData = point.customdata;
-
-    console.log('Custom Data:', customData);
 
     if (!customData) {
       console.error('No custom data found for this point.');
@@ -252,7 +214,7 @@ export class RevenuesComponent implements OnInit {
       { netLicenses: customData[12], source: customData[13], path: customData[14] },
       { netLicenses: customData[15], source: customData[16], path: customData[17] },
       { netLicenses: customData[18], source: customData[19], path: customData[20] },
-      { netLicenses: customData[21], source: customData[22], path: customData[23] }
+      { netLicenses: customData[21], source: customData[22], path: customData[23] },
     ];
 
     let licensesHtml = '';
@@ -299,15 +261,60 @@ export class RevenuesComponent implements OnInit {
 
   private sanitizeHtml(input: string | undefined): string {
     if (!input) return '';
-    return input.replace(/[&<>"']/g, char => {
+    return input.replace(/[&<>"']/g, (char) => {
       const entities: { [key: string]: string } = {
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
         '"': '&quot;',
-        "'": '&#39;'
+        "'": '&#39;',
       };
       return entities[char];
     });
   }
+
+  extractYearFromPath(path: string | null): number | null {
+    if (!path) return null;
+    const match = path.match(/\[(\d{4})\]/);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  getSharedLink(path: string | null, year: number, source: string): string | null {
+    if (!this.pdfLibrary || !path) return null;
+
+    // Extract the title from the path
+    const extractedTitle = this.extractTitleFromPath(path);
+
+    if (!extractedTitle) {
+      console.warn(`No title extracted from path: ${path}`);
+      return null;
+    }
+
+    // Find a matching file in the library based on year and title
+    const match = this.pdfLibrary.find(file => {
+      const normalizedLibraryTitle = file.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+      return (
+        file.year.toString() === year.toString() && // Match by year
+        normalizedLibraryTitle === extractedTitle // Match by normalized title
+      );
+    });
+
+    if (match) {
+      console.log(`Match Found: ${match.sharedLink}`);
+      return match.sharedLink;
+    } else {
+      console.warn(`No match found for Path: ${path}, Title: ${extractedTitle}, Year: ${year}`);
+      return null;
+    }
+  }
+
+
+  extractTitleFromPath(path: string): string {
+    if (!path) return '';
+
+    // Extract portion after [year] and before .pdf
+    const match = path.match(/\[\d{4}\]\s*(.*)\.pdf$/i);
+    return match && match[1] ? match[1].toLowerCase().replace(/[^a-z0-9\s]/g, '').trim() : '';
+  }
+
 }

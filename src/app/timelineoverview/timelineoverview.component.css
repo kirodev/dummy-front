@@ -28,3 +28,33 @@
   font-size: 16px;
   color: #555;
 }
+/* Shared styles for input and search boxes */
+.shared-input-style {
+  max-width: 900px;
+  margin: 0 auto; /* Center the input */
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box; /* Include padding and border in element's total size */
+}
+
+.shared-input-style:focus {
+  border-color: #4e7ebf; /* Add a blue border on focus */
+}
+
+/* Button styles */
+.shared-button-style {
+  background-color: #4e7ebf;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+.shared-button-style:hover {
+  background-color: #0056b3;
+}

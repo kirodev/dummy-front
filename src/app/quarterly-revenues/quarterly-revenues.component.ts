@@ -1,5 +1,3 @@
-// src/app/quarterly-revenues/quarterly-revenues.component.ts
-
 import { Component, OnInit } from '@angular/core';
 import { PaymentConnection } from '../payment-connection.service';
 declare var Plotly: any;
@@ -18,30 +16,30 @@ interface QuarterlyRevenue {
   styleUrls: ['./quarterly-revenues.component.css']
 })
 export class QuarterlyRevenuesComponent implements OnInit {
-
   quarterlyRevenues: QuarterlyRevenue[] = [];
   plotRendered: boolean = false;
+  currentPlotType: 'bar' | 'line' = 'bar';
 
-  constructor(private paymentConnection: PaymentConnection) { }
+  constructor(private paymentConnection: PaymentConnection) {}
 
   ngOnInit(): void {
     this.fetchQuarterlyRevenues();
-    this.loadPlotlyScript().then(() => {
-      console.log('Plotly.js script loaded successfully');
-      // Only plot after both the script and data are loaded
-      if (this.quarterlyRevenues.length > 0) {
-        this.plotData();
-      }
-    }).catch(error => {
-      console.error('Error loading Plotly.js script:', error);
-    });
+    this.loadPlotlyScript()
+      .then(() => {
+        console.log('Plotly.js script loaded successfully');
+        if (this.quarterlyRevenues.length > 0) {
+          this.plotData();
+        }
+      })
+      .catch((error) => {
+        console.error('Error loading Plotly.js script:', error);
+      });
   }
 
-  // Function to load Plotly.js script dynamically
   loadPlotlyScript(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       if (typeof Plotly !== 'undefined') {
-        resolve(); // If Plotly is already loaded, resolve immediately
+        resolve();
       } else {
         const scriptElement = document.createElement('script');
         scriptElement.src = 'https://cdn.plot.ly/plotly-2.25.2.min.js';
@@ -53,14 +51,12 @@ export class QuarterlyRevenuesComponent implements OnInit {
     });
   }
 
-  // Fetch quarterly revenues
   fetchQuarterlyRevenues(): void {
     this.paymentConnection.getQuarterlyRevenues().subscribe(
       (data: QuarterlyRevenue[]) => {
         this.quarterlyRevenues = data;
-        // Check if Plotly is already loaded
         if (typeof Plotly !== 'undefined') {
-          this.plotData(); // Plot after data is fetched
+          this.plotData();
         }
       },
       (error) => {
@@ -69,7 +65,6 @@ export class QuarterlyRevenuesComponent implements OnInit {
     );
   }
 
-  // Helper function to generate distinct colors
   generateDistinctColors(count: number): string[] {
     const colors = [];
     const hueStep = 360 / count;
@@ -81,10 +76,7 @@ export class QuarterlyRevenuesComponent implements OnInit {
     return colors;
   }
 
-  // Plot quarterly data
   plotData(): void {
-    if (this.plotRendered) return; // Prevent re-rendering
-
     const chartElement = document.getElementById('quarterlyRevenuesChart');
     if (!chartElement) {
       console.error('Element with ID "quarterlyRevenuesChart" not found.');
@@ -93,18 +85,14 @@ export class QuarterlyRevenuesComponent implements OnInit {
 
     const companyQuarterRevenueMap = new Map<string, Map<string, number>>();
     const companyColors: Map<string, string> = new Map();
-
-    // Filter out Samsung Electronics Co., Ltd. data
     const filteredRevenues = this.quarterlyRevenues.filter(item => item.licensor !== 'Samsung Electronics Co., Ltd.');
 
-    // Get unique companies
     const companies = Array.from(new Set(filteredRevenues.map(item => item.licensor)));
     const colors = this.generateDistinctColors(companies.length);
     companies.forEach((company, index) => {
       companyColors.set(company, colors[index]);
     });
 
-    // Aggregate revenue per company per quarter-year
     filteredRevenues.forEach(item => {
       const yearQuarter = `${item.quarter} ${item.year}`;
       const company = item.licensor;
@@ -116,11 +104,9 @@ export class QuarterlyRevenuesComponent implements OnInit {
       companyQuarterRevenueMap.get(company)!.set(yearQuarter, revenue);
     });
 
-    // Get unique quarter-year labels sorted chronologically
     const uniqueYearQuarters = Array.from(new Set(filteredRevenues.map(item => `${item.quarter} ${item.year}`)))
                                      .sort(this.sortQuarterYear);
 
-    // Create traces for each company
     const traces: Partial<Plotly.PlotData>[] = [];
 
     companyQuarterRevenueMap.forEach((yearQuarterRevenueMap, company) => {
@@ -133,7 +119,7 @@ export class QuarterlyRevenuesComponent implements OnInit {
       traces.push({
         x: uniqueYearQuarters,
         y: revenues,
-        type: 'bar',
+        type: this.currentPlotType as Plotly.PlotType, // Cast to PlotType
         name: company,
         marker: { color: companyColors.get(company) ?? '#000000' },
       });
@@ -142,31 +128,31 @@ export class QuarterlyRevenuesComponent implements OnInit {
     const layout: Partial<Plotly.Layout> = {
       autosize: true,
       title: 'Quarterly Revenues by Year',
-      barmode: 'stack',
+      barmode: this.currentPlotType === 'bar' ? 'stack' : undefined,
       xaxis: {
         title: 'Quarters',
         tickangle: -45,
-        automargin: true
+        automargin: true,
       },
       yaxis: {
         title: 'Revenue (in thousands)',
         rangemode: 'tozero',
-        automargin: true
+        automargin: true,
       },
       legend: {
-        orientation: 'v',        // Vertical orientation
-        x: 1.02,                 // Position to the right of the plot
-        y: 1,                    // Align to the top
-        bgcolor: 'rgba(255, 255, 255, 0.5)', // Optional: semi-transparent background
-        bordercolor: '#FFFFFF',  // Optional: border color
-        borderwidth: 1           // Optional: border width
+        orientation: 'v',
+        x: 1.02,
+        y: 1,
+        bgcolor: 'rgba(255, 255, 255, 0.5)',
+        bordercolor: '#FFFFFF',
+        borderwidth: 1,
       },
       margin: {
         l: 50,
-        r: 150, // Increased right margin to accommodate the legend
+        r: 150,
         t: 50,
-        b: 100
-      }
+        b: 100,
+      },
     };
 
     const config = { responsive: true };
@@ -175,10 +161,15 @@ export class QuarterlyRevenuesComponent implements OnInit {
       console.error('Error plotting graph:', error);
     });
 
-    this.plotRendered = true; // Mark as rendered
+    this.plotRendered = true;
   }
 
-  // Helper function to sort quarter-year labels chronologically
+  togglePlotType(): void {
+    this.currentPlotType = this.currentPlotType === 'bar' ? 'line' : 'bar';
+    this.plotRendered = false; // Reset the render flag
+    this.plotData(); // Re-render the chart
+  }
+
   sortQuarterYear(a: string, b: string): number {
     const [qA, yearA] = a.split(' ');
     const [qB, yearB] = b.split(' ');
