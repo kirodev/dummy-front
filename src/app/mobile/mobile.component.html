@@ -74,8 +74,7 @@
       type="text"
       id="startDate"
       [(ngModel)]="startDate"
-      placeholder="Enter year (YYYY) or full date (YYYY-MM-DD)"
-    />
+      placeholder="Enter year (YYYY) or full date (YYYY-MM-DD)" />
   </div>
 
   <div class="filter-section">
@@ -84,13 +83,13 @@
       type="text"
       id="endDate"
       [(ngModel)]="endDate"
-      placeholder="Enter year (YYYY) or full date (YYYY-MM-DD)"
-    />
+      placeholder="Enter year (YYYY) or full date (YYYY-MM-DD)" />
   </div>
 
   <button class="apply-filters-btn" (click)="applyFilters()">Apply
     Filters</button>
-    <button class="apply-filters-btn" (click)="resetFilters()">Reset Filters</button>
+  <button class="apply-filters-btn" (click)="resetFilters()">Reset
+    Filters</button>
 
   <h2>Sorting</h2>
 
@@ -116,23 +115,22 @@
     aria-label="Open Filters and Sort">
     ☰ Filters & Sort
   </button>
-  <button routerLink="/timeline-overview"  class="side-nav-toggle">
-   Licensing Revenues
+  <button routerLink="/timeline-overview" class="side-nav-toggle">
+    Licensing Revenues
   </button>
 
-
   <!-- Legend -->
-<div class="legend">
-  <div class="legend-item">
-    <div class="legend-color green"></div>
-    <span class="legend-text">Available</span>
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-color green"></div>
+      <span class="legend-text">Available</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color white"></div>
+      <span class="legend-text">Not Available</span>
+    </div>
   </div>
-  <div class="legend-item">
-    <div class="legend-color white"></div>
-    <span class="legend-text">Not Available</span>
-  </div>
-</div>
-<div class="popup"></div>
+  <div class="popup"></div>
 
   <table>
     <thead>
@@ -145,17 +143,23 @@
         </th>
       </tr>
     </thead>
+    <!-- Your existing table structure -->
     <tbody>
       <tr *ngFor="let licensor of licensors; let rowIndex = index">
-        <td class="row-name">{{ licensor }}</td>
+        <td class="row-name">
+          <a [routerLink]="['/timeline-overview', licensor]"
+            class="licensor-link">
+            {{ licensor }}
+          </a>
+        </td>
         <td
           *ngFor="let cell of filteredTableData[rowIndex]; let colIndex = index"
           [ngClass]="{
-            'green-cell': cell === 'green',
-            'white-cell': cell === 'white',
-            'red-cell': cell === 'red',
-            'transparent-cell': cell === 'transparent'
-          }"
+        'green-cell': cell === 'green',
+        'white-cell': cell === 'white',
+        'red-cell': cell === 'red',
+        'transparent-cell': cell === 'transparent'
+      }"
           (click)="cellClick(rowIndex, colIndex)"
           [title]="getCellDescription(rowIndex, colIndex)"></td>
       </tr>
@@ -166,7 +170,6 @@
         </td>
       </tr>
     </tbody>
+
   </table>
 </div>
-
-

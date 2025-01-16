@@ -561,3 +561,13 @@ td {
 
 }
 
+/* timelineoverview.component.css or your global styles */
+.licensor-link {
+  color: #1f77b4; /* Example color */
+  text-decoration: none;
+}
+
+.licensor-link:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}

@@ -1,7 +1,10 @@
+// timelineoverview.component.ts
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { ConnectionService } from '../connection.service';
 import { PaymentConnection } from '../payment-connection.service';
+import { ActivatedRoute, Router } from '@angular/router';
+
 declare var Plotly: any;
 
 interface PaymentEntry {
@@ -53,9 +56,15 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
     '#bcbd22', '#17becf',
   ];
 
+  // New properties for user feedback
+  errorMessage: string = '';
+  isLoading: boolean = false;
+
   constructor(
     private connectionService: ConnectionService,
-    private paymentConnection: PaymentConnection
+    private paymentConnection: PaymentConnection,
+    private route: ActivatedRoute,
+    private router: Router // Inject Router
   ) {}
 
   // ---------------- HELPER FUNCTIONS ----------------
@@ -105,8 +114,33 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
   // ---------------- LIFECYCLE HOOKS ----------------
 
   ngOnInit(): void {
-    this.fetchLicensors();
-    this.fetchPayments();
+    this.isLoading = true; // Start loading indicator
+
+    // Fetch licensors and payments first
+    Promise.all([
+      this.fetchLicensors(),
+      this.fetchPayments()
+    ]).then(() => {
+      this.isLoading = false; // End loading indicator
+
+      // Subscribe to route parameters after data is loaded
+      this.route.paramMap.subscribe(params => {
+        const licensor = params.get('licensor');
+        if (licensor) {
+          this.selectedLicensor = licensor;
+          this.onLicensorChange(); // Fetch and display data for the selected licensor
+        } else {
+          console.warn('No licensor parameter found in the route.');
+          this.resetToDefaultView();
+        }
+      });
+    }).catch(err => {
+      this.isLoading = false; // End loading indicator
+      console.error('Error fetching licensors or payments:', err);
+      this.displayErrorMessage('Failed to load necessary data.');
+    });
+
+    // Subscribe to grouped license data
     this.groupedLicenseData$.subscribe({
       next: (data) => {
         this.groupedLicenseData = data;
@@ -125,6 +159,7 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
       error: (error) => console.error('Error in groupedLicenseData subscription:', error),
     });
 
+    // Load Plotly.js script
     this.loadPlotlyScript()
       .then(() => {
         console.log('Plotly.js script loaded successfully');
@@ -134,8 +169,37 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
       .catch((error) => console.error('Error loading Plotly.js script:', error));
   }
 
+
   ngAfterViewInit(): void {
-    this.initializePlots();
+    // Removed redundant call to initializePlots()
+  }
+
+  /**
+   * Reset the component to its default view when no licensor is selected.
+   */
+  resetToDefaultView(): void {
+    // Example: Display a default message
+    this.groupedLicenseDataSource.next([]); // Clear any existing data
+    this.displayErrorMessage('Please select a licensor to view the timeline overview.');
+    // Optionally, clear plots
+    const plotDiv = document.getElementById('overallDiv');
+    const licensorPaymentsPlot = document.getElementById('licensorPaymentsPlot');
+    if (plotDiv) Plotly.purge(plotDiv);
+    if (licensorPaymentsPlot) Plotly.purge(licensorPaymentsPlot);
+  }
+
+  /**
+   * Display an error or prompt message to the user.
+   */
+  displayErrorMessage(message: string): void {
+    this.errorMessage = message;
+  }
+
+  /**
+   * Clear the error message.
+   */
+  clearErrorMessage(): void {
+    this.errorMessage = '';
   }
 
   initializePlots(): void {
@@ -175,13 +239,21 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
       }
     }
   }
-
-  fetchLicensors(): void {
-    this.paymentConnection.getAnnualRevenues().subscribe((data: AnnualRevenue[]) => {
-      this.annualRevenues = data;
-      this.licensors = Array.from(new Set(data.map((item) => item.licensor))).filter(Boolean);
-      this.licensors.sort();
-      console.log('Licensors from annual revenues:', this.licensors);
+  fetchLicensors(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.paymentConnection.getAnnualRevenues().subscribe({
+        next: (data: AnnualRevenue[]) => {
+          this.annualRevenues = data;
+          this.licensors = Array.from(new Set(data.map((item) => item.licensor))).filter(Boolean);
+          this.licensors.sort();
+          console.log('Licensors from annual revenues:', this.licensors);
+          resolve();
+        },
+        error: (err) => {
+          console.error('Error fetching licensors:', err);
+          reject(err);
+        }
+      });
     });
   }
 
@@ -223,12 +295,22 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
   // ---------------- EVENT HANDLERS ----------------
 
   /**
-   * Called when licensor changes in the dropdown,
-   * waits for fresh data, then filters and plots.
+   * Called when licensor changes in the dropdown or via route parameter,
+   * fetches and plots data accordingly.
    */
   onLicensorChange(): void {
     if (!this.selectedLicensor) {
       console.warn('No licensor selected');
+      this.resetToDefaultView();
+      return;
+    }
+
+    // Check if the selected licensor exists in your data
+    if (!this.licensors.includes(this.selectedLicensor)) {
+      console.error(`Licensor "${this.selectedLicensor}" not found.`);
+      this.displayErrorMessage(`Licensor "${this.selectedLicensor}" not found.`);
+      // Optionally, navigate to a not-found page
+      // this.router.navigate(['/not-found']);
       return;
     }
 
@@ -278,9 +360,11 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
       },
       error: (err) => {
         console.error('Error fetching data for selected licensor:', err);
+        this.displayErrorMessage('Failed to fetch data for the selected licensor.');
       },
     });
   }
+
 
   /**
    * Alternate method if your template calls onLicensorSelect() instead of onLicensorChange().

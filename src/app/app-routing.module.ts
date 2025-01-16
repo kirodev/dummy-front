@@ -80,6 +80,7 @@ const routes: Routes = [
 
   { path: 'library', component: LibraryComponent },
   { path: 'equations', component: EquationsPaymentsComponent },
+  { path: 'timeline-overview/:licensor', component: TimelineOverviewComponent },
   { path: 'timeline-overview', component: TimelineOverviewComponent },
 
 
