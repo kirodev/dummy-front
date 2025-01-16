@@ -571,3 +571,54 @@ td {
   text-decoration: underline;
   cursor: pointer;
 }
+.search-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Space out elements */
+  flex: 1;
+  max-width: 600px; /* Adjust container width as needed */
+  margin: 20px auto; /* Center the container horizontally */
+  gap: 10px; /* Add spacing between elements */
+}
+
+.search-container input[type="text"] {
+  flex: 1; /* Allow the input to take the remaining space */
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.search-container input[type="text"]:focus {
+  border-color: #4e7ebf;
+}
+
+.search-container .search-btn {
+  padding: 10px;
+  background-color: #4e7ebf;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.search-container .search-btn:hover {
+  background-color: #0056b3;
+}
+
+.search-container .side-nav-toggle {
+  padding: 10px 15px;
+  background-color: #28a745; /* Match the button theme to filters */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.search-container .side-nav-toggle:hover {
+  background-color: #218838;
+}

@@ -43,15 +43,7 @@
   </div>
 
   <!-- Search Filter -->
-  <div class="filter-section">
-    <label for="searchTerm">Search Licensees:</label>
-    <input
-      type="text"
-      id="searchTerm"
-      [(ngModel)]="searchTerm"
-      (keyup.enter)="applyFilters()"
-      placeholder="Enter licensee name" />
-  </div>
+
 
   <!-- Date Filters -->
   <div class="filter-section">
@@ -109,15 +101,27 @@
 
 <!-- Main Content: Table -->
 <div class="table-container">
-  <button
-    class="side-nav-toggle"
-    (click)="toggleSideNav()"
-    aria-label="Open Filters and Sort">
-    ☰ Filters & Sort
-  </button>
-  <button routerLink="/timeline-overview" class="side-nav-toggle">
-    Licensing Revenues
-  </button>
+
+
+  <div class="search-container">
+    <input
+      type="text"
+      id="searchTerm"
+      [(ngModel)]="searchTerm"
+      (keyup.enter)="applyFilters()"
+      placeholder="Search Licensees..."
+      aria-label="Search Licensees" />
+    <button class="search-btn btn" (click)="applyFilters()" aria-label="Apply Search">
+      🔍
+    </button>
+    <button
+      class="side-nav-toggle btn"
+      (click)="toggleSideNav()"
+      aria-label="Open Filters and Sort">
+      ☰ Filters & Sort
+    </button>
+  </div>
+
 
   <!-- Legend -->
   <div class="legend">
