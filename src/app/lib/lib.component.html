@@ -15,16 +15,13 @@
 </div>
 
 <!-- Loading Indicator for Existing Files -->
-<div *ngIf="isLoading" class="alert alert-info mt-3">
-  Loading files, please wait...
-</div>
+
 
 <!-- Main Content -->
 <div *ngIf="!isLoading">
   <div class="filter-container mt-3">
     <!-- Search Input -->
     <div class="search-input">
-      <label for="searchInput" class="form-label">Search by Title:</label>
       <input
         id="searchInput"
         type="text"
@@ -37,7 +34,6 @@
 
     <!-- Report Type Filter -->
     <div class="report-type-select">
-      <label for="reportType" class="form-label">Select Report Type:</label>
       <select
         id="reportType"
         class="form-select"
@@ -52,7 +48,6 @@
     </div>
     <!-- Judicial Subcategory Filter -->
     <div class="judicial-subcategory-filter" *ngIf="selectedReportType === 'Judicial Documents'">
-      <label class="form-label">Select Subcategory:</label>
       <div *ngFor="let subCategory of uniqueJudicialSubCategories" class="subcategory-option">
         <input
           type="checkbox"
@@ -66,7 +61,6 @@
     </div>
     <!-- Year Filter -->
     <div class="year-filter">
-      <label for="yearFilter" class="form-label">Search by Year:</label>
       <select
         id="yearFilter"
         class="form-select"
@@ -83,11 +77,30 @@
 
 
     <!-- Reset Filters Button -->
-    <div class="reset-button">
-      <button class="btn btn-secondary" (click)="resetFilters()">
-        Reset Filters
-      </button>
-    </div>
+<!-- Filter Container -->
+<div class="filter-container mt-3">
+  <!-- Reset Filters Button -->
+  <div class="reset-button">
+    <button class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
+  </div>
+
+  <!-- Sync Dropbox Files Button -->
+
+  <div *ngIf="showAdminBoard" class="sync-button">
+    <button
+      class="btn btn-primary"
+      (click)="syncAndRefreshFiles()"
+      [disabled]="isSyncing"
+    >
+      <span *ngIf="!isSyncing">Sync Dropbox</span>
+      <span *ngIf="isSyncing">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        Synchronizing...
+      </span>
+    </button>
+  </div>
+</div>
+
   </div>
 
   <!-- Synchronization Indicator with Spinner -->

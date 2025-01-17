@@ -603,13 +603,14 @@ td {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+
 }
 
 .search-container .search-btn:hover {
   background-color: #0056b3;
 }
 
-.search-container .side-nav-toggle {
+.search-container .side-nav-toggle  {
   padding: 10px 15px;
   background-color: #28a745; /* Match the button theme to filters */
   color: white;
@@ -617,8 +618,30 @@ td {
   border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Add shadow similar to filters button */
+  transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover */
 }
 
 .search-container .side-nav-toggle:hover {
   background-color: #218838;
+  box-shadow: 0 4px 7px rgba(0, 0, 0, 0.4); /* Slightly larger shadow on hover */
+
+}
+.search-container .search-btn,
+.filter-section .apply-filters-btn {
+  padding: 10px;
+  background-color: #4e7ebf; /* Maintain the blue color for buttons */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Add shadow for consistency */
+  transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition */
+}
+
+.search-container .search-btn:hover,
+.filter-section .apply-filters-btn:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+  box-shadow: 0 4px 7px rgba(0, 0, 0, 0.4); /* Slightly larger shadow on hover */
 }

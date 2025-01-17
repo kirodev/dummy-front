@@ -35,15 +35,13 @@
       id="typeFilter"
       [(ngModel)]="typeFilter"
       (change)="toggleTypeFilter()">
-      <option value="all">All</option>
+      <option value="all">All</option> <!-- Default -->
       <option value="include">OEM</option>
-      <option value="exclude">Others</option>
-
+      <option value="exclude">Exclude OEM</option>
     </select>
   </div>
 
   <!-- Search Filter -->
-
 
   <!-- Date Filters -->
   <div class="filter-section">
@@ -77,12 +75,12 @@
       [(ngModel)]="endDate"
       placeholder="Enter year (YYYY) or full date (YYYY-MM-DD)" />
   </div>
-
+  <div class="filter-section">
   <button class="apply-filters-btn" (click)="applyFilters()">Apply
     Filters</button>
   <button class="apply-filters-btn" (click)="resetFilters()">Reset
     Filters</button>
-
+  </div>
   <h2>Sorting</h2>
 
   <!-- Sorting Dropdown -->
@@ -92,6 +90,7 @@
       id="sortOrder"
       [(ngModel)]="sortOrder"
       (change)="sortLicensees()">
+      <option value="default">Default</option> <!-- Default -->
       <option value="alphabetical">Alphabetically</option>
       <option value="count">Total Statements</option>
     </select>
@@ -102,7 +101,6 @@
 <!-- Main Content: Table -->
 <div class="table-container">
 
-
   <div class="search-container">
     <input
       type="text"
@@ -111,7 +109,8 @@
       (keyup.enter)="applyFilters()"
       placeholder="Search Licensees..."
       aria-label="Search Licensees" />
-    <button class="search-btn btn" (click)="applyFilters()" aria-label="Apply Search">
+    <button class="search-btn btn" (click)="applyFilters()"
+      aria-label="Apply Search">
       🔍
     </button>
     <button
@@ -121,7 +120,6 @@
       ☰ Filters & Sort
     </button>
   </div>
-
 
   <!-- Legend -->
   <div class="legend">

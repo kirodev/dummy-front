@@ -36,29 +36,23 @@ export class MobileComponent implements OnInit {
   // Search and Sorting
   searchTerm$ = new BehaviorSubject<string>('');
   searchTerm: string = '';
-  sortOrder: 'alphabetical' | 'count' = 'alphabetical';
-
-  // Date Filtering
+  sortOrder: 'default' | 'alphabetical' | 'count' = 'default'; // Initialize with 'default'
+  typeFilter: 'include' | 'exclude' | 'all' = 'all'; // Initialize with 'all' (Others)
   startDate: string = '';
   endDate: string = '';
+  companyTypes: CompanyType[] = [];
+  licenseeTypeMap: Map<string, number> = new Map();
+  isSideNavOpen: boolean = false;
+  private originalLicensees: string[] = [];
+  private originalTableData: string[][] = [];
+
+
   dateFilterType:
     | 'exactDate'
     | 'fullPeriod'
     | 'startDateInside'
     | 'endDateInside'
     | 'anyDateInside' = 'exactDate';
-
-  // Type Filtering
-  companyTypes: CompanyType[] = [];
-  licenseeTypeMap: Map<string, number> = new Map();
-  typeFilter: 'include' | 'exclude' | 'all' = 'all';
-
-  // Side Nav Control
-  isSideNavOpen: boolean = false;
-
-  // Original Data Snapshot
-  private originalLicensees: string[] = [];
-  private originalTableData: string[][] = [];
 
   constructor(
     private router: Router,
@@ -69,17 +63,22 @@ export class MobileComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Restore filter state from localStorage
+    // Check for saved state in localStorage
+    localStorage.removeItem('filterState');
+
     const savedFilterState = localStorage.getItem('filterState');
     if (savedFilterState) {
       const filterState = JSON.parse(savedFilterState);
-      this.searchTerm = filterState.searchTerm;
-      this.startDate = filterState.startDate;
-      this.endDate = filterState.endDate;
-      this.dateFilterType = filterState.dateFilterType;
-      this.typeFilter = filterState.typeFilter;
-      this.sortOrder = filterState.sortOrder;
-      this.filteredLicensees = filterState.filteredLicensees;
+      this.searchTerm = filterState.searchTerm || '';
+      this.startDate = filterState.startDate || '';
+      this.endDate = filterState.endDate || '';
+      this.dateFilterType = filterState.dateFilterType || 'exactDate';
+      this.typeFilter = filterState.typeFilter || 'all'; // Ensure 'all' is default
+      this.sortOrder = filterState.sortOrder || 'default'; // Ensure 'default' is used
+    } else {
+      // Set defaults explicitly
+      this.typeFilter = 'all';
+      this.sortOrder = 'default';
     }
 
     // Fetch all necessary data
@@ -128,25 +127,16 @@ export class MobileComponent implements OnInit {
         this.multiplePayments = multiplePayments;
         this.multipleLicenses = multipleLicenses;
 
-        // Debugging: Log all licensees from various sources
-        console.log('All Licensees:', this.allLicensees);
-        console.log('Company Types:', this.companyTypes);
-
         this.initializeTableData();
-        this.applyFilters();
+
+        // Apply default filters and sorting after fetching data
+        this.applyFilters(); // Ensure type filter defaults to 'all'
+        this.sortLicensees(); // Ensure sorting defaults to 'default'
       },
       error: (error) => {
         console.error('Error fetching data:', error);
       },
     });
-
-    // Search term handling with debounce
-    this.searchTerm$
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe((term) => {
-        this.searchTerm = term;
-        this.applyFilters();
-      });
   }
 
 
@@ -541,35 +531,50 @@ export class MobileComponent implements OnInit {
    * Reset all filters to their default states.
    */
   resetFilters(): void {
+    this.typeFilter = 'all'; // Reset to All
+    this.sortOrder = 'default'; // Reset to Default
+
     this.searchTerm = '';
-    this.searchTerm$.next('');
     this.startDate = '';
     this.endDate = '';
     this.dateFilterType = 'exactDate';
-    this.typeFilter = 'all'; // Default to 'all'
 
-    // Clear saved filter state
+    this.filteredLicensees = [...this.originalLicensees];
+    this.filteredTableData = this.originalTableData.map((row) => [...row]);
+
+    // Remove saved state from localStorage
     localStorage.removeItem('filterState');
 
-    // Reset licensees and table data to original state
-    this.filteredLicensees = [...this.originalLicensees];
-    this.tableData = this.originalTableData.map((row) => [...row]);
-    this.filteredTableData = this.tableData.map((row) => [...row]);
-
-    console.log('Filters have been reset.');
+    console.log('Filters have been reset to defaults.');
   }
+
+
 
 
   /**
    * General sorting method based on the selected sort order.
    */
   sortLicensees(): void {
+    if (this.sortOrder === 'default') {
+      console.log('Default sort selected');
+
+      // Reset the filtered licensees to the original order
+      this.filteredLicensees = [...this.originalLicensees];
+
+      // Reset the filtered table data to its original state
+      this.filteredTableData = this.originalTableData.map((row) => [...row]);
+
+      console.log('Filters have been reset to default.');
+      return;
+    }
+
     if (this.sortOrder === 'alphabetical') {
       this.sortLicenseesAlphabetically();
     } else if (this.sortOrder === 'count') {
       this.sortLicenseesByCount();
     }
   }
+
 
   /**
    * Get the description for a table cell, used for tooltips.

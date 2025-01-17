@@ -46,16 +46,7 @@ export class PdfLibraryService {
     );
   }
 
-  // Sync Dropbox files with the database
-  checkDropboxFiles(folderPath?: string): Observable<PdfFile[]> {
-    let url = `${this.url}lib/sync`;
-    if (folderPath) {
-      url += `?folderPath=${encodeURIComponent(folderPath)}`;
-    }
-    return this.http.get<PdfFile[]>(url, {
-      headers: this.getHeaders(),
-    });
-  }
+
     // Fetch all files from the database
 
     getFilesFromDatabase(): Observable<PdfFile[]> {
@@ -90,6 +81,20 @@ export class PdfLibraryService {
       catchError(this.handleError)
     );
   }
+
+  checkDropboxFiles(folderPath?: string): Observable<PdfFile[]> {
+    let url = `${this.url}lib/sync`;
+    if (folderPath) {
+      url += `?folderPath=${encodeURIComponent(folderPath)}`;
+    }
+    return this.http.get<PdfFile[]>(url, { headers: this.getHeaders() }).pipe(
+      catchError((err) => {
+        console.error('Error fetching Dropbox files:', err);
+        return throwError(() => err);
+      })
+    );
+  }
+
   getPdfFilesFromAllTables(): Observable<PdfFile[]> {
     const licenses$ = this.http.get<PdfFile[]>(`${this.baseUrlLicenses}`, { headers: this.getHeaders() });
     const multipleLicenses$ = this.http.get<PdfFile[]>(`${this.baseUrlMultipleLicenses}`, { headers: this.getHeaders() });

@@ -275,3 +275,53 @@
 .container {
   padding-top: 60px; /* Equal to navbar height */
 }
+/* Align the reset and sync buttons side by side */
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 16px; /* Space between buttons */
+  justify-content: flex-start; /* Align buttons to the start */
+}
+
+/* Button Styles (applies to both buttons) */
+.reset-button button,
+.sync-button button {
+  width: 150px; /* Ensure both buttons have the same width */
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Reset button specific styling */
+.reset-button button {
+  background-color: #6c757d; /* Bootstrap secondary color */
+  color: #fff;
+  border: none;
+}
+
+.reset-button button:hover {
+  background-color: #5a6268;
+  box-shadow: 0 4px 7px rgba(0, 0, 0, 0.4);
+}
+
+/* Sync button specific styling */
+.sync-button button {
+  background-color: #4e7ebf; /* Custom primary color */
+  color: #fff;
+  border: none;
+}
+
+.sync-button button:hover {
+  background-color: #0056b3;
+  box-shadow: 0 4px 7px rgba(0, 0, 0, 0.4);
+}
+
+/* Add margin for smaller screens */
+@media (max-width: 767px) {
+  .filter-container {
+    flex-wrap: wrap;
+    gap: 8px; /* Reduce gap on smaller screens */
+  }
+}

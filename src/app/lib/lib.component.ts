@@ -4,6 +4,7 @@ import { Component, OnInit } from '@angular/core';
 import { PdfFile, PdfLibraryService } from '../pdf-library-service.service';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+import { RoleService } from '../role.service';
 
 @Component({
   selector: 'app-library',
@@ -16,7 +17,7 @@ export class LIBComponent implements OnInit {
   isLoading: boolean = true; // Indicates loading of existing files
   isSyncing: boolean = false; // Indicates synchronization with Dropbox
   errorMessage: string = ''; // To display error messages
-
+  processedFiles: string[] = []; // Correctly typed as an array of strings
   // Filters and Search
   searchQuery: string = '';
   selectedYear: string = '';
@@ -31,7 +32,7 @@ export class LIBComponent implements OnInit {
     'Licensing Programs',
     'Licensing Terms Statements',
     'Reports',
-    'Papers'
+    'Papers',
   ];
 
   // Judicial Subcategories
@@ -40,8 +41,11 @@ export class LIBComponent implements OnInit {
 
   // For Debounced Search
   searchSubject: Subject<string> = new Subject();
+  showAdminBoard = false;
 
-  constructor(private pdfLibraryService: PdfLibraryService) {}
+  constructor(private pdfLibraryService: PdfLibraryService,    private roleService: RoleService
+  ) {}
+
 
   ngOnInit(): void {
     this.loadExistingFiles();
@@ -50,6 +54,9 @@ export class LIBComponent implements OnInit {
     this.searchSubject.pipe(debounceTime(300)).subscribe((searchTextValue) => {
       this.searchQuery = searchTextValue;
       this.searchFiles();
+    });
+    this.roleService.isAdmin().subscribe(isAdmin => {
+      this.showAdminBoard = isAdmin;
     });
   }
 
@@ -65,16 +72,15 @@ export class LIBComponent implements OnInit {
         console.log(`Fetched ${files.length} Existing Files.`);
         const validFiles = files.filter((file) => !!file.path);
         console.log(`Valid Files Count: ${validFiles.length}`);
-        const mappedFiles = validFiles.map((file: PdfFile) => this.mapPdfFile(file));
+        const mappedFiles = validFiles.map((file: PdfFile) =>
+          this.mapPdfFile(file)
+        );
         console.log('Mapped Existing Files:', mappedFiles);
         this.pdfFiles = mappedFiles;
         this.filteredPdfFiles = [...this.pdfFiles];
         this.populateUniqueYears();
         this.populateUniqueJudicialSubCategories(); // Populate subcategories
         this.isLoading = false;
-
-        // Start synchronizing with Dropbox after loading existing files
-        this.syncWithDropbox();
       },
       error: (err) => {
         console.error('Error fetching existing files:', err);
@@ -100,8 +106,11 @@ export class LIBComponent implements OnInit {
         console.log('Mapped Synced Files:', mappedSyncedFiles);
 
         // Avoid duplicates by checking if the file already exists
-        const newFiles = mappedSyncedFiles.filter(syncedFile =>
-          !this.pdfFiles.some(existingFile => existingFile.path === syncedFile.path)
+        const newFiles = mappedSyncedFiles.filter(
+          (syncedFile) =>
+            !this.pdfFiles.some(
+              (existingFile) => existingFile.path === syncedFile.path
+            )
         );
 
         if (newFiles.length > 0) {
@@ -131,11 +140,50 @@ export class LIBComponent implements OnInit {
   mapPdfFile(file: PdfFile): PdfFile {
     return {
       ...file,
-      type: this.extractReportType(file.path),
-      year: this.extractYear(file.path), // Consistently using 'year'
-      sharedLink: file.sharedLink || this.constructSharedLink(file.path), // Assuming a method to construct sharedLink if not present
+      type: file.type || this.extractReportType(file.path), // Use backend-provided type or extract from path
+      year: file.year && file.year !== 'Unknown' ? file.year : this.extractYear(file.path), // Use backend year or extract
+      sharedLink: file.sharedLink || this.constructSharedLink(file.path), // Use backend link or construct
     };
   }
+  syncAndRefreshFiles(): void {
+    this.isSyncing = true;
+    this.errorMessage = '';
+    this.processedFiles = []; // Clear previous list
+
+    console.log('Starting Dropbox synchronization...');
+    this.pdfLibraryService.checkDropboxFiles().subscribe({
+      next: (updatedFiles: PdfFile[]) => {
+        // Filter new files by comparing paths
+        const newFiles = updatedFiles.filter(
+          (file) => !this.pdfFiles.some((existing) => existing.path === file.path)
+        );
+
+        newFiles.forEach((file) => {
+          const fileInfo = `Title: ${file.title}, Year: ${file.year}, Path: ${file.path}`;
+          this.processedFiles.push(fileInfo);
+          console.log(`Processing File: ${fileInfo}`);
+        });
+
+        console.log(`Total files fetched from backend: ${updatedFiles.length}`);
+        console.log(`New files to add: ${newFiles.length}`);
+
+        this.pdfFiles.push(...newFiles);
+        this.filteredPdfFiles = [...this.pdfFiles];
+
+        this.populateUniqueYears();
+        this.populateUniqueJudicialSubCategories();
+
+        this.isSyncing = false;
+        console.log('Dropbox synchronization completed successfully.');
+      },
+      error: (err) => {
+        this.errorMessage = 'Failed to synchronize Dropbox files.';
+        this.isSyncing = false;
+      },
+    });
+  }
+
+
 
   /**
    * Extracts and normalizes the report type from the file path.
@@ -163,16 +211,16 @@ export class LIBComponent implements OnInit {
       'annual report': 'Annual Report',
       'press releases': 'Press Release',
       'press release': 'Press Release',
-      'judicial_documents': 'Judicial Documents',
-      'judicial_document': 'Judicial Documents',
+      judicial_documents: 'Judicial Documents',
+      judicial_document: 'Judicial Documents',
       'licensing programs': 'Licensing Programs',
       'licensing program': 'Licensing Programs',
       'licensing terms statements': 'Licensing Terms Statements',
       'licensing terms statement': 'Licensing Terms Statements',
-      'reports': 'Reports',
-      'report': 'Reports',
-      'papers': 'Papers',
-      'paper': 'Papers',
+      reports: 'Reports',
+      report: 'Reports',
+      papers: 'Papers',
+      paper: 'Papers',
       'current reports': 'Current reports',
       'current report': 'Current reports',
     };
@@ -201,6 +249,7 @@ export class LIBComponent implements OnInit {
     const yearMatch = path.match(/\b(19|20)\d{2}\b/);
     return yearMatch ? yearMatch[0] : 'Unknown';
   }
+
 
   /**
    * Constructs the shared link for a PDF file.
@@ -250,8 +299,8 @@ export class LIBComponent implements OnInit {
    */
   populateUniqueJudicialSubCategories(): void {
     const judicialSubCategories = this.pdfFiles
-      .filter(file => file.type === 'Judicial Documents')
-      .map(file => {
+      .filter((file) => file.type === 'Judicial Documents')
+      .map((file) => {
         if (file.path) {
           const parts = file.path.split('\\');
           if (parts.length >= 2) {
@@ -262,7 +311,9 @@ export class LIBComponent implements OnInit {
       });
 
     // Remove duplicates and sort alphabetically
-    this.uniqueJudicialSubCategories = Array.from(new Set(judicialSubCategories)).sort();
+    this.uniqueJudicialSubCategories = Array.from(
+      new Set(judicialSubCategories)
+    ).sort();
   }
 
   /**
@@ -283,7 +334,10 @@ export class LIBComponent implements OnInit {
       }
 
       // If report type is Judicial Documents, filter by subcategories
-      if (this.selectedReportType === 'Judicial Documents' && this.selectedJudicialSubCategories.length > 0) {
+      if (
+        this.selectedReportType === 'Judicial Documents' &&
+        this.selectedJudicialSubCategories.length > 0
+      ) {
         if (!file.path) return false;
         const parts = file.path.split('\\');
         if (parts.length >= 2) {
@@ -353,7 +407,8 @@ export class LIBComponent implements OnInit {
         this.selectedJudicialSubCategories.push(subCategory);
       }
     } else {
-      this.selectedJudicialSubCategories = this.selectedJudicialSubCategories.filter(sc => sc !== subCategory);
+      this.selectedJudicialSubCategories =
+        this.selectedJudicialSubCategories.filter((sc) => sc !== subCategory);
     }
     this.searchFiles();
   }
