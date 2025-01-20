@@ -444,166 +444,247 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
   plotOverallDataByLicensor(): void {
     const plotDiv = document.getElementById('overallDiv');
     if (!plotDiv) {
-      console.error('No DOM element with id "overallDiv" exists.');
-      return;
+        console.error('No DOM element with id "overallDiv" exists.');
+        return;
     }
 
-    // Debugging: Check groupedLicenseData
-    console.log('Grouped License Data for Overall Plot:', this.groupedLicenseData);
-    if (this.groupedLicenseData.length === 0) {
-      console.warn('No license data available for the overall plot.');
-      // Optionally, clear the plot or display a message
-      Plotly.purge(plotDiv);
-      return;
+    if (!this.groupedLicenseData || this.groupedLicenseData.length === 0) {
+        console.warn('No license data available for the overall plot.');
+        Plotly.purge(plotDiv);
+        return;
     }
 
     const categories = ['_2G', '_3G', '_4G', '_5G', '_6G', 'wifi'];
-    const techCombinationsMap = new Map<string, { x: (string | null)[]; y: (string | null)[]; text: (string | null)[] }>();
     const data: any[] = [];
+    const techColorMap = new Map<string, string>();
+    const licenseeSet = new Set<string>();
+    const usedColors = new Set<string>();
+    let colorIndex = 0;
+
+    const colorPalette = [
+        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+    ];
+
+    const generateDistinctColor = (): string => {
+        const hueStep = 360 / 15;
+        const hue = (colorIndex * hueStep) % 360;
+        const lightness = 50 + ((colorIndex % 2) * 10);
+        const saturation = 70;
+        const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        colorIndex++;
+        if (usedColors.has(color)) return generateDistinctColor();
+        usedColors.add(color);
+        return color;
+    };
+
+    // Step 1: Collect all licensees and reverse their sorting
+    this.groupedLicenseData.forEach((group) => {
+        group.licenses.forEach((license: any) => {
+            const truncatedLicensee =
+                license.licensee?.length > 12
+                    ? `${license.licensee.slice(0, 12)}...`
+                    : license.licensee || 'Unknown';
+            licenseeSet.add(truncatedLicensee);
+        });
+    });
+
+    // Reverse sorting for licensee list
+    const licenseeList = Array.from(licenseeSet).sort().reverse();
+
+    // Step 2: Process licenses and map them to reversed Y-axis positions
     let earliestYear = Number.MAX_SAFE_INTEGER;
     let latestYear = Number.MIN_SAFE_INTEGER;
 
-    // Aggregate data by technology combination
     this.groupedLicenseData.forEach((group) => {
-      group.licenses.forEach((license: any) => {
-        const { signed_date, expiration_date, licensee } = license;
+        group.licenses.forEach((license: any) => {
+            const techCombination =
+                categories
+                    .filter((category) => license[category]?.toUpperCase() === 'Y')
+                    .map((category) => category.replace('_', '').toUpperCase())
+                    .join(', ') || 'NO TECHNOLOGIES';
 
-        if (signed_date) {
-          const year = new Date(signed_date).getFullYear();
-          earliestYear = Math.min(earliestYear, year);
-        }
-        if (expiration_date) {
-          const year = new Date(expiration_date).getFullYear();
-          latestYear = Math.max(latestYear, year);
-        }
+            if (!techColorMap.has(techCombination)) {
+                const color = techCombination === 'NO TECHNOLOGIES'
+                    ? '#9b9b9b'
+                    : (
+                        colorIndex < colorPalette.length
+                            ? colorPalette[colorIndex++]
+                            : generateDistinctColor()
+                    );
+                techColorMap.set(techCombination, color);
+            }
 
-        const techCombination = categories
-          .filter((category) => license[category]?.toUpperCase() === 'Y')
-          .map((category) => category.replace('_', '').toUpperCase())
-          .join(', ') || 'NO TECHNOLOGIES';
+            const color = techColorMap.get(techCombination)!;
 
-        if (!techCombinationsMap.has(techCombination)) {
-          techCombinationsMap.set(techCombination, { x: [], y: [], text: [] });
-        }
+            const { signed_date, expiration_date, licensee, mapping_id } = license;
+            const signedYear = signed_date
+                ? new Date(signed_date).getFullYear()
+                : null;
+            const expirationYear = expiration_date
+                ? new Date(expiration_date).getFullYear()
+                : null;
 
-        const traces = techCombinationsMap.get(techCombination);
-        const truncatedLicensee =
-          licensee?.length > 12 ? `${licensee.slice(0, 12)}...` : licensee;
+            if (signedYear) earliestYear = Math.min(earliestYear, signedYear);
+            if (expirationYear) latestYear = Math.max(latestYear, expirationYear);
 
-        const hoverText = `
-          Licensee: ${licensee || 'N/A'}<br>
-          Signed: ${signed_date || 'Not Available'}<br>
-          Expiration: ${expiration_date || 'Not Available'}<br>
-          Technologies: ${techCombination}
-        `;
+            const truncatedLicensee =
+                licensee?.length > 12 ? `${licensee.slice(0, 12)}...` : licensee || 'Unknown';
+            const yPosition = licenseeList.indexOf(truncatedLicensee);
 
-        if (signed_date && expiration_date) {
-          // Add data points for licenses with both dates
-          traces?.x.push(signed_date, expiration_date, null); // Null separates different licensees
-          traces?.y.push(truncatedLicensee, truncatedLicensee, null);
-          traces?.text.push(hoverText, hoverText, null);
-        } else {
-          const singleDate = signed_date || expiration_date;
-          if (singleDate) {
-            traces?.x.push(singleDate, null); // Null separates different licensees
-            traces?.y.push(truncatedLicensee, null);
-            traces?.text.push(hoverText, null);
-          }
-        }
-      });
+            let xData: (string | null)[] = [];
+            let yData: (number | null)[] = [];
+            let textData: (string | null)[] = [];
+            let lineDash = 'solid';
+            let markerSymbol = 'circle';
+            let markerOpacity = [1, 1];
+
+            const hoverText = `
+                Licensee: ${licensee || 'N/A'}<br>
+                Signed: ${signed_date || 'Not Available'}<br>
+                Expiration: ${expiration_date || 'Not Available'}<br>
+                Technologies: ${techCombination}
+            `;
+
+            if (mapping_id?.startsWith('X-')) {
+                markerSymbol = 'diamond';
+                xData = signedYear ? [`${signedYear}-01-01`] : [];
+                yData = signedYear ? [yPosition] : [];
+                textData = [hoverText];
+                data.push({
+                    x: xData,
+                    y: yData,
+                    type: 'scatter',
+                    mode: 'markers',
+                    marker: {
+                        symbol: markerSymbol,
+                        size: 5,
+                        color,
+                        line: {
+                            color: 'black',
+                            width: 1,
+                        },
+                    },
+                    text: textData,
+                    hoverinfo: 'text',
+                    name: techCombination,
+                    legendgroup: techCombination,
+                    showlegend: false,
+                });
+                return;
+            }
+
+            if (signedYear && expirationYear) {
+                xData = [`${signedYear}-01-01`, `${expirationYear}-01-01`, null];
+                yData = [yPosition, yPosition, null];
+                textData = [hoverText, hoverText, null];
+                lineDash = 'solid';
+            } else if (!signedYear && expirationYear) {
+                const fakeSignedYear = expirationYear - 1;
+                xData = [`${fakeSignedYear}-01-01`, `${expirationYear}-01-01`, null];
+                yData = [yPosition, yPosition, null];
+                textData = ['', hoverText, null];
+                lineDash = 'dot';
+                markerOpacity = [0, 1];
+            } else if (signedYear && !expirationYear) {
+                const fakeExpirationYear = signedYear + 1;
+                xData = [`${signedYear}-01-01`, `${fakeExpirationYear}-01-01`, null];
+                yData = [yPosition, yPosition, null];
+                textData = [hoverText, '', null];
+                lineDash = 'dot';
+                markerOpacity = [1, 0];
+            }
+
+            data.push({
+                x: xData,
+                y: yData,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: {
+                    dash: lineDash,
+                    color,
+                    width: lineDash === 'dot' ? 2 : 2,
+                },
+                marker: {
+                    symbol: markerSymbol,
+                    size: 8,
+                    color,
+                    opacity: markerOpacity,
+                },
+                text: textData,
+                hoverinfo: 'text',
+                name: techCombination,
+                legendgroup: techCombination,
+                showlegend: false,
+            });
+        });
     });
 
-    // Create traces for each technology combination
-    let colorIndex = 0;
-    techCombinationsMap.forEach((traces, techCombination) => {
-      data.push({
-        x: traces.x,
-        y: traces.y,
-        type: 'scatter',
-        mode: 'lines+markers', // Add lines between points within same licensee
-        line: { color: this.colorPalette[colorIndex % this.colorPalette.length] },
-        marker: { size: 8 },
-        text: traces.text,
-        hoverinfo: 'text',
-        name: techCombination, // Legend label for the combination
-        showlegend: true,
-        connectgaps: false, // Prevent lines from connecting across nulls
-      });
-      colorIndex++;
-    });
+    const heightPerLicensee = 30;
+    const baseHeight = 600;
+    const dynamicHeight = baseHeight + licenseeList.length * heightPerLicensee;
 
-    const yearRange = [];
-    for (let year = earliestYear; year <= latestYear; year++) {
-      yearRange.push(year.toString());
-    }
-
-    // **Calculate Dynamic Height Based on Number of Licensees**
-    const licenseeSet = new Set<string>();
-    data.forEach((trace: any) => {
-      trace.y.forEach((licensee: string | null) => {
-        if (licensee) licenseeSet.add(licensee);
-      });
-    });
-    const licenseeList = Array.from(licenseeSet);
-    const numberOfLicensees = licenseeList.length;
-
-    // Define height per licensee (e.g., 30px per licensee)
-    const heightPerLicensee = 30; // Adjust as needed
-    const baseHeight = 600; // Base height for the plot
-    const dynamicHeight = baseHeight + (numberOfLicensees * heightPerLicensee);
-
-    console.log(`Number of Licensees: ${numberOfLicensees}`);
-    console.log(`Dynamic Plot Height: ${dynamicHeight}px`);
-
-    // Define layout with synchronized x-axis and margins
     const layout = {
-      title: `Overall Timeline for Licensor: ${this.selectedLicensor}`,
-      xaxis: {
-        title: 'Year',
-        type: 'date', // Ensure 'date' type for alignment
-        automargin: true,
-        tickvals: yearRange.map((year) => `${year}-01-01`), // Align tickvals
-        ticktext: yearRange.map(String), // Ensure ticktext is string
-        tickangle: -45, // Rotate labels to avoid crowding
-        showgrid: true,
-        gridcolor: '#e0e0e0',
-        showline: false,
-      },
-      yaxis: {
-        title: 'Licensee',
-        automargin: true,
-        tickmode: 'array',
-        tickvals: licenseeList,
-        ticktext: licenseeList.map((lic) => (lic && lic.length > 12 ? `${lic.slice(0, 12)}...` : lic)),
-        tickfont: {
-          size: 12, // Adjust tick font size for readability
+        title: `Overall Timeline for Licensor: ${this.selectedLicensor}`,
+        xaxis: {
+            title: 'Year',
+            type: 'date',
+            automargin: true,
+            tickmode: 'linear',
+            dtick: 'M12',
+            tickformat: '%Y',
+            tickangle: -45,
+            tickfont: { size: 10 },
+            showgrid: true,
+            zeroline: false,
         },
-      },
-      showlegend: true,
-      height: dynamicHeight, // Set dynamic height
-      margin: {
-        t: 50,  // Top margin
-        l: 200, // Increased left margin to accommodate longer labels
-        r: 50,  // Right margin
-        b: 200, // Increased bottom margin for x-axis label space
-      },
+        yaxis: {
+            title: 'Licensee',
+            tickmode: 'array',
+            tickvals: licenseeList.map((_, index) => index),
+            ticktext: licenseeList,
+            automargin: true,
+            tickfont: { size: 10 },
+            zeroline: false,
+
+        },
+        showlegend: true,
+        legend: {
+            itemclick: 'toggle',
+            itemdoubleclick: 'toggleothers',
+        },
+        height: dynamicHeight,
+        margin: {
+            t: 40,
+            l: 150,
+            r: 40,
+            b: 80,
+        },
     };
 
-    console.log('Layout Configuration:', layout);
-
-    if (data.length === 0) {
-      console.warn('No data available for plotting.');
-      // Optionally, clear the plot or display a message
-      Plotly.purge(plotDiv);
-      return;
-    }
-
-    Plotly.newPlot(plotDiv, data, layout).then(() => {
-      console.log('Overall plot rendered successfully.');
-    }).catch((error: any) => {
-      console.error('Error rendering overall plot:', error);
+    techColorMap.forEach((color, techCombination) => {
+        data.push({
+            x: [null],
+            y: [null],
+            type: 'scatter',
+            mode: 'markers',
+            marker: {
+                symbol: 'square',
+                size: 10,
+                color,
+            },
+            name: techCombination,
+            legendgroup: techCombination,
+            showlegend: true,
+            hoverinfo: 'none',
+        });
     });
-  }
+
+    Plotly.newPlot(plotDiv, data, layout)
+        .then(() => console.log('Overall plot rendered successfully.'))
+        .catch((error: any) => console.error('Error rendering plot:', error));
+}
+
 
   /**
    * Show a fallback chart with only revenue bars, no payments.
