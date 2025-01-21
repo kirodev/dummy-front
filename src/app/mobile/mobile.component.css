@@ -22,11 +22,6 @@ table {
   flex-wrap: wrap; /* Allow items to wrap to the next line if needed */
 }
 
-.table-container {
-  width: 100%; /* Adjust the width of the table container */
-  max-width: 100%; /* Ensure it doesn't exceed the width of the screen */
-
-}
 
 .legend {
   width: 30%; /* Adjust the width of the legend container */
@@ -702,13 +697,88 @@ td {
   background: white;
   border-radius: 8px;
   padding: 20px;
-  width: 90%;
-  height: 90%;
+  width: 90%; /* Adjust width as needed */
+  max-width: auto; /* Set a maximum width */
+  max-height: 90vh; /* Limit the height to 90% of the viewport */
   overflow-y: auto; /* Enable vertical scrolling */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional shadow for a polished look */
   position: relative;
 }
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
+html, body {
+  height: 100%; /* Ensure full height for the viewport */
+}
+
+body {
+  display: flex;
+  flex-direction: column; /* Stack header, content, and footer */
+  font-family: Arial, sans-serif; /* Base font for the page */
+}
+
+/* Main App Container */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Full viewport height */
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #DED8C4;
+  position: fixed; /* Stays at the top */
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* Ensure it appears above other elements */
+  height: 60px; /* Fixed navbar height */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Padding below navbar for content */
+.container {
+  flex: 1; /* Pushes the footer to the bottom */
+  padding-top: 70px; /* Match the navbar height + margin */
+  padding: 20px; /* Optional: Add padding for content */
+  overflow: auto; /* Allow scrolling if content overflows */
+}
+
+/* Footer */
+.footer {
+  background-color: rgba(255, 255, 255, 0.9); /* Light background */
+  text-align: center;
+  padding: 10px 0; /* Padding inside the footer */
+  border-top: 1px solid #ddd; /* Optional border for separation */
+  color: #333;
+  width: 100%; /* Full width */
+  position: relative; /* Default behavior */
+  margin-top: auto; /* Pushes footer to the bottom when content is short */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar {
+    height: 50px; /* Adjust navbar height for smaller screens */
+    padding: 5px 10px;
+  }
+
+  .container {
+    padding-top: 60px; /* Match the smaller navbar height */
+  }
+
+  .footer {
+    font-size: 12px; /* Adjust font size for smaller screens */
+  }
+}
 
 
 .popup-content .btn-close {
@@ -726,4 +796,142 @@ td {
   width: 100%;
   height: 100%;
   border: none;
+}
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Keep this as a semi-transparent background for overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background-color: #F2F1EA !important;
+  border-radius: 8px;
+  padding: 20px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1001;
+}
+th.vertical-header:not(:first-child) {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
+  font-size: 12px;
+  white-space: nowrap;
+  padding: 3px;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  th.vertical-header:not(:first-child) {
+    writing-mode: unset; /* Disable vertical writing mode */
+    transform: rotate(-90deg); /* Rotate headers to horizontal */
+    text-align: left; /* Adjust alignment for readability */
+    white-space: nowrap; /* Prevent wrapping */
+    font-size: 10px; /* Adjust font size for smaller screens */
+    height: auto; /* Allow dynamic height */
+    line-height: 1.2; /* Ensure text is readable */
+  }
+}
+
+
+/* Reset default browser styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure full height */
+}
+
+/* Wrapper for content and footer */
+.main-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+/* Content should expand but not force footer up */
+.content {
+  flex-grow: 1;
+  margin-bottom: 50px; /* Space between content and footer */
+}
+
+/* Table styles */
+.table-container {
+  margin-bottom: 50px; /* Add spacing below table */
+  padding: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 50px; /* Space directly below the table */
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+/* Footer always at the bottom */
+.footer {
+  text-align: center;
+  padding: 10px;
+  background-color: #f1f1f1;
+  border-top: 1px solid #ddd;
+  margin-top: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .footer {
+    font-size: 12px;
+  }
+}
+/* Main wrapper to ensure full page layout */
+.main-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Full viewport height */
+}
+
+/* Content wrapper to push the footer down */
+.content {
+  flex: 1; /* Grow to fill the space, pushing the footer */
+  padding-bottom: 50px; /* Add space below the content */
+}
+
+/* Table container spacing */
+.table-container {
+  margin-bottom: 50px; /* Proper spacing below the table */
+}
+
+/* Footer styling */
+.footer {
+  background-color: #f1f1f1;
+  text-align: center;
+  padding: 20px 0;
+  border-top: 1px solid #ddd;
+  color: #333;
+  position: relative; /* Default positioning to stay below content */
+  width: 100%;
 }

@@ -423,7 +423,7 @@ export class TimelineOverviewComponent implements OnInit {
     const categories = ['_2G', '_3G', '_4G', '_5G', '_6G', 'wifi'];
     const data: any[] = [];
     const techColorMap = new Map<string, string>();
-    const licenseeSet = new Set<string>();
+    const licenseeSet = new Set<string>(); 
     const usedColors = new Set<string>();
     let colorIndex = 0;
 

@@ -41,7 +41,7 @@
       </li>
       <li class="nav-item" *ngIf="showAdminBoard">
          <div class="dropdown">
-        <a>Services</a>
+        <a>Features</a>
         <div class="dropdown-content">
           <a routerLink="/mobile">Known Licenses</a>
           <a routerLink="/revenues">Licensing Revenues</a>
@@ -51,9 +51,12 @@
         </div>
       </div>
       </li>
-      <li class="nav-item" >
-        <a href="/support" class="nav-link" routerLink="/">Support</a>
+       <!--<li class="nav-item" >
+        <a href="/documentation" class="nav-link" routerLink="/documentation">Documentation</a>
       </li>
+      <li class="nav-item" >
+        <a href="/help" class="nav-link" routerLink="/help">Help</a>
+      </li> -->
     </ul>
 
     <ul class="navbar-nav ml-auto" *ngIf="!isLoggedIn">
@@ -81,5 +84,12 @@
 </nav>
 
 
-  <router-outlet></router-outlet>
 
+<div class="app-container">
+  <router-outlet></router-outlet>
+  <footer class="footer" >
+    <div class="container">
+      <p>&copy; 2025 Frandly. All rights reserved.</p>
+    </div>
+  </footer>
+</div>

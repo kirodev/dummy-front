@@ -1,0 +1,67 @@
+<div class="ticket-form-container">
+  <h2>Submit a Ticket</h2>
+  <form class="ticket-form">
+    <!-- Name -->
+    <div class="form-group">
+      <label for="name">Name</label>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        placeholder="Enter your name"
+        required
+      />
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        placeholder="Enter your email"
+        required
+      />
+    </div>
+
+    <!-- Issue Category -->
+    <div class="form-group">
+      <label for="category">Issue Category</label>
+      <select id="category" name="category" required>
+        <option value="" disabled selected>Select a category</option>
+        <option value="technical">Technical Issue</option>
+        <option value="billing">Billing</option>
+        <option value="account">Account</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <!-- Priority -->
+    <div class="form-group">
+      <label for="priority">Priority</label>
+      <select id="priority" name="priority" required>
+        <option value="" disabled selected>Select priority</option>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea
+        id="description"
+        name="description"
+        placeholder="Describe the issue..."
+        rows="5"
+        required
+      ></textarea>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="submit-button">Submit Ticket</button>
+  </form>
+</div>

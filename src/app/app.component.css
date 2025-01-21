@@ -171,3 +171,38 @@
 .dropdown-menu .square-container {
   padding: 10px;
 }
+
+/* Ensure the root and body cover the entire viewport */
+/* Ensure the root and body cover the entire viewport */
+html, body {
+  height: 100%; /* Full viewport height */
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main app container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Full viewport height */
+  position: static;
+}
+
+/* Ensure the main content grows to push the footer down */
+
+/* Footer styles */
+.footer {
+  text-align: center; /* Center the text */
+  font-size: 14px; /* Adjust font size */
+  color: #333; /* Footer text color */
+  padding: 10px 10px; /* Padding inside the footer */
+  margin-top: auto; /* Push footer to the bottom */
+}
+
+/* Optional: Adjust footer for smaller screens */
+@media (max-width: 100%) {
+  .footer {
+    font-size: 12px;
+  }
+}

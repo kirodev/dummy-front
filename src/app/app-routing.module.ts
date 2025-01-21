@@ -34,6 +34,8 @@ import { QuarterlyRevenuesComponent } from './quarterly-revenues/quarterly-reven
 import { LIBComponent } from './lib/lib.component';
 import { LicensingRevenuesComponent } from './licensing-revenues/licensing-revenues.component';
 import { TimelineOverviewComponent } from './timelineoverview/timelineoverview.component';
+import { SupportHelpComponent } from './support-help/support-help.component';
+import { DocumentationComponent } from './documentation/documentation.component';
 
 const routes: Routes = [
 
@@ -82,6 +84,8 @@ const routes: Routes = [
   { path: 'equations', component: EquationsPaymentsComponent },
   { path: 'timeline-overview/:licensor', component: TimelineOverviewComponent },
   { path: 'timeline-overview', component: TimelineOverviewComponent },
+  { path: 'help', component: SupportHelpComponent },
+  { path: 'documentation', component: DocumentationComponent },
 
 
 

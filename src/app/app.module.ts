@@ -48,6 +48,8 @@ import { TimelineOverviewComponent } from './timelineoverview/timelineoverview.c
 import { ToastrModule } from 'ngx-toastr';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ProfileComponent } from './profile/profile.component';
+import { SupportHelpComponent } from './support-help/support-help.component';
+import { DocumentationComponent } from './documentation/documentation.component';
 
 @NgModule({
   declarations: [
@@ -87,6 +89,8 @@ import { ProfileComponent } from './profile/profile.component';
     LicensingRevenuesComponent,
     TimelineOverviewComponent,
     ProfileComponent,
+    SupportHelpComponent,
+    DocumentationComponent,
   ],
 
   imports: [

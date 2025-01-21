@@ -1,4 +1,9 @@
 /* licensing-revenues.component.css */
+
+@font-face {
+  font-family: "ROG Fonts";
+  src: url("src/assets/7032-fontps.ttf") format("truetype");
+}
 .licensing-revenues-container {
   max-width: 900px;
   margin: 0 auto; /* Center the container */
@@ -8,7 +13,6 @@
 
 .licensing-revenues-container h2 {
   margin-bottom: 20px;
-  color: #555555;
 }
 
 .plot-container {
@@ -26,7 +30,6 @@
   text-align: center;
   margin: 20px 0;
   font-size: 16px;
-  color: #555;
 }
 /* Shared styles for input and search boxes */
 .shared-input-style {
@@ -57,4 +60,14 @@
 
 .shared-button-style:hover {
   background-color: #0056b3;
+}
+h1 {
+  color: #8EBBDA;
+  font-size: 17.5px;
+  font-family:  'ROG Fonts';
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-left: 20px;
+  padding-top: 46px;
 }

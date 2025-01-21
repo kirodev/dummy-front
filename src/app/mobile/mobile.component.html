@@ -1,187 +1,52 @@
-<!-- mobile.component.html -->
+<div class="main-wrapper">
+  <header>
+    <h1>Mobile Basic Matrix</h1>
+    <h2>Find your focal license in The Matrix below:</h2>
+  </header>
 
-<h1>Mobile Basic Matrix</h1>
-<h2>Find your focal license in The Matrix below:</h2>
-
-<!-- Toggle Button for Side Nav -->
-
-<!-- Overlay -->
-<div
-  class="overlay"
-  [attr.aria-hidden]="!isSideNavOpen"
-  [class.show]="isSideNavOpen"
-  (click)="toggleSideNav()"></div>
-
-<!-- Side Nav -->
-<div
-  class="side-nav"
-  [class.open]="isSideNavOpen"
-  [attr.aria-hidden]="!isSideNavOpen"
-  role="dialog"
-  aria-label="Filters and Sorting Panel">
-  <button
-    class="close-btn"
-    (click)="toggleSideNav()"
-    aria-label="Close Filters and Sort">
-    ×
-  </button>
-  <br>
-  <h2>Filters</h2>
-
-  <!-- Type Filter Dropdown -->
-  <div class="filter-section">
-    <label for="typeFilter">Type Filter:</label>
-    <select
-      id="typeFilter"
-      [(ngModel)]="typeFilter"
-      (change)="toggleTypeFilter()">
-      <option value="all">All</option> <!-- Default -->
-      <option value="include">OEM</option>
-      <option value="exclude">Exclude OEM</option>
-    </select>
-  </div>
-
-  <!-- Search Filter -->
-
-  <!-- Date Filters -->
-  <div class="filter-section">
-    <label for="dateFilterType">Date Filter Type:</label>
-    <select
-      id="dateFilterType"
-      [(ngModel)]="dateFilterType"
-      (change)="onDateFilterTypeChange($event)">
-      <option value="exactDate">Exact Date</option>
-      <option value="fullPeriod">Full Period</option>
-      <option value="startDateInside">Start Date Inside</option>
-      <option value="endDateInside">End Date Inside</option>
-      <option value="anyDateInside">Any Date Inside</option>
-    </select>
-  </div>
-
-  <div class="filter-section">
-    <label for="startDate">Start Date:</label>
-    <input
-      type="text"
-      id="startDate"
-      [(ngModel)]="startDate"
-      placeholder="Enter year (YYYY) or full date (YYYY-MM-DD)" />
-  </div>
-
-  <div class="filter-section">
-    <label for="endDate">End Date:</label>
-    <input
-      type="text"
-      id="endDate"
-      [(ngModel)]="endDate"
-      placeholder="Enter year (YYYY) or full date (YYYY-MM-DD)" />
-  </div>
-  <div class="filter-section">
-  <button class="apply-filters-btn" (click)="applyFilters()">Apply
-    Filters</button>
-  <button class="apply-filters-btn" (click)="resetFilters()">Reset
-    Filters</button>
-  </div>
-  <h2>Sorting</h2>
-
-  <!-- Sorting Dropdown -->
-  <div class="filter-section">
-    <label for="sortOrder">Sort By:</label>
-    <select
-      id="sortOrder"
-      [(ngModel)]="sortOrder"
-      (change)="sortLicensees()">
-      <option value="default">Default</option> <!-- Default -->
-      <option value="alphabetical">Alphabetically</option>
-      <option value="count">Total Statements</option>
-    </select>
-  </div>
-
-</div>
-
-<!-- Main Content: Table -->
-<div class="table-container">
-
-  <div class="search-container">
-    <input
-      type="text"
-      id="searchTerm"
-      [(ngModel)]="searchTerm"
-      (keyup.enter)="applyFilters()"
-      placeholder="Search Licensees..."
-      aria-label="Search Licensees" />
-    <button class="search-btn btn" (click)="applyFilters()"
-      aria-label="Apply Search">
-      🔍
-    </button>
-    <button
-      class="side-nav-toggle btn"
-      (click)="toggleSideNav()"
-      aria-label="Open Filters and Sort">
-      ☰ Filters & Sort
-    </button>
-  </div>
-
-  <!-- Legend -->
-  <div class="legend">
-    <div class="legend-item">
-      <div class="legend-color green"></div>
-      <span class="legend-text">Available</span>
-    </div>
-    <div class="legend-item">
-      <div class="legend-color white"></div>
-      <span class="legend-text">Not Available</span>
+  <div class="content">
+    <div class="table-container">
+      <!-- Table goes here -->
+      <table>
+        <thead>
+          <tr>
+            <th class="empty-header"></th>
+            <th *ngFor="let licensee of displayLicensees" class="vertical-header">
+              {{ licensee }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let licensor of licensors; let rowIndex = index">
+            <td class="row-name">
+              <span class="licensor-link" (click)="showPopup(licensor)">
+                {{ licensor }}
+              </span>
+            </td>
+            <td
+              *ngFor="let cell of filteredTableData[rowIndex]; let colIndex = index"
+              [ngClass]="{
+                'green-cell': cell === 'green',
+                'white-cell': cell === 'white',
+                'red-cell': cell === 'red',
+                'transparent-cell': cell === 'transparent'
+              }"
+              (click)="cellClick(rowIndex, colIndex)"
+              [title]="getCellDescription(rowIndex, colIndex)"></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th class="empty-header"></th>
-        <th
-          *ngFor="let licensee of displayLicensees"
-          class="vertical-header">
-          {{ licensee }}
-        </th>
-      </tr>
-    </thead>
-    <!-- Your existing table structure -->
-    <tbody>
-      <tr *ngFor="let licensor of licensors; let rowIndex = index">
-        <td class="row-name">
-          <span class="licensor-link" (click)="showPopup(licensor)">
-            {{ licensor }}
-          </span>
-        </td>
-        <td
-          *ngFor="let cell of filteredTableData[rowIndex]; let colIndex = index"
-          [ngClass]="{
-        'green-cell': cell === 'green',
-        'white-cell': cell === 'white',
-        'red-cell': cell === 'red',
-        'transparent-cell': cell === 'transparent'
-      }"
-          (click)="cellClick(rowIndex, colIndex)"
-          [title]="getCellDescription(rowIndex, colIndex)"></td>
-      </tr>
-      <!-- Display message if no licensees are available -->
-      <tr *ngIf="displayLicensees.length === 0">
-        <td colspan="100%" class="no-data-message">
-          No licensees match the selected criteria.
-        </td>
-      </tr>
-    </tbody>
-
-  </table>
-</div>
 <!-- Popup Overlay -->
-
 <div *ngIf="isPopupVisible" class="popup-overlay">
   <div class="popup-content">
     <button class="btn-close" (click)="hidePopup()">&#x2715;</button>
     <app-timeline-overview
       *ngIf="selectedLicensor"
       [licensor]="selectedLicensor"
-      [hideSelectInput]="true"
-    ></app-timeline-overview>
+      [hideSelectInput]="true">
+    </app-timeline-overview>
   </div>
 </div>

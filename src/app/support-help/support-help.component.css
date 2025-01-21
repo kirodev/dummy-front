@@ -1,0 +1,92 @@
+/* Container styling */
+.ticket-form-container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+}
+
+/* Header */
+.ticket-form-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Form styling */
+.ticket-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Form groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Labels */
+.form-group label {
+  font-size: 14px;
+  color: #555;
+}
+
+/* Inputs and Selects */
+.ticket-form input,
+.ticket-form select,
+.ticket-form textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+/* Focus effect */
+.ticket-form input:focus,
+.ticket-form select:focus,
+.ticket-form textarea:focus {
+  border-color: #4e7ebf;
+  box-shadow: 0 0 5px rgba(78, 126, 191, 0.5);
+}
+
+/* Textarea */
+.ticket-form textarea {
+  resize: none;
+}
+
+/* Submit button */
+.submit-button {
+  padding: 12px 20px;
+  background-color: #4e7ebf;
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Hover effect */
+.submit-button:hover {
+  background-color: #3b669d;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .ticket-form-container {
+    padding: 15px;
+  }
+
+  .submit-button {
+    font-size: 14px;
+  }
+}
