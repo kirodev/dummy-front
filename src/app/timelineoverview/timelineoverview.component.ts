@@ -1,5 +1,5 @@
 // timelineoverview.component.ts
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, Input, SimpleChanges } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { ConnectionService } from '../connection.service';
 import { PaymentConnection } from '../payment-connection.service';
@@ -35,7 +35,19 @@ interface PaymentData {
   templateUrl: './timelineoverview.component.html',
   styleUrls: ['./timelineoverview.component.css'],
 })
-export class TimelineOverviewComponent implements OnInit, AfterViewInit {
+export class TimelineOverviewComponent implements OnInit {
+  @Input() set licensor(value: string | null) {
+    if (value) {
+      this.selectedLicensor = value;
+      this.onLicensorChange(); // Trigger updates when licensor changes
+    } else {
+      this.selectedLicensor = ''; // Reset to default if value is null
+    }
+  }
+
+
+  @Input() hideSelectInput: boolean = false;
+
   private groupedLicenseDataSource = new BehaviorSubject<any[]>([]);
   groupedLicenseData$ = this.groupedLicenseDataSource.asObservable();
 
@@ -114,65 +126,60 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
   // ---------------- LIFECYCLE HOOKS ----------------
 
   ngOnInit(): void {
-    this.isLoading = true; // Start loading indicator
+    this.isLoading = true;
 
-    // Fetch licensors and payments first
-    Promise.all([
-      this.fetchLicensors(),
-      this.fetchPayments()
-    ]).then(() => {
-      this.isLoading = false; // End loading indicator
+    // Fetch licensors and payments
+    Promise.all([this.fetchLicensors(), this.fetchPayments()])
+      .then(() => {
+        this.isLoading = false;
 
-      // Subscribe to route parameters after data is loaded
-      this.route.paramMap.subscribe(params => {
-        const licensor = params.get('licensor');
-        if (licensor) {
-          this.selectedLicensor = licensor;
-          this.onLicensorChange(); // Fetch and display data for the selected licensor
-        } else {
-          console.warn('No licensor parameter found in the route.');
-          this.resetToDefaultView();
-        }
+        // Subscribe to route parameters
+
+      })
+      .catch((err) => {
+        this.isLoading = false;
+        console.error('Error fetching licensors or payments:', err);
+        this.displayErrorMessage('Failed to load necessary data.');
       });
-    }).catch(err => {
-      this.isLoading = false; // End loading indicator
-      console.error('Error fetching licensors or payments:', err);
-      this.displayErrorMessage('Failed to load necessary data.');
-    });
+
+    // Load Plotly.js script
+    this.loadPlotlyScript()
+      .then(() => {
+        console.log('Plotly.js script loaded successfully');
+      })
+      .catch((error) => console.error('Error loading Plotly.js script:', error));
 
     // Subscribe to grouped license data
     this.groupedLicenseData$.subscribe({
       next: (data) => {
         this.groupedLicenseData = data;
         console.log('Grouped License Data Updated:', data);
+
+        // Ensure the overall plot is consistent
         if (data.length > 0) {
           this.plotOverallDataByLicensor(); // Plot data for the timeline
         } else {
           console.warn('Grouped license data is empty. Skipping overall plot.');
-          // Clear the overall plot if no data
           const plotDiv = document.getElementById('overallDiv');
           if (plotDiv) {
             Plotly.purge(plotDiv);
           }
         }
       },
-      error: (error) => console.error('Error in groupedLicenseData subscription:', error),
+      error: (error) =>
+        console.error('Error in groupedLicenseData subscription:', error),
     });
-
-    // Load Plotly.js script
-    this.loadPlotlyScript()
-      .then(() => {
-        console.log('Plotly.js script loaded successfully');
-        // Plot initial data if available
-        this.initializePlots();
-      })
-      .catch((error) => console.error('Error loading Plotly.js script:', error));
   }
 
 
-  ngAfterViewInit(): void {
-    // Removed redundant call to initializePlots()
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['licensor'] && changes['licensor'].currentValue !== changes['licensor'].previousValue) {
+      console.log('Licensor changed:', changes['licensor'].currentValue);
+      this.onLicensorChange(); // Fetch and plot data only when the licensor changes
+    }
   }
+
+
 
   /**
    * Reset the component to its default view when no licensor is selected.
@@ -202,43 +209,7 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
     this.errorMessage = '';
   }
 
-  initializePlots(): void {
-    // Check if DOM elements exist
-    const overallDiv = document.getElementById('overallDiv');
-    const licensorPaymentsPlot = document.getElementById('licensorPaymentsPlot');
 
-    if (!overallDiv || !licensorPaymentsPlot) {
-      console.warn('Plot divs not found during initialization. Retrying...');
-      setTimeout(() => this.initializePlots(), 500); // Retry initialization
-      return;
-    }
-
-    console.log('Plot divs initialized.');
-    // Plot initial data
-    const selectedLicensorRevenues = this.getSelectedLicensorRevenues();
-    if (selectedLicensorRevenues.length > 0) {
-      // Check if there are payments for the selected licensor
-      const normalizedSelectedLicensor = this.normalizeLicensorName(this.selectedLicensor);
-      const hasPayments = this.paymentData.some(item =>
-        this.normalizeLicensorName(item.licensor) === normalizedSelectedLicensor &&
-        this.computePaymentValue(item) > 0
-      );
-      if (hasPayments) {
-        this.processDataAndPlot(selectedLicensorRevenues);
-      } else {
-        this.plotRevenueOnly(selectedLicensorRevenues);
-      }
-    } else {
-      console.warn('No revenue data available for the selected licensor.');
-      // Clear plots if no revenue data
-      if (licensorPaymentsPlot) {
-        Plotly.purge(licensorPaymentsPlot);
-      }
-      if (overallDiv) {
-        Plotly.purge(overallDiv);
-      }
-    }
-  }
   fetchLicensors(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.paymentConnection.getAnnualRevenues().subscribe({
@@ -264,13 +235,15 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
     return new Promise((resolve, reject) => {
       this.paymentConnection.getPayments().subscribe({
         next: (data: PaymentData[]) => {
+          console.log('Payments Data:', data); // Debug the fetched data
           this.paymentData = data;
-          // Use our new `filterPayments` logic
-          this.filteredPayments = this.filterPayments(this.paymentData);
-          console.log('Filtered Payments after fetchPayments:', this.filteredPayments);
+          this.filteredPayments = this.filterPayments(data); // Ensure filtering logic works
           resolve(true);
         },
-        error: (err) => reject(err),
+        error: (err) => {
+          console.error('Error fetching payments:', err);
+          reject(err);
+        },
       });
     });
   }
@@ -305,64 +278,57 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    // Check if the selected licensor exists in your data
-    if (!this.licensors.includes(this.selectedLicensor)) {
-      console.error(`Licensor "${this.selectedLicensor}" not found.`);
-      this.displayErrorMessage(`Licensor "${this.selectedLicensor}" not found.`);
-      // Optionally, navigate to a not-found page
-      // this.router.navigate(['/not-found']);
-      return;
-    }
-
     console.log('Selected Licensor:', this.selectedLicensor);
-    console.log('Annual Revenues:', this.annualRevenues);
 
-    // Normalize the selected licensor's name for consistent comparison
     const normalizedSelectedLicensor = this.normalizeLicensorName(this.selectedLicensor);
 
-    // 1. Filter revenues for the selected licensor
-    const selectedLicensorRevenues = this.annualRevenues.filter(
-      (item) => this.normalizeLicensorName(item.licensor) === normalizedSelectedLicensor
-    );
-    console.log('Selected Licensor Revenues:', selectedLicensorRevenues);
+    // Fetch revenues and payments
+    Promise.all([
+      this.connectionService.getDataByLicensor(this.selectedLicensor).toPromise(),
+      this.paymentConnection.getPayments().toPromise(),
+    ])
+      .then(([licenseData, paymentsData]) => {
+        if (!licenseData) {
+          console.warn('License data is undefined or null.');
+          this.displayErrorMessage('No license data available.');
+          return;
+        }
 
-    // 2. Filter payments for the selected licensor
-    this.filteredPayments = this.paymentData.filter((item) => {
-      return (
-        this.normalizeLicensorName(item.licensor) === normalizedSelectedLicensor &&
-        this.computePaymentValue(item) > 0
-      );
-    });
-    console.log('Filtered Payments:', this.filteredPayments);
+        if (!paymentsData) {
+          console.warn('Payments data is undefined or null.');
+          this.displayErrorMessage('No payments data available.');
+          return;
+        }
 
-    // 3. Fetch and group license data for the selected licensor
-    this.connectionService.getDataByLicensor(this.selectedLicensor).subscribe({
-      next: (data: any[]) => {
-        // 1) Filter & group the licensor data (for timeline)
-        const licensorFilteredData = data.filter(
+        // Filter and group license data
+        const licensorFilteredData = licenseData.filter(
           (license) => license.licensor === this.selectedLicensor
         );
         const groupedData = this.groupLicenseData(licensorFilteredData);
-        this.groupedLicenseDataSource.next(groupedData); // Update the BehaviorSubject
-        console.log('Grouped License Data:', groupedData);
+        this.groupedLicenseDataSource.next(groupedData);
 
-        // 4. Conditional Plotting Based on Payment Availability
-        if (this.filteredPayments.length > 0) {
-          // If payments exist, process and plot payments along with remaining revenues
+        // Filter payments for the selected licensor
+        this.filteredPayments = paymentsData.filter(
+          (item) =>
+            this.normalizeLicensorName(item.licensor) === normalizedSelectedLicensor &&
+            this.computePaymentValue(item) > 0
+        );
+        console.log('Filtered Payments:', this.filteredPayments);
+
+        const selectedLicensorRevenues = this.getSelectedLicensorRevenues();
+        console.log('Selected Licensor Revenues:', selectedLicensorRevenues);
+
+        // Plot the data
+        if (selectedLicensorRevenues.length > 0 || this.filteredPayments.length > 0) {
           this.processDataAndPlot(selectedLicensorRevenues);
         } else {
-          // If no payments, plot revenues only
           this.plotRevenueOnly(selectedLicensorRevenues);
         }
-
-        // 5. Optionally, plot the overall timeline (handled by subscription)
-        // Removed direct call to plotOverallDataByLicensor
-      },
-      error: (err) => {
+      })
+      .catch((err) => {
         console.error('Error fetching data for selected licensor:', err);
         this.displayErrorMessage('Failed to fetch data for the selected licensor.');
-      },
-    });
+      });
   }
 
 
@@ -890,8 +856,7 @@ export class TimelineOverviewComponent implements OnInit, AfterViewInit {
 
     if (yearsExceedingRevenue.length > 0) {
       const yearsList = yearsExceedingRevenue.join(', ');
-      alert(`Alert: Payments exceed revenues in the following year(s): ${yearsList}`);
-      console.warn(`Payments exceed revenues in the following year(s): ${yearsList}`);
+
     }
 
     const layout = {

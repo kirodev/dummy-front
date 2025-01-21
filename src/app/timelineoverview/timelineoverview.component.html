@@ -3,21 +3,18 @@
 
   <!-- Dropdown for Licensor Selection -->
   <div class="licensing-revenues-container">
-    <select
-      id="licensor"
-      class="shared-input-style"
-      [(ngModel)]="selectedLicensor"
-      (change)="onLicensorChange()"
-    >
-      <option value="" disabled selected>Select Licensor</option>
-      <option *ngFor="let licensor of licensors" [value]="licensor">{{ licensor }}</option>
-    </select>
-    <button
-      class="shared-button-style"
-      (click)="onLicensorChange()"
-    >
-    🔍
-    </button>
+    <div *ngIf="!hideSelectInput">
+      <!-- Apply shared-input-style class to the select element -->
+      <label for="licensorSelect">Select Licensor:</label>
+      <select id="licensorSelect" [(ngModel)]="selectedLicensor" (change)="onLicensorChange()" class="shared-input-style">
+        <option *ngFor="let licensor of licensors" [value]="licensor">{{ licensor }}</option>
+      </select>
+      <button
+        class="shared-button-style"
+        (click)="onLicensorChange()">
+        🔍
+      </button>
+    </div>
   </div>
 
   <!-- Plot Containers -->

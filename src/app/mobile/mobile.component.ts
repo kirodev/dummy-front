@@ -19,6 +19,9 @@ export class MobileComponent implements OnInit {
   allLicensees: string[] = []; // Normalized all licensees
   filteredLicensees: string[] = []; // Normalized licensees after applying type and search filters
   licensors: string[] = [];
+  isPopupVisible: boolean = false; // Tracks popup visibility
+  popupText: string = ''; // Content to display in the popup
+  selectedLicensor: string | null = null;
 
   // Mapping between normalized and original licensee names
   normalizedToOriginalLicenseeMap: Map<string, string> = new Map(); // New mapping
@@ -137,6 +140,7 @@ export class MobileComponent implements OnInit {
         console.error('Error fetching data:', error);
       },
     });
+    
   }
 
 
@@ -663,6 +667,24 @@ export class MobileComponent implements OnInit {
     );
   }
 
+  showPopup(licensor: string): void {
+    this.isPopupVisible = true;
+    this.selectedLicensor = licensor; // Set the selected licensor
+  }
 
+  // Hide popup
+  hidePopup(): void {
+    this.isPopupVisible = false;
+    this.selectedLicensor = null;
+  }
+
+
+  // Navigate to the timeline page for the selected licensor
+  navigateToLicensorPage(): void {
+    if (this.selectedLicensor) {
+      this.router.navigate(['/timeline-overview', this.selectedLicensor]);
+      this.hidePopup();
+    }
+  }
 
 }

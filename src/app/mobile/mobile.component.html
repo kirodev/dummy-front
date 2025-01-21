@@ -132,7 +132,6 @@
       <span class="legend-text">Not Available</span>
     </div>
   </div>
-  <div class="popup"></div>
 
   <table>
     <thead>
@@ -149,10 +148,9 @@
     <tbody>
       <tr *ngFor="let licensor of licensors; let rowIndex = index">
         <td class="row-name">
-          <a [routerLink]="['/timeline-overview', licensor]"
-            class="licensor-link">
+          <span class="licensor-link" (click)="showPopup(licensor)">
             {{ licensor }}
-          </a>
+          </span>
         </td>
         <td
           *ngFor="let cell of filteredTableData[rowIndex]; let colIndex = index"
@@ -174,4 +172,16 @@
     </tbody>
 
   </table>
+</div>
+<!-- Popup Overlay -->
+
+<div *ngIf="isPopupVisible" class="popup-overlay">
+  <div class="popup-content">
+    <button class="btn-close" (click)="hidePopup()">&#x2715;</button>
+    <app-timeline-overview
+      *ngIf="selectedLicensor"
+      [licensor]="selectedLicensor"
+      [hideSelectInput]="true"
+    ></app-timeline-overview>
+  </div>
 </div>
