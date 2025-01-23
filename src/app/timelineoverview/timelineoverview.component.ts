@@ -423,7 +423,7 @@ export class TimelineOverviewComponent implements OnInit {
     const categories = ['_2G', '_3G', '_4G', '_5G', '_6G', 'wifi'];
     const data: any[] = [];
     const techColorMap = new Map<string, string>();
-    const licenseeSet = new Set<string>(); 
+    const licenseeSet = new Set<string>();
     const usedColors = new Set<string>();
     let colorIndex = 0;
 
@@ -468,10 +468,10 @@ export class TimelineOverviewComponent implements OnInit {
                 categories
                     .filter((category) => license[category]?.toUpperCase() === 'Y')
                     .map((category) => category.replace('_', '').toUpperCase())
-                    .join(', ') || 'NO TECHNOLOGIES';
+                    .join(', ') || 'UNKOWN TECH';
 
             if (!techColorMap.has(techCombination)) {
-                const color = techCombination === 'NO TECHNOLOGIES'
+                const color = techCombination === 'UNKOWN TECH'
                     ? '#9b9b9b'
                     : (
                         colorIndex < colorPalette.length
