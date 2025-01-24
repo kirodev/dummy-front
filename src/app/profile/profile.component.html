@@ -1,13 +1,16 @@
-<div class="container mt-5">
+<div class="container mt-5 d-flex justify-content-center">
   <ng-container *ngIf="currentUser; else loggedOut">
-    <div class="card shadow-sm">
-      <div class="card-header bg-primary text-white">
-        <h3 class="mb-0 text-center">
+    <div class="card shadow square-card">
+      <!-- Card Header -->
+      <div class="card-header bg-primary text-white text-center">
+        <h3 class="mb-0">
           <strong>{{ currentUser.username }}</strong>'s Profile
         </h3>
       </div>
+
+      <!-- Card Body -->
       <div class="card-body">
-        <div class="mb-3 text-center">
+        <div class="text-center mb-3">
           <img
             *ngIf="currentUser.avatarUrl"
             [src]="currentUser.avatarUrl"
@@ -20,34 +23,36 @@
             <i class="fa fa-user-circle fa-5x text-secondary"></i>
           </div>
         </div>
-        <div class="mb-3">
+
+        <div class="mb-3 text-center">
           <strong>Username:</strong> {{ currentUser.username }}
         </div>
-        <div class="mb-3">
+        <div class="mb-3 text-center">
           <strong>Email:</strong> {{ currentUser.email || 'Not provided' }}
         </div>
-        <div class="mb-3">
+        <div class="mb-3 text-center">
           <strong>Token:</strong>
           <input
             type="text"
-            class="form-control"
+            class="form-control text-center"
             readonly
             [value]="currentUser.accessToken"
-            title="Access Token"
           />
         </div>
-        <div class="mb-3">
+
+        <!-- Roles -->
+        <div class="text-center mb-3">
           <strong>Roles:</strong>
-          <ul class="list-unstyled">
-            <li *ngFor="let role of currentUser.roles">
+          <ul class="list-inline mt-2">
+            <li *ngFor="let role of currentUser.roles" class="list-inline-item">
               <span class="badge bg-secondary">{{ role }}</span>
             </li>
           </ul>
         </div>
-        <!-- Buttons -->
-        <div class="text-center">
 
-          <button id="center-button" (click)="openPopup()">Change Password</button>
+        <!-- Change Password Button -->
+        <div class="text-center">
+          <button class="btn btn-primary" (click)="openPopup()">Change Password</button>
         </div>
       </div>
     </div>
@@ -58,66 +63,56 @@
       Please <a routerLink="/login" class="alert-link">login</a> to view your profile.
     </div>
   </ng-template>
+</div>
 
-  <!-- Change Password Modal -->
-  <div
-    class="modal fade"
-    id="changePasswordModal"
-    tabindex="-1"
-    aria-labelledby="changePasswordModalLabel"
-    aria-hidden="true"
-  >
-
+<!-- Custom Popup -->
+<div class="popup-overlay" *ngIf="showPopup">
+  <div class="popup-content">
+    <h2>Change Password</h2>
+    <form (submit)="changePassword()">
+      <div class="mb-3">
+        <label for="currentPassword" class="form-label">Current Password</label>
+        <input
+          type="password"
+          id="currentPassword"
+          class="form-control"
+          [(ngModel)]="passwordForm.currentPassword"
+          name="currentPassword"
+          required
+        />
+      </div>
+      <div class="mb-3">
+        <label for="newPassword" class="form-label">New Password</label>
+        <input
+          type="password"
+          id="newPassword"
+          class="form-control"
+          [(ngModel)]="passwordForm.newPassword"
+          name="newPassword"
+          required
+        />
+      </div>
+      <div class="mb-3">
+        <label for="confirmPassword" class="form-label">Confirm Password</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          class="form-control"
+          [(ngModel)]="passwordForm.confirmPassword"
+          name="confirmPassword"
+          required
+        />
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary close-button"
+          (click)="closePopup()"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary close-button">Save Changes</button>
+      </div>
+    </form>
   </div>
-
-  <!-- Custom Popup -->
-  <div class="popup-overlay" *ngIf="showPopup">
-    <div class="popup-content">
-      <h2>Change Password</h2>
-      <form (submit)="changePassword()">
-        <div class="mb-3">
-          <label for="currentPassword" class="form-label">Current Password</label>
-          <input
-            type="password"
-            id="currentPassword"
-            class="form-control"
-            [(ngModel)]="passwordForm.currentPassword"
-            name="currentPassword"
-            required
-          />
-        </div>
-        <div class="mb-3">
-          <label for="newPassword" class="form-label">New Password</label>
-          <input
-            type="password"
-            id="newPassword"
-            class="form-control"
-            [(ngModel)]="passwordForm.newPassword"
-            name="newPassword"
-            required
-          />
-        </div>
-        <div class="mb-3">
-          <label for="confirmPassword" class="form-label">Confirm Password</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            class="form-control"
-            [(ngModel)]="passwordForm.confirmPassword"
-            name="confirmPassword"
-            required
-          />
-        </div>
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary close-button"
-            (click)="closePopup()"
-          >
-            Cancel
-          </button>
-          <button type="submit" class="btn btn-secondary close-button">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
+</div>

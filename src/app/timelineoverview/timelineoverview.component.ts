@@ -468,10 +468,10 @@ export class TimelineOverviewComponent implements OnInit {
                 categories
                     .filter((category) => license[category]?.toUpperCase() === 'Y')
                     .map((category) => category.replace('_', '').toUpperCase())
-                    .join(', ') || 'UNKOWN TECH';
+                    .join(', ') || 'UNKNOWN TECH';
 
             if (!techColorMap.has(techCombination)) {
-                const color = techCombination === 'UNKOWN TECH'
+                const color = techCombination === 'UNKNOWN TECH'
                     ? '#9b9b9b'
                     : (
                         colorIndex < colorPalette.length

@@ -1,95 +1,105 @@
 <div id="app">
-
-
   <div class="container">
     <router-outlet></router-outlet>
   </div>
 </div>
-<nav>
-  <div class="navbar">
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
     <div class="logo">
-      <img src="assets/LOGO+Slogan 1.svg" alt="FRANDLY Logo">
+      <img src="assets/LOGO+Slogan 1.svg" alt="FRANDLY Logo" width="197" height="70">
     </div>
 
-   <!--  <div class="nav-links">
-      <a routerLink="/sechome">Home</a>
+    <!-- Hamburger menu for small screens -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-      Use a container div for the dropdown menu -->
-      <!-- <div class="dropdown">
-        <a routerLink="/far-licenses" class="dropdown-btn">FRAND Licenses</a>
-        <div class="dropdown-content">
-          <!-- Vertical dropdown items
-          <a routerLink="/mobile">Mobile</a>
-          <a routerLink="/automotive">Connected Vehicles</a>
-          <a routerLink="/iot">IoT</a>
-          <a routerLink="/audiovisual">Audio Visual</a>
+    <!-- Navbar links -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto" routerLinkActive="active">
+        <li class="nav-item" *ngIf="showAdminBoard">
+          <a href="/sechome" class="nav-link" routerLink="sechome">Home</a>
+        </li>
+        <li class="nav-item" *ngIf="showModeratorBoard">
+          <a href="/sechome" class="nav-link" routerLink="sechome">Home</a>
+        </li>
+        <div class="dropdown">
+          <a class="nav-link" href="#" (click)="toggleDropdown($event)">
+            Features
+            <span id="dropdownArrow" class="ms-2">
+              <!-- Show down arrow when dropdown is closed -->
+              <span *ngIf="!dropdownOpen" class="arrow">&#9660;</span>
+              <!-- Show up arrow when dropdown is open -->
+              <span *ngIf="dropdownOpen" class="arrow">&#9650;</span>
+            </span>
+          </a>
+          <ul class="dropdown-menu" [class.show]="dropdownOpen" aria-labelledby="navbarDropdown">
+            <li>
+              <a class="dropdown-item" routerLink="/mobile" routerLinkActive="active">
+                Known Licenses
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" routerLink="/revenues" routerLinkActive="active">
+                Licensing Revenues
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" routerLink="/sales" routerLinkActive="active">
+                Product Market Sales
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" routerLink="/library" routerLinkActive="active">
+                Documents Library
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" routerLink="/timeline-overview" routerLinkActive="active">
+                Timeline
+              </a>
+            </li>
+          </ul>
         </div>
-      </div>
 
-      <a routerLink="/ip-portfolios" class="grey-link">IP Portfolios</a>
-      <a routerLink="/roi" class="grey-link">Return On Investment</a>
 
-    </div> -->
-    <a href="#" class="navbar-brand"></a>
-    <ul class="navbar-nav mr-auto" routerLinkActive="active">
+      </ul>
 
-      <li class="nav-item" *ngIf="showAdminBoard">
-        <a href="/sechome" class="nav-link" routerLink="sechome">Home</a>
-      </li>
-      <li class="nav-item" *ngIf="showModeratorBoard">
-        <a href="/sechome" class="nav-link" routerLink="sechome">Home</a>
-      </li>
-      <li class="nav-item" *ngIf="showAdminBoard">
-         <div class="dropdown">
-        <a>Features</a>
-        <div class="dropdown-content">
-          <a routerLink="/mobile">Known Licenses</a>
-          <a routerLink="/revenues">Licensing Revenues</a>
-          <a routerLink="/sales">Product Market Sales</a>
-          <a routerLink="/library">Documents Library</a>
-          <a routerLink="/timeline-overview">Timeline</a>
-        </div>
-      </div>
-      </li>
-       <!--<li class="nav-item" >
-        <a href="/documentation" class="nav-link" routerLink="/documentation">Documentation</a>
-      </li>
-      <li class="nav-item" >
-        <a href="/help" class="nav-link" routerLink="/help">Help</a>
-      </li> -->
-    </ul>
+      <!-- Auth links for non-logged-in users -->
+      <ul class="navbar-nav ms-auto" *ngIf="!isLoggedIn">
+        <li class="nav-item">
+          <a href="/register" class="nav-link" routerLink="register">Sign Up</a>
+        </li>
+        <li class="nav-item">
+          <a href="/login" class="nav-link" routerLink="login">Login</a>
+        </li>
+      </ul>
 
-    <ul class="navbar-nav ml-auto" *ngIf="!isLoggedIn">
-      <li class="nav-item">
-        <a href="/register" class="nav-link" routerLink="register">Sign Up</a>
-      </li>
-      <li class="nav-item">
-        <a href="/login" class="nav-link" routerLink="login">Login</a>
-      </li>
-    </ul>
-
-    <ul class="navbar-nav ml-auto" *ngIf="isLoggedIn">
-      <li class="nav-item">
-        <div class="profile-info"> <!-- Wrap profile image and username in a div -->
-          <img id="profile-img" src="//ssl.gstatic.com/accounts/ui/avatar_2x.png" class="profile-img-card" />
-          <a href="/profile" class="nav-link" routerLink="profile">{{ username }}</a>
-        </div>
-      </li>
-      <li class="nav-item">
-        <a href class="nav-link" (click)="logout()">Logout</a>
-      </li>
-    </ul>
+      <!-- Profile and Logout for logged-in users -->
+      <ul class="navbar-nav ms-auto" *ngIf="isLoggedIn">
+        <li class="nav-item">
+          <div class="profile-info">
+            <img id="profile-img" src="//ssl.gstatic.com/accounts/ui/avatar_2x.png" class="profile-img-card" />
+            <a href="/profile" class="nav-link" routerLink="profile">{{ username }}</a>
+          </div>
+        </li>
+        <li class="nav-item">
+          <a href class="nav-link" (click)="logout()">Logout</a>
+        </li>
+      </ul>
+    </div>
   </div>
-
 </nav>
-
-
 
 <div class="app-container">
   <router-outlet></router-outlet>
-  <footer class="footer" >
+  <footer class="footer">
     <div class="container">
       <p>&copy; 2025 Frandly. All rights reserved.</p>
     </div>
   </footer>
 </div>
+
+<!-- Bootstrap JS (including dependencies like Popper.js) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
