@@ -373,19 +373,28 @@ fetchTimelineData(): void {
     }
   );
 }
- plotData(): void {
+plotData(): void {
   const data: any[] = [];
   const idToColor: Map<string, string> = new Map();
   const staticColors: string[] = [
     '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
     '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
-    '#bcbd22', '#17becf'
+    '#bcbd22', '#17becf',
   ];
   const legendEntries: Set<string> = new Set();
 
-  // Fixed y-value for "Overall" traces to ensure consistent alignment
+  // Fixed y-value for "Overall" traces
   const overallYValue = 6;
-  const missingDateOffset = 0.5; // Increased offset for missing date markers
+
+  // Y-axis values for technologies
+  const techYValues: { [key: string]: number } = {
+    _2G: 0,
+    _3G: 1,
+    _4G: 2,
+    _5G: 3,
+    _6G: 4,
+    wifi: 5,
+  };
 
   // Function to assign a unique color to each mapping_id
   const getColorForMappingId = (mapping_id: string): string => {
@@ -396,102 +405,127 @@ fetchTimelineData(): void {
     return idToColor.get(mapping_id) || '#000000';
   };
 
-  // Define technologies with explicit typing
   const technologies: (keyof License)[] = ['_2G', '_3G', '_4G', '_5G', '_6G', 'wifi'];
 
-  // Step 1: Collect all main trace date ranges (traces with both signed and expiration dates)
-  const mainRanges: Array<{ signed: Date, expiration: Date }> = [];
-
-  this.groupedLicenseData.forEach((group: GroupedLicense) => {
-    const { signed, expiration } = this.getGroupDates(group);
-    if (signed && expiration) {
-      const signedDate = new Date(signed);
-      const expirationDate = new Date(expiration);
-      mainRanges.push({ signed: signedDate, expiration: expirationDate });
-    }
-  });
-
-  // Helper function to check if a date is within any main trace range
-  const isDateWithinMainRanges = (date: Date): boolean => {
-    return mainRanges.some(range => date >= range.signed && date <= range.expiration);
-  };
-
-  // Step 2: Iterate and plot traces
   this.groupedLicenseData.forEach((group: GroupedLicense) => {
     const mapping_id = group.mapping_id;
     const color = getColorForMappingId(mapping_id);
     const { signed, expiration } = this.getGroupDates(group);
 
-    // Prepare hover text with mapping_id, signed, and expiration dates
+    // Hover text for the trace
     const hoverText = `${mapping_id}<br>Signed: ${signed || '?'}<br>Expiration: ${expiration || '?'}`;
 
-    // Add main trace with lines and markers for "Overall" if both signed and expiration dates exist
+    // 1. Handle "X-" Prefix in Mapping ID
+    if (mapping_id.startsWith('X-')) {
+      const diamondTrace = {
+        x: [signed || expiration || new Date().toISOString()],
+        y: [overallYValue],
+        mode: 'markers',
+        name: `${mapping_id}`,
+        text: [hoverText],
+        hoverinfo: 'text',
+        marker: {
+          symbol: 'diamond',
+          size: 6, // Smaller size for diamond markers
+          color: color,
+          line: { color: 'black', width: 1 },
+        },
+        showlegend: !legendEntries.has(mapping_id),
+      };
+      data.push(diamondTrace);
+      legendEntries.add(mapping_id);
+      return; // No further processing for "X-" IDs
+    }
+
+    // 2. Handle Signed or Expiration Date Only
+    if (signed && !expiration) {
+      const fakeExpiration = new Date(signed);
+      fakeExpiration.setFullYear(fakeExpiration.getFullYear() + 1);
+
+      const dottedTrace = {
+        x: [signed, fakeExpiration.toISOString(), null],
+        y: [overallYValue, overallYValue, null],
+        line: { dash: 'dot', color },
+        name: `${mapping_id}`,
+        text: [hoverText, hoverText, null],
+        hoverinfo: 'text',
+        type: 'scatter',
+        mode: 'lines+markers',
+        marker: {
+          size: 8, // Normal size for circle markers
+          symbol: 'circle',
+          color: color,
+          opacity: [1, 0],
+        },
+        showlegend: !legendEntries.has(mapping_id),
+      };
+      data.push(dottedTrace);
+      legendEntries.add(mapping_id);
+      return;
+    }
+
+    if (!signed && expiration) {
+      const fakeSigned = new Date(expiration);
+      fakeSigned.setFullYear(fakeSigned.getFullYear() - 1);
+
+      const dottedTrace = {
+        x: [fakeSigned.toISOString(), expiration, null],
+        y: [overallYValue, overallYValue, null],
+        line: { dash: 'dot', color },
+        name: `${mapping_id}`,
+        text: [hoverText, hoverText, null],
+        hoverinfo: 'text',
+        type: 'scatter',
+        mode: 'lines+markers',
+        marker: {
+          size: 8, // Normal size for circle markers
+          symbol: 'circle',
+          color: color,
+          opacity: [0, 1],
+        },
+        showlegend: !legendEntries.has(mapping_id),
+      };
+      data.push(dottedTrace);
+      legendEntries.add(mapping_id);
+      return;
+    }
+
+    // 3. Add "Overall" trace with both signed and expiration dates
     if (signed && expiration) {
       const mainTrace = {
         x: [signed, expiration],
-        y: [overallYValue, overallYValue], // Use fixed y-value for alignment
+        y: [overallYValue, overallYValue],
         line: { color },
         name: mapping_id,
-        text: [hoverText, hoverText], // Set custom hover text
-        hoverinfo: 'text', // Use custom text for hover
-        showlegend: !legendEntries.has(mapping_id), // Show legend only once per mapping_id
+        text: [hoverText, hoverText],
+        hoverinfo: 'text',
+        showlegend: !legendEntries.has(mapping_id),
         type: 'scatter',
-        mode: 'lines+markers', // Ensures both lines and markers (dots) are shown
+        mode: 'lines+markers',
         marker: {
-          size: 8, // Adjust size as needed
+          size: 8, // Normal size for circle markers
           symbol: 'circle',
           color: color,
         },
       };
       data.push(mainTrace);
-      legendEntries.add(mapping_id); // Prevent adding multiple entries for the same mapping_id
+      legendEntries.add(mapping_id);
     }
 
-    // If start or end date is missing, conditionally add a marker with increased offset
-    if (!signed || !expiration) {
-      const missingDateStr = signed || expiration;
-
-      if (missingDateStr) { // Ensure it's not null
-        const missingDateObj = new Date(missingDateStr);
-
-        // Check if the missing date falls within any main trace range
-        const isWithinAnyRange = isDateWithinMainRanges(missingDateObj);
-
-        if (!isWithinAnyRange) {
-          const markerTrace = {
-            x: [missingDateStr],
-            y: [overallYValue + missingDateOffset], // Apply increased offset for clarity
-            mode: 'markers',
-            name: `${mapping_id} Missing Date`, // Unique name for legend
-            text: [hoverText], // Set custom hover text
-            hoverinfo: 'text', // Use custom text for hover
-            marker: {
-              symbol: 'circle', // Use circle symbol
-              size: 8, // Consistent size with main markers
-              color: color, // Same color as main trace for consistency
-            },
-            showlegend: true, // Include in legend
-          };
-          data.push(markerTrace);
-          legendEntries.add(`${mapping_id} Missing Date`);
-        }
-      }
-    }
-
-    // Traces for individual technologies with lines and markers
-    technologies.forEach((tech, i) => {
+    // 4. Add traces for each technology
+    technologies.forEach((tech) => {
       if (group.licenses.some((license: License) => license[tech] === 'Y')) {
         const techTrace = {
           x: [signed, expiration],
-          y: [i, i],
+          y: [techYValues[tech], techYValues[tech]],
           line: { color },
           name: `${mapping_id} - ${tech.toUpperCase()}`,
-          showlegend: false, // Exclude from legend to prevent clutter
+          showlegend: false,
           type: 'scatter',
           mode: 'lines+markers',
           marker: {
-            size: 6, // Smaller size for technology traces
-            symbol: 'circle', // Ensure circles
+            size: 8, // Normal size for circle markers
+            symbol: 'circle',
             color: color,
           },
         };
@@ -500,60 +534,23 @@ fetchTimelineData(): void {
     });
   });
 
-  // Define layout
   const layout: any = {
     height: 600,
     autosize: true,
     hovermode: 'closest',
     showlegend: true,
     title: {
-      text: 'Timeline',
+      text: 'Timeline with Technologies',
     },
     xaxis: {
-      rangeselector: {
-        buttons: [
-          {
-            count: 7,
-            label: '1w',
-            step: 'day',
-            stepmode: 'backward',
-          },
-          {
-            count: 1,
-            label: '1m',
-            step: 'month',
-            stepmode: 'backward',
-          },
-          {
-            count: 6,
-            label: '6m',
-            step: 'month',
-            stepmode: 'backward',
-          },
-          {
-            count: 1,
-            label: 'YTD',
-            step: 'year',
-            stepmode: 'todate',
-          },
-          {
-            count: 1,
-            label: '1y',
-            step: 'year',
-            stepmode: 'backward',
-          },
-          {
-            step: 'all',
-          },
-        ],
-      },
+
       showgrid: false,
       type: 'date',
       zeroline: false,
     },
     yaxis: {
       autorange: false,
-      range: [-1, 7.5],
+      range: [-1, 7],
       showgrid: false,
       ticktext: ['2G', '3G', '4G', '5G', '6G', 'WIFI', 'Overall'],
       tickvals: [0, 1, 2, 3, 4, 5, 6],
@@ -567,9 +564,9 @@ fetchTimelineData(): void {
     plotlyServerURL: 'https://plot.ly',
   };
 
-  // Render the plot with Plotly
   Plotly.newPlot('myDiv', data, layout, config);
 }
+
 
 
 
