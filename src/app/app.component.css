@@ -130,7 +130,7 @@
 }
 
 .dropdown-menu .dropdown-item {
-  border-bottom: 1px solid #4E7EBF !important;
+  border-bottom: 1px solid #132970  !important;
 }
 
 .dropdown-menu .dropdown-item:last-child {
@@ -183,7 +183,8 @@
 
 
 .navbar-nav a {
-  color: #ff8c00; /* Default color */
+  color: #fc5900
+  ; /* Default color */
   font-family: Constantia;
   font-size: 18px;
   text-decoration: none;
@@ -191,7 +192,7 @@
 }
 
 .navbar-nav a:hover {
-  color: #005DAC !important; /* Hover color */
+  color: #132970  !important; /* Hover color */
 }
 
 .navbar-nav a.active {
@@ -201,14 +202,15 @@
 .navbar-nav a:hover,
 .navbar-nav a.active,
 .navbar-nav a[routerLinkActive="active"] {
-  color: #ff8c00;
+  color: #fc5900;
 }
 /* Dropdown item default styles */
 /* Dropdown menu styles with yellow background */
 .dropdown-content {
   display: none;
   position: absolute;
-  background-color: yellow !important; /* Force yellow background */
+  background-color: #fc5900
+  !important; /* Force yellow background */
   width: 200px;
   top: 100%;
   left: 0;
@@ -221,7 +223,7 @@
 /* Dropdown menu when visible */
 .dropdown-content.show {
   display: block !important;
-  background-color: yellow !important; /* Ensure it's yellow when visible */
+  background-color: #fc5900 !important; /* Ensure it's yellow when visible */
 }
 
 /* Dropdown links */
@@ -231,13 +233,13 @@
   display: block;
   text-decoration: none;
   font-size: 14px;
-  border-bottom: 1px solid #3b6fff !important;
+  border-bottom: 1px solid #132970  !important;
   background-color: transparent !important; /* Ensure link background is transparent */
   transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 /* Hover state for dropdown links */
 .dropdown-content a:hover {
-  background-color: yellow !important; /* Ensure background remains yellow */
+  background-color: #fc5900 !important; /* Ensure background remains yellow */
   color: #000 !important; /* Optional: Black text for contrast */
 }

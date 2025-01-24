@@ -31,7 +31,7 @@ body {
   display: flex; /* Flexbox */
   justify-content: center; /* Center content horizontally */
   align-items: center; /* Center content vertically */
-  border: 2px solid #E57A45;
+  border: 2px solid #fc5900;
   margin: 0 auto; /* Center horizontally */
   transition: transform 0.3s ease-in-out; /* Hover effect */
   z-index: 3; /* Ensure button is above everything */
@@ -108,7 +108,7 @@ a {
 
 /* Headers */
 h1 {
-  color: #E57A45;
+  color: #fc5900;
   font-family: Constantia;
   font-size: 28px; /* Adjust font size */
   font-style: normal;
@@ -250,4 +250,8 @@ h2 {
 .frand-container h1  {
   background-color: rgb(105, 105, 105);
   color: #7e7e7e;
+}
+h1:hover {
+  color: #132970; /* Change text color on hover */
+  transition: color 0.3s ease-in-out; /* Smooth transition */
 }

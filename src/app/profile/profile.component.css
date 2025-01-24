@@ -157,14 +157,14 @@
 }
 /* Card Header (Karim's Profile Background) */
 .card-header {
-  background-color: orange !important; /* Change the background to orange */
+  background-color: #fc5900 !important; /* Change the background to orange */
   color: white !important; /* Ensure text is white for contrast */
 }
 
 /* Buttons (Change Password Button) */
 .btn-primary {
   background-color: rgb(0, 83, 179) !important; /* Change button background to orange */
-  border-color: orange !important; /* Change button border to orange */
+  border-color: #fc5900 !important; /* Change button border to orange */
   color: white !important; /* Ensure text is white for contrast */
 }
 
@@ -201,12 +201,12 @@
 
 /* Save Changes button styles */
 .modal-footer .btn-primary {
-  background-color: orange; /* Orange background */
-  border-color: orange; /* Orange border */
+  background-color: #fc5900; /* Orange background */
+  border-color: #fc5900; /* Orange border */
   color: white; /* White text */
 }
 
 .modal-footer .btn-primary:hover {
-  background-color: darkorange; /* Slightly darker orange on hover */
-  border-color: darkorange;
+  background-color: #fc5900; /* Slightly darker orange on hover */
+  border-color: #fc5900;
 }
