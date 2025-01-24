@@ -24,7 +24,7 @@
         <li class="nav-item" *ngIf="showModeratorBoard">
           <a href="/sechome" class="nav-link" routerLink="sechome">Home</a>
         </li>
-        <div class="dropdown">
+        <div class="dropdown" *ngIf="showAdminBoard">
           <a class="nav-link" href="#" (click)="toggleDropdown($event)">
             Features
             <span id="dropdownArrow" class="ms-2">
