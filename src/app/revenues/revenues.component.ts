@@ -226,7 +226,7 @@ export class RevenuesComponent implements OnInit {
             <strong>Net Licenses USD ${index + 1}:</strong> ${item.netLicenses || 'N/A'}<br>
             <strong>Source:</strong> ${item.source || 'N/A'}<br>
             <strong>Path:</strong> ${item.path || 'N/A'}<br>
-            <a href="${sharedLink}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">[Go to Source]</a>
+            <a href="${sharedLink}" target="_blank" rel="noopener noreferrer" >[Go to Source]</a>
           </div>
           <hr>
         `;
