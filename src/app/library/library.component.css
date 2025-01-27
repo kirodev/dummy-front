@@ -172,7 +172,7 @@ select {
 .details-table td {
   border: 1px solid #ddd;
   padding: 8px;
-  white-space: pre-wrap; /* Preserve whitespace formatting */
+  white-space: pre-wrap !important; /* Preserve whitespace formatting */
 }
 .highlight {
   background-color: yellow;

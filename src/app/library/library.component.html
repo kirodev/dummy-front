@@ -83,7 +83,7 @@
         <table class="details-table">
           <tr *ngFor="let detail of file.highlightedDetails">
             <!-- Use sanitized content for rendering -->
-            <td [innerHTML]="sanitizeContent(detail)"></td>
+            <td [innerHTML]="sanitizeAndHighlight(file.details || '', searchQuery)"></td>
           </tr>
         </table>
       </div>

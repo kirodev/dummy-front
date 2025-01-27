@@ -167,22 +167,8 @@ h2 {
   padding: 0; /* Remove any default padding */
 }
 
-/* Square Styles */
-.Background .Square {
-  width: 40px; /* Width of each square */
-  height: 40px; /* Height of each square */
-  border: rgba(20, 20, 20, 0.055) 1px solid; /* Border color */
-  box-sizing: border-box; /* Include border in element's total width and height */
-  background-color: transparent; /* Ensure squares are visible */
-  transition: 10s linear;
-}
 
-.Background .Square:hover,
-.Background .Square.active {
-  background-color: var(--square-color);
-  border: var(--square-color) 1px solid;
-  transition: 0ms linear;
-}
+
 
 @keyframes hue_rotate {
   0% {
@@ -254,4 +240,60 @@ h2 {
 h1:hover {
   color: #132970; /* Change text color on hover */
   transition: color 0.3s ease-in-out; /* Smooth transition */
+}
+/* Keyframes for smooth fading transitions between 4 colors */
+/* Keyframes for smooth color rotation using degrees */
+@keyframes specific-color-fade {
+  0% {
+    filter: hue-rotate(0deg); /* Start at Grey */
+  }
+  25% {
+    filter: hue-rotate(90deg); /* Rotate to Orange */
+  }
+  50% {
+    filter: hue-rotate(180deg); /* Rotate to Green */
+  }
+  75% {
+    filter: hue-rotate(270deg); /* Rotate to Red */
+  }
+  100% {
+    filter: hue-rotate(360deg); /* Back to Grey */
+  }
+}
+
+/* Default style for background squares */
+.Background .Square {
+  width: 40px; /* Width of each square */
+  height: 40px; /* Height of each square
+
+
+
+
+
+
+.Background .Square:hover,
+.Background .Square.active {
+  background-color: var(--square-color);
+  border: var(--square-color) 1px solid;
+  transition: 0ms linear;
+  animation: specific-color-fade 4s ease infinite; /* Smooth fading transition between colors */
+  transform: scale(1.1); /* Slight scale effect */
+}
+
+/* Square Styles */
+.Background .Square {
+  width: 40px; /* Width of each square */
+  height: 40px; /* Height of each square */
+  border: 1px solid rgba(20, 20, 20, 0.1); /* Subtle border */
+  background-color: #bebebe; /* Default Grey */
+  animation: none; /* No animation initially */
+  transition: background-color 4s ease, transform 0.6s ease-in-out; /* Smooth hover and fade effect */
+  animation-fill-mode: forwards; /* Retain the last animation state */
+  transition: background-color 4s ease; /* Keep fading transition after hover ends */
+  width: 100px; /* Width of each square */
+  height: 100px; /* Height of each square */
+  border: rgba(20, 20, 20, 0.055) 1px solid; /* Border color */
+  box-sizing: border-box; /* Include border in element's total width and height */
+  background-color: transparent; /* Ensure squares are visible */
+  transition: 10s linear;
 }

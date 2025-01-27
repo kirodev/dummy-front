@@ -126,3 +126,20 @@
   border-radius: 5px;
   font-size: 14px;
 }
+@keyframes hue-rotation {
+  0% {
+    background-color: #DBDBDB; /* Grey */
+  }
+  25% {
+    background-color: #E57A45; /* Red */
+  }
+  50% {
+    background-color: #FFA500; /* Orange */
+  }
+  75% {
+    background-color: #4CAF50; /* Green */
+  }
+  100% {
+    background-color: #DBDBDB; /* Back to Grey */
+  }
+}

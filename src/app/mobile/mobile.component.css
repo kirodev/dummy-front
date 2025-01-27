@@ -935,3 +935,27 @@ th, td {
   position: relative; /* Default positioning to stay below content */
   width: 100%;
 }
+.btn-close {
+  background: none; /* Remove background color */
+  border: none; /* Remove default border */
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margin */
+  font-size: 24px; /* Adjust font size of the "X" */
+  cursor: pointer; /* Change cursor to pointer */
+  color: black; /* Set icon color */
+  width: 30px; /* Fixed width for a square shape */
+  height: 30px; /* Fixed height for a square shape */
+  display: inline-flex; /* Center the "X" */
+  justify-content: center;
+  align-items: center;
+  outline: none; /* Remove default outline */
+}
+
+.btn-close:focus {
+  outline: 2px solid #4e7ebf; /* Blue focus outline */
+  outline-offset: 2px; /* Add space between the button and the outline */
+}
+
+.btn-close:hover {
+  color: #b81212; /* Change the "X" color on hover */
+}

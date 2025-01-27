@@ -179,27 +179,28 @@ export class LibraryComponent implements OnInit {
     const filteredTerms = terms.map(term => term.trim());
     const isAndOperation = operators.includes('AND') && !operators.includes('OR');
 
-    this.filteredPdfFiles = this.pdfFiles.filter(file => {
-      if (this.selectedReportType && (!file.directory_path || !file.directory_path.includes(this.selectedReportType))) {
-        return false;
+    this.filteredPdfFiles = this.pdfFiles.map(file => {
+      // Skip highlighting and show raw details when no filters are active
+      if (
+        !this.searchByTitle &&
+        !this.searchByDetails &&
+        filteredTerms.length === 0 &&
+        !this.selectedReportType &&
+        !this.selectedDate
+      ) {
+        return {
+          ...file,
+          highlightedDetails: [file.details || ''],
+          showDetails: false, // Disable detail view
+        };
       }
 
-      if (this.selectedDate && file.date !== this.selectedDate) {
-        return false;
-      }
-
-      if (filteredTerms.length === 0 && !this.searchByTitle && !this.searchByDetails) {
-        file.highlightedDetails = [file.details || ''];
-        file.showDetails = false;
-        return true;
-      }
-
+      // Apply filtering logic when filters are active
       let matchesTitle = false;
       let matchesDetails = false;
 
       if (this.searchByTitle && file.title) {
-        file.showDetails = false;
-        const titleLower = file.title!.toLowerCase();
+        const titleLower = file.title.toLowerCase();
         matchesTitle = isAndOperation
           ? filteredTerms.every(term => this.isTermMatch(titleLower, term))
           : filteredTerms.some(term => this.isTermMatch(titleLower, term));
@@ -216,20 +217,19 @@ export class LibraryComponent implements OnInit {
 
         matchesDetails = matchingRows.length > 0;
 
-        if (matchesDetails) {
-          file.highlightedDetails = matchingRows.map(row =>
-            this.highlightMatchingDetails(row, filteredTerms)
-          );
-          file.showDetails = true;
-        } else {
-          file.highlightedDetails = [];
-          file.showDetails = false;
-        }
+        file.highlightedDetails = matchesDetails
+          ? matchingRows.map(row => this.highlightMatchingDetails(row, filteredTerms))
+          : [];
+        file.showDetails = matchesDetails;
       }
 
-      return (this.searchByTitle && matchesTitle) || (this.searchByDetails && matchesDetails);
+      return {
+        ...file,
+        showDetails: matchesTitle || matchesDetails,
+      };
     });
   }
+
 
   isTermMatch(text: string, term: string): boolean {
     const regex = new RegExp(`(^|[^\\w-])${term}([^\\w-]|$)`, 'i');
@@ -321,5 +321,15 @@ export class LibraryComponent implements OnInit {
     this.filteredPdfFiles = [...this.pdfFiles];
   }
 
+  sanitizeAndHighlight(text: string, search: string): string {
+    if (!search) return text;
+
+    // Escape special characters in the search term
+    const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Match and replace entire words/phrases, not characters
+    const regex = new RegExp(`(${escapedSearch})`, 'gi');
+    return text.replace(regex, '<mark>$1</mark>');
+  }
 
 }

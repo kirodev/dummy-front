@@ -23,3 +23,20 @@ body{
   --background-Color: #F3F2EB;
   --square-color: #26c245;
 }
+@keyframes hue-rotation {
+  0% {
+    background-color: #DBDBDB; /* Grey */
+  }
+  25% {
+    background-color: #e54545; /* Red */
+  }
+  50% {
+    background-color: #FFA500; /* Orange */
+  }
+  75% {
+    background-color: #4CAF50; /* Green */
+  }
+  100% {
+    background-color: #DBDBDB; /* Back to Grey */
+  }
+}
