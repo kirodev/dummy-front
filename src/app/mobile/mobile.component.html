@@ -47,11 +47,11 @@
       id="dateFilterType"
       [(ngModel)]="dateFilterType"
       (change)="onDateFilterTypeChange($event)">
-      <option value="exactDate">Exact Date</option>
-      <option value="fullPeriod">Full Period</option>
-      <option value="startDateInside">Start Date Inside</option>
-      <option value="endDateInside">End Date Inside</option>
-      <option value="anyDateInside">Any Date Inside</option>
+      <option value="exactDate">Match Specific Date	</option>
+      <option value="fullPeriod">Overlapping Date Range</option>
+      <option value="startDateInside">Start Date Within Range</option>
+      <option value="endDateInside">End Date Within Range</option>
+      <option value="anyDateInside">Start or End Date in Range</option>
     </select>
   </div>
 
@@ -148,7 +148,7 @@
       </tr>
       <tr *ngIf="displayLicensees.length === 0">
         <td colspan="100%" class="no-data-message">
-          No licensees match the selected criteria.
+          Loading data, please wait...
         </td>
       </tr>
     </tbody>

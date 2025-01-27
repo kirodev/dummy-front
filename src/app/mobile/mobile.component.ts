@@ -140,7 +140,7 @@ export class MobileComponent implements OnInit {
         console.error('Error fetching data:', error);
       },
     });
-    
+
   }
 
 
@@ -370,8 +370,8 @@ export class MobileComponent implements OnInit {
     const signed = this.parseDate(signedDate); // Parse signed date
     const expiration = this.parseDate(expirationDate); // Parse expiration date
 
-    // If signed date is invalid, exclude the record
-    if (!signed.year) return false;
+    // If signed or expiration dates are invalid, exclude the record
+    if (!signed.year && !expiration.year) return false;
 
     const isDateWithinRange = (
       date: { year: number | null; month: number | null; day: number | null },
@@ -451,7 +451,6 @@ export class MobileComponent implements OnInit {
         return false;
     }
   }
-
 
 
 
