@@ -1,9 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { TokenStorageService } from '../_services/token-storage.service';
 import { UserService } from '../_services/user.service';
-import { ToastrService } from 'ngx-toastr';
-
-declare var bootstrap: any;
 
 @Component({
   selector: 'app-profile',
@@ -17,47 +15,57 @@ export class ProfileComponent implements OnInit {
     newPassword: '',
     confirmPassword: '',
   };
+  showPopup: boolean = false;
+  isLoading: boolean = false;
+  successMessage: string | null = null;
+  errorMessage: string | null = null;
 
   constructor(
     private token: TokenStorageService,
     private userService: UserService,
-    private toastr: ToastrService
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.currentUser = this.token.getUser();
+    if (!this.currentUser) {
+      this.errorMessage = 'User is not logged in.';
+      this.router.navigate(['/login']);
+    }
   }
 
-  openChangePasswordModal(): void {
-    const modalElement = document.getElementById('changePasswordModal');
-    const modal = new bootstrap.Modal(modalElement);
-    modal.show();
-  }
-
-
-
-  private resetPasswordForm(): void {
-    this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
-    const modalElement = document.getElementById('changePasswordModal');
-    const modal = bootstrap.Modal.getInstance(modalElement);
-    modal.hide();
-  }
-
-
-  showPopup: boolean = false;
   openPopup(): void {
     this.showPopup = true;
   }
 
   closePopup(): void {
     this.showPopup = false;
+    this.resetPasswordForm();
+  }
+
+  private resetPasswordForm(): void {
+    this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
+  }
+
+  clearMessages(): void {
+    this.successMessage = null;
+    this.errorMessage = null;
   }
 
   changePassword(): void {
     if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-      this.toastr.error('Passwords do not match!', 'Error');
+      this.errorMessage = 'Passwords do not match!';
       return;
     }
+
+    const passwordCriteria = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordCriteria.test(this.passwordForm.newPassword)) {
+      this.errorMessage =
+        'Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character.';
+      return;
+    }
+
+    this.isLoading = true;
 
     const payload = {
       currentPassword: this.passwordForm.currentPassword,
@@ -66,17 +74,17 @@ export class ProfileComponent implements OnInit {
 
     this.userService.changePassword(payload).subscribe({
       next: () => {
-        this.toastr.success('Password changed successfully!', 'Success');
-        this.closePopup(); // Close the popup
-        this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
+        this.successMessage = 'Password changed successfully!';
+        this.errorMessage = null;
+        this.closePopup();
       },
       error: (err) => {
-        console.error('Error changing password:', err); // Log the error for debugging
-        const errorMessage =
+        this.errorMessage =
           err?.error?.message || 'Something went wrong. Please try again later.';
-        this.toastr.error(errorMessage, 'Error');
+      },
+      complete: () => {
+        this.isLoading = false;
       },
     });
   }
-
 }
