@@ -16,6 +16,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
   errorMessage = '';
   roles: string[] = [];
   username: string = '';
+  isFirstLogin = true; // New variable for first-time login
 
   constructor(
     private authService: AuthService,
@@ -31,6 +32,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
       const user = this.tokenStorage.getUser();
       this.roles = user.roles;
       this.username = user.username; // Retrieve the username
+      this.isFirstLogin = false; // Not the first login since token exists
+
     }
   }
 
@@ -52,16 +55,20 @@ export class LoginComponent implements OnInit, AfterViewInit {
         this.isLoggedIn = true;
         const user = this.tokenStorage.getUser();
         this.roles = user.roles;
-        this.username = user.username; // Retrieve the username
+        this.username = user.username;
+
+        // If this is the first login, set the flag to false for next logins
+        this.isFirstLogin = false;
+
         this.reloadPage();
       },
       err => {
-        this.errorMessage = err.error.message;
+        this.errorMessage = err.error?.message || 'An error occurred.';
         this.isLoginFailed = true;
       }
     );
-
   }
+
 
   reloadPage(): void {
     window.location.reload();

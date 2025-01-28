@@ -2,6 +2,12 @@
   <section id="Background" class="Background">
     <div (click)="activeSquare($event)" class="Square"></div>
   </section>
+
+  <!-- Alert Positioned at the Top -->
+  <div *ngIf="isLoginFailed" class="alert alert-danger global-alert">
+    {{ errorMessage || 'Login failed. Please try again.' }}
+  </div>
+
   <div class="glass-Box">
     <img
       id="profile-img"
@@ -56,26 +62,17 @@
         </div>
       </div>
       <div class="form-group">
-        <button >
+        <button>
           Login
         </button>
-      </div>
-      <div class="form-group">
-        <div
-          class="alert alert-danger"
-          role="alert"
-          *ngIf="f.submitted && isLoginFailed"
-        >
-          Login failed {{ errorMessage }}
-        </div>
       </div>
     </form>
 
     <div *ngIf="isLoggedIn">
-      <h2>WELCOME {{ username.toUpperCase() }} !!</h2> <br>  ROLE: {{ roles.join(', ') }}
-    </div>
-    <div *ngIf="isLoginFailed">
-      UNDER MAINTENANCE! Please try again later  {{ errorMessage }}
+      <h2 *ngIf="!isFirstLogin">WELCOME BACK {{ username.toUpperCase() }}</h2>
+      <h2 *ngIf="isFirstLogin">WELCOME {{ username.toUpperCase() }} </h2>
+      <br>
+      You are logged-in as {{ roles.join(', ') }}
     </div>
 
   </div>

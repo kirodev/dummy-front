@@ -176,29 +176,15 @@ export class LibraryComponent implements OnInit {
     const query = this.searchQuery.toLowerCase().trim();
     const { terms, operators } = this.parseQuery(query);
 
-    const filteredTerms = terms.map(term => term.trim());
+    // Limit terms to a maximum of 5
+    const filteredTerms = terms.slice(0, 5).map(term => term.trim());
     const isAndOperation = operators.includes('AND') && !operators.includes('OR');
 
-    this.filteredPdfFiles = this.pdfFiles.map(file => {
-      // Skip highlighting and show raw details when no filters are active
-      if (
-        !this.searchByTitle &&
-        !this.searchByDetails &&
-        filteredTerms.length === 0 &&
-        !this.selectedReportType &&
-        !this.selectedDate
-      ) {
-        return {
-          ...file,
-          highlightedDetails: [file.details || ''],
-          showDetails: false, // Disable detail view
-        };
-      }
-
-      // Apply filtering logic when filters are active
+    this.filteredPdfFiles = this.pdfFiles.filter(file => {
       let matchesTitle = false;
       let matchesDetails = false;
 
+      // Check if the title matches the search terms (but don't highlight titles)
       if (this.searchByTitle && file.title) {
         const titleLower = file.title.toLowerCase();
         matchesTitle = isAndOperation
@@ -206,6 +192,7 @@ export class LibraryComponent implements OnInit {
           : filteredTerms.some(term => this.isTermMatch(titleLower, term));
       }
 
+      // Check if the details match the search terms
       if (this.searchByDetails && file.details) {
         const detailRows = file.details.split('\n---\n');
         const matchingRows = detailRows.filter(row => {
@@ -217,18 +204,27 @@ export class LibraryComponent implements OnInit {
 
         matchesDetails = matchingRows.length > 0;
 
-        file.highlightedDetails = matchesDetails
+        // Only apply highlighting if there are valid terms
+        file.highlightedDetails = matchesDetails && filteredTerms.length > 0
           ? matchingRows.map(row => this.highlightMatchingDetails(row, filteredTerms))
           : [];
-        file.showDetails = matchesDetails;
       }
 
-      return {
-        ...file,
-        showDetails: matchesTitle || matchesDetails,
-      };
+      // Always include files, but clear "showDetails" if no search terms match
+      file.showDetails = matchesDetails;
+
+      return matchesTitle || matchesDetails || (!this.searchByTitle && !this.searchByDetails && !filteredTerms.length);
     });
+
+    // Ensure "View Highlights" is always present
+    this.filteredPdfFiles = this.filteredPdfFiles.map(file => ({
+      ...file,
+      highlightedDetails: file.highlightedDetails || [],
+    }));
   }
+
+
+
 
 
   isTermMatch(text: string, term: string): boolean {
@@ -237,11 +233,18 @@ export class LibraryComponent implements OnInit {
   }
 
   highlightMatchingDetails(details: string, terms: string[]): string {
-    const escapedTerms = terms.map(term => this.escapeRegExp(term));
+    if (!terms || terms.length === 0) {
+      return details; // Return details as-is if there are no terms
+    }
+
+    // Escape special characters in terms and limit to 5
+    const escapedTerms = terms.slice(0, 5).map(term => this.escapeRegExp(term));
     const regexPattern = `(${escapedTerms.join('|')})`;
     const regex = new RegExp(regexPattern, 'gi');
+
     return details.replace(regex, match => `<mark>${match}</mark>`);
   }
+
 
   escapeRegExp(term: string): string {
     return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -250,10 +253,9 @@ export class LibraryComponent implements OnInit {
   parseQuery(query: string): { terms: string[], operators: string[] } {
     const terms: string[] = [];
     const operators: string[] = [];
-
     const regex = /\s*(AND|OR)\s*/i;
-    const splitQuery = query.split(regex);
 
+    const splitQuery = query.split(regex);
     splitQuery.forEach((part, index) => {
       if (index % 2 === 0) {
         if (part.trim().length > 0) {
