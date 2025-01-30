@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { SalesService } from '../sales-service.service';
+import { ActivatedRoute, Router } from '@angular/router';
 declare var Plotly: any;
 
 
@@ -19,11 +20,14 @@ export class SalesComponent implements OnInit {
   activeTab = 'sales'; // Default active tab
   private plotRendered = false;
   private comparisonPlotRendered = false;
-  constructor(private salesService: SalesService) { }
+  constructor(private salesService: SalesService,private route: ActivatedRoute, private router: Router) { }
 
   ngOnInit(): void {
     this.loadSales();
     this.loadPlotlyScript();
+    this.route.queryParams.subscribe((params) => {
+      this.activeTab = params['tab'] || 'sales';
+    });
 
   }
   ngAfterViewChecked(): void {
@@ -40,7 +44,14 @@ export class SalesComponent implements OnInit {
       }
     }
   }
-
+  setActiveTab(tab: string): void {
+    this.activeTab = tab;
+    // Update the query parameter when switching tabs
+    this.router.navigate([], {
+      queryParams: { tab: tab },
+      queryParamsHandling: 'merge',
+    });
+  }
   switchTab(tabName: string): void {
     this.activeTab = tabName;
     this.plotRendered = false;
@@ -463,11 +474,5 @@ export class SalesComponent implements OnInit {
     return color;
   }
 
-  setActiveTab(tab: string): void {
-    this.activeTab = tab;
-    // Trigger a resize event to make sure Plotly graphs render correctly in tabs
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-    }, 100);
-  }
+
 }

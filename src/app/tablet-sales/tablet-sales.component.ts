@@ -83,92 +83,181 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
     const tabletSalesMap = new Map<
       string,
       {
-        totalSales: number;
+        company: string;
+        yearQuarter: string;
+        year: number;
         averageSales: number;
-        sources: { source: string; link: string; sales: number }[];
+        individualSales: { source: string; link: string; sales: number }[];
       }
     >();
 
-    // Group sales data by company, year, and quarter
+    // Aggregate data by company, year, and quarter
     this.tabletSalesList.forEach((item) => {
-      const key = `${item.company}|${item.year}|${item.quarter}`;
-      let data = tabletSalesMap.get(key);
+      const year = Number(item.year?.toString().trim());
+      const quarter = this.getQuarterValue(item.quarter?.toString().trim());
+
+      if (isNaN(year) || isNaN(quarter) || year < 2010 || year > 2024) {
+        console.warn(`Skipping invalid or out-of-range year/quarter: ${item.year}, ${item.quarter}`);
+        return;
+      }
+
+      const yearQuarterKey = `${year} Q${quarter}`;
+      let data = tabletSalesMap.get(`${item.company}|${yearQuarterKey}`);
 
       if (!data) {
         data = {
-          totalSales: 0,
+          company: item.company,
+          yearQuarter: yearQuarterKey,
+          year: year,
           averageSales: item.average_sales,
-          sources: [],
+          individualSales: [],
         };
-        tabletSalesMap.set(key, data);
+        tabletSalesMap.set(`${item.company}|${yearQuarterKey}`, data);
       }
 
-      data.totalSales += item.sales;
-      data.sources.push({ source: item.source, link: item.link, sales: item.sales });
+      data.individualSales.push({ source: item.source, link: item.link, sales: item.sales });
     });
 
-    // Prepare data for plotting
-    const xValues = Array.from(tabletSalesMap.keys()).map((key) => key.split('|').slice(1).join(' '));
-    const ySales = Array.from(tabletSalesMap.values()).map((data) => data.totalSales);
-    const yAverages = Array.from(tabletSalesMap.values()).map((data) => data.averageSales);
+    // Create traces for each company
+    const companyMap = new Map<string, { x: string[]; y: number[]; customdata: any[] }>();
 
-    // Create traces
-    const salesTrace = {
-      x: xValues,
-      y: ySales,
-      type: 'bar',
-      name: 'Total Sales',
-      customdata: Array.from(tabletSalesMap.values()),
-      hovertemplate: 'Total Sales: %{y}<extra></extra>',
-    };
+    const allYearQuarterSet = new Set<string>();
 
-    const avgTrace = {
-      x: xValues,
-      y: yAverages,
-      type: 'scatter',
-      mode: 'lines+markers',
-      name: 'Average Sales',
-      line: { color: 'orange', dash: 'dashdot' },
-      hovertemplate: 'Average Sales: %{y}<extra></extra>',
-    };
+    tabletSalesMap.forEach((data, key) => {
+      if (data.averageSales > 0) {
+        const [company, yearQuarter] = key.split('|');
+        allYearQuarterSet.add(yearQuarter);
+        if (!companyMap.has(company)) {
+          companyMap.set(company, { x: [], y: [], customdata: [] });
+        }
+        companyMap.get(company)?.x.push(yearQuarter);
+        companyMap.get(company)?.y.push(data.averageSales);
+        companyMap.get(company)?.customdata.push(data);
+      }
+    });
 
-    const layout = {
-      title: 'Tablet Sales and Averages Over Time',
-      xaxis: { title: 'Year and Quarter' },
-      yaxis: { title: 'Sales' },
+    // Correctly sort by year and quarter
+    const sortedYearQuarters = Array.from(allYearQuarterSet)
+      .map((yearQuarter) => {
+        const [year, quarter] = yearQuarter.split(' Q');
+        return { year: Number(year), quarter: Number(quarter), yearQuarter };
+      })
+      .sort((a, b) => a.year - b.year || a.quarter - b.quarter)
+      .map((item) => item.yearQuarter);
+
+    // Ensure each company's x and y values are ordered correctly
+    companyMap.forEach((values) => {
+      const sortedIndices = values.x
+        .map((yearQuarter, index) => ({
+          yearQuarter,
+          index,
+        }))
+        .sort((a, b) => sortedYearQuarters.indexOf(a.yearQuarter) - sortedYearQuarters.indexOf(b.yearQuarter))
+        .map((item) => item.index);
+
+      // Reorder arrays
+      values.x = sortedIndices.map((i) => values.x[i]);
+      values.y = sortedIndices.map((i) => values.y[i]);
+      values.customdata = sortedIndices.map((i) => values.customdata[i]);
+    });
+
+    // Create traces for Plotly
+    const traces: Partial<Plotly.PlotData>[] = [];
+    companyMap.forEach((values, company) => {
+      traces.push({
+        x: values.x,
+        y: values.y,
+        type: 'bar',
+        name: company,
+        customdata: values.customdata,
+        hovertemplate: `${company}<br>Average Sales: %{y}<extra></extra>`,
+        marker: { color: this.generateRandomColor() },
+      });
+    });
+
+    const layout: Partial<Plotly.Layout> = {
+      title: 'Average Tablet Sales by Year and Quarter (Stacked by Company)',
+      barmode: 'stack',
+      xaxis: {
+        title: 'Year and Quarter',
+        tickangle: -45,
+        categoryorder: 'array', // Explicitly set the order
+        categoryarray: sortedYearQuarters, // Provide the correct order
+      },
+      yaxis: { title: 'Average Sales' },
       height: 600,
-      barmode: 'group',
     };
 
-    // Plot the graph
+    // Render the plot
     const tabletSalesDiv = document.getElementById('tabletSalesDiv') as any;
     if (tabletSalesDiv) {
-      Plotly.newPlot('tabletSalesDiv', [salesTrace, avgTrace], layout).then(() => {
-        (tabletSalesDiv as any).on('plotly_click', (data: any) => this.handlePointClick(data));
+      Plotly.newPlot('tabletSalesDiv', traces, layout).then(() => {
+        tabletSalesDiv.on('plotly_click', (data: any) => this.handlePointClick(data));
       });
     }
   }
 
 
+  private getQuarterValue(quarter: string): number {
+    return Number(quarter.replace('Q', ''));
+  }
+
+
+ generateRandomColor(): string {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
   handlePointClick(data: any): void {
     const point = data.points[0];
     const customData = point.customdata;
 
-    // Display sources used for the selected point
-    let infoText = `<strong>Company:</strong> ${customData.company}<br>`;
-    infoText += `<strong>Year:</strong> ${customData.year}<br>`;
-    infoText += `<strong>Quarter:</strong> ${customData.quarter}<br>`;
-    infoText += `<strong>Total Sales:</strong> ${customData.totalSales}<br>`;
-    infoText += `<strong>Average Sales:</strong> ${customData.averageSales}<br>`;
-    infoText += `<strong>Sources:</strong><ul>`;
+    let popupContent = `<strong>Company:</strong> ${customData.company}<br>`;
+    popupContent += `<strong>Year and Quarter:</strong> ${customData.yearQuarter}<br>`;
+    popupContent += `<strong>Average Sales:</strong> ${customData.averageSales.toLocaleString()}<br><br>`;
 
-    customData.sources.forEach((source: any) => {
-      infoText += `<li>${source.source} - <a href="${source.link}" target="_blank">${source.link}</a> (Sales: ${source.sales})</li>`;
+    // Calculate the total sales and show individual sales details
+    let totalSales = 0;
+    const salesDetails = customData.individualSales.map((salesEntry: any) => {
+      totalSales += salesEntry.sales;
+
+      const displayedLink = this.extractDomain(salesEntry.link);
+      return `
+        - <strong>Source:</strong> ${salesEntry.source} <br>
+        <strong>Sales:</strong> ${salesEntry.sales.toLocaleString()} <br>
+        ${salesEntry.link ? `<strong>Link:</strong> <a href="${salesEntry.link}" target="_blank">${displayedLink}</a><br>` : ''}
+      `;
     });
 
-    infoText += '</ul>';
+    const averageCalculated = (totalSales / customData.individualSales.length).toLocaleString();
 
-    this.showPopup(infoText);
+    popupContent += `<strong>How Average was Calculated:</strong><br>`;
+    popupContent += `Sum of Sales: ${totalSales.toLocaleString()}<br>`;
+    popupContent += `Number of Entries: ${customData.individualSales.length}<br>`;
+    popupContent += `Calculated Average: ${averageCalculated}<br><br>`;
+
+    popupContent += `<strong>Individual Sales Details:</strong><br>${salesDetails.join('<br>')}`;
+
+    this.showPopup(popupContent);
+  }
+
+
+  extractDomain(url: string): string {
+    try {
+      const domain = new URL(url).hostname;
+      const parts = domain.split('.');
+      if (parts.length >= 2) {
+        return parts[parts.length - 2]; // Return the main domain (e.g., `canalys` or `idc`)
+      }
+      return domain;
+    } catch (e) {
+      console.error('Invalid URL:', url);
+      return 'Invalid URL';
+    }
   }
 
   showPopup(infoText: string): void {

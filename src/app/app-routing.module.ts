@@ -90,6 +90,7 @@ const routes: Routes = [
   { path: 'documentation', component: DocumentationComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'tablet-sales', component: TabletSalesComponent },
+  { path: 'sales/comparison', component: SalesComponent },
 
 
 

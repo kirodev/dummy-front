@@ -1,17 +1,26 @@
-<!-- Tab navigation -->
 <ul class="nav nav-tabs custom-tabs">
-  <li class="nav-item">
-    <a class="nav-link" [class.active]="activeTab === 'sales'" (click)="setActiveTab('sales')">Sales Over Time</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" [class.active]="activeTab === 'comparison'" (click)="setActiveTab('comparison')">Sales Comparison</a>
-  </li>
   <li class="nav-item">
     <a
       class="nav-link"
       [class.active]="activeTab === 'sales'"
       (click)="setActiveTab('sales')"
-      >Tablet Sales Over Time</a
+      >Sales Over Time</a
+    >
+  </li>
+  <li class="nav-item">
+    <a
+      class="nav-link"
+      [class.active]="activeTab === 'comparison'"
+      (click)="setActiveTab('comparison')"
+      >Sales Comparison</a
+    >
+  </li>
+  <li class="nav-item">
+    <a
+      class="nav-link"
+      routerLink="/tablet-sales"
+      routerLinkActive="active"
+      >Tablet Sales</a
     >
   </li>
 </ul>
