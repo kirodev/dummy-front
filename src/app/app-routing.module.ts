@@ -38,6 +38,8 @@ import { SupportHelpComponent } from './support-help/support-help.component';
 import { DocumentationComponent } from './documentation/documentation.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { TabletSalesComponent } from './tablet-sales/tablet-sales.component';
+import { DisableRightClickDirective } from './DisableRightClick.directive';
+import { PreventCopy } from './PreventCopy.directive';
 
 const routes: Routes = [
 
@@ -102,6 +104,10 @@ const routes: Routes = [
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
+   declarations: [
+      DisableRightClickDirective,
+      PreventCopy
+   ]
 })
 export class AppRoutingModule { }

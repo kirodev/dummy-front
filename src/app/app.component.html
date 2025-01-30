@@ -93,8 +93,11 @@
 </nav>
 
 <div class="app-container">
-  <router-outlet></router-outlet>
-  <footer class="footer">
+  <div appDisableRightClick appPreventCopy>
+    <router-outlet></router-outlet>
+  </div>
+
+    <footer class="footer">
     <div class="container">
       <p>&copy; 2025 Frandly. All rights reserved.</p>
     </div>

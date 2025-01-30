@@ -4,10 +4,33 @@
 }
 @import url('https://fonts.googleapis.com/css2?family=Nova+Square&display=swap');
 
-body{
+
+
+body {
   font-family: 'Nova Square', 'Poppins', cursive;
   background-color: #F2F1EA;
+  -webkit-user-select: none; /* Prevent text selection */
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
+body::after {
+  content: ' ';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.999); /* Almost opaque */
+  pointer-events: none;
+  z-index: 99999;
+}
+
+
+body::selection {
+  background: transparent; /* Remove text highlight */
+}
+
 :host {
   display: block;
   height: 100vh;
