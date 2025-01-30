@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, NgZone, Renderer2 } from '@angular/co
 import { TokenStorageService } from '../_services/token-storage.service';
 import { AuthService } from '../_services/auth.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -23,7 +24,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
     private tokenStorage: TokenStorageService,
     private ngZone: NgZone,
     private sanitizer: DomSanitizer,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private router :Router
   ) { }
 
   ngOnInit(): void {
@@ -108,4 +110,9 @@ export class LoginComponent implements OnInit, AfterViewInit {
       }
     }
   }
+  onForgotPassword(): void {
+    // Navigate to a Forgot Password page
+    this.router.navigate(['/forgot-password']);
+  }
+
 }

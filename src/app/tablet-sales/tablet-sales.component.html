@@ -1,11 +1,4 @@
-<!-- Tab navigation -->
 <ul class="nav nav-tabs custom-tabs">
-  <li class="nav-item">
-    <a class="nav-link" [class.active]="activeTab === 'sales'" (click)="setActiveTab('sales')">Sales Over Time</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" [class.active]="activeTab === 'comparison'" (click)="setActiveTab('comparison')">Sales Comparison</a>
-  </li>
   <li class="nav-item">
     <a
       class="nav-link"
@@ -14,16 +7,22 @@
       >Tablet Sales Over Time</a
     >
   </li>
-</ul>
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="activeTab === 'sales'" (click)="setActiveTab('sales')">Sales Over Time</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" [class.active]="activeTab === 'comparison'" (click)="setActiveTab('comparison')">Sales Comparison</a>
+  </li>
 
+</ul>
 
 <!-- Tab content -->
 <div [ngSwitch]="activeTab">
   <div *ngSwitchCase="'sales'">
-    <div id="myDiv"></div>
+    <div id="tabletSalesDiv"></div>
   </div>
   <div *ngSwitchCase="'comparison'">
-    <div id="comparisonDiv"></div>
+    <div id="tabletComparisonDiv"></div>
   </div>
 </div>
 

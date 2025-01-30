@@ -36,6 +36,8 @@ import { LicensingRevenuesComponent } from './licensing-revenues/licensing-reven
 import { TimelineOverviewComponent } from './timelineoverview/timelineoverview.component';
 import { SupportHelpComponent } from './support-help/support-help.component';
 import { DocumentationComponent } from './documentation/documentation.component';
+import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
+import { TabletSalesComponent } from './tablet-sales/tablet-sales.component';
 
 const routes: Routes = [
 
@@ -86,6 +88,8 @@ const routes: Routes = [
   { path: 'timeline-overview', component: TimelineOverviewComponent },
   { path: 'help', component: SupportHelpComponent },
   { path: 'documentation', component: DocumentationComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'tablet-sales', component: TabletSalesComponent },
 
 
 

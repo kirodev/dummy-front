@@ -12,7 +12,7 @@ export class SalesService {
   constructor(private http: HttpClient, private tokenStorageService: TokenStorageService) {}
   private   url = environment.baseUrl;
   private baseUrl = this.url +'sales';
-  
+  private baseTUrl = this.url +'tablets-sales';
   private getHeaders(): HttpHeaders {
     const token = this.tokenStorageService.getToken(); // Get the JWT token from your token storage service
     return new HttpHeaders({
@@ -40,4 +40,10 @@ export class SalesService {
       catchError(this.handleError)
     );
   }
+
+  getAllTabletSales(): Observable<any[]> {
+    const headers = this.getHeaders();
+    return this.http.get<any[]>(`${this.baseTUrl}`, { headers }).pipe(
+      catchError(this.handleError)
+    );  }
 }
