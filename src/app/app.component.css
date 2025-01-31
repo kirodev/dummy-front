@@ -245,3 +245,30 @@
   background-color: #fc5900 !important; /* Ensure background remains yellow */
   color: #000 !important; /* Optional: Black text for contrast */
 }
+.watermark-container {
+  position: relative;
+  padding: 20px;
+}
+
+.moving-watermark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0.1;
+  font-size: 40px;
+  color: red;
+  transform: rotate(-30deg);
+  pointer-events: none;
+  animation: move 5s infinite alternate;
+}
+
+@keyframes move {
+  from {
+    top: 0;
+    left: 0;
+  }
+  to {
+    top: 200px;
+    left: 200px;
+  }
+}

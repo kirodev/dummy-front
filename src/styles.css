@@ -14,21 +14,14 @@ body {
   -ms-user-select: none;
   user-select: none;
 }
-body::after {
-  content: ' ';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.999); /* Almost opaque */
-  pointer-events: none;
-  z-index: 99999;
-}
-
 
 body::selection {
   background: transparent; /* Remove text highlight */
+}
+
+/* Remove the black overlay */
+body::after {
+  display: none;
 }
 
 :host {

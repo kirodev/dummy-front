@@ -3,7 +3,7 @@ import { Directive, HostListener } from '@angular/core';
 @Directive({
   selector: '[appPreventCopyPaste]'
 })
-export class PreventCopy {
+export class PreventCopyDirective {
 
   @HostListener('contextmenu', ['$event'])
   disableRightClick(event: MouseEvent) {
