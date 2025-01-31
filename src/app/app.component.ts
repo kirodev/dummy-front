@@ -19,6 +19,8 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
   showModeratorBoard = false;
   dropdownOpen = false; // Variable to toggle dropdown visibility
   private roleSubscriptions: Subscription[] = [];
+  isScreenBlocked = false;
+  private clipboardInterval: any;
 
   constructor(
     private tokenStorageService: TokenStorageService,
@@ -27,8 +29,12 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.detectDevTools();
-
+    this.setupClipboardMonitoring();
+    this.detectScreenRecording();
+    this.detectDevToolsTiming();
+    this.monitorClipboardForScreenshots();
+    this.detectScreenRecording();
+    this.disableRightClick();
     this.isLoggedIn = !!this.tokenStorageService.getToken();
 
     if (this.isLoggedIn) {
@@ -50,7 +56,7 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       );
     }
   }
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
     const ctx = canvas.getContext('2d');
 
@@ -59,6 +65,14 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       ctx.fillStyle = 'black';
       ctx.fillText('Confidential Info - Canvas', 50, 50);
     }
+  }
+
+
+
+  ngOnDestroy(): void {
+    clearInterval(this.clipboardInterval);
+    this.roleSubscriptions.forEach((sub) => sub.unsubscribe());
+
   }
   logout(): void {
     this.tokenStorageService.signOut();
@@ -88,65 +102,210 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
     this.dropdownOpen = !this.dropdownOpen;
   }
 
-  ngOnDestroy(): void {
-    // Unsubscribe to prevent memory leaks
-    this.roleSubscriptions.forEach((sub) => sub.unsubscribe());
+
+  disableRightClick(): void {
+    document.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
   }
 
+
+
+
   @HostListener('window:keydown', ['$event'])
-  handleKeyDown(event: KeyboardEvent) {
+  disablePrintScreen(event: KeyboardEvent): void {
     if (event.key === 'PrintScreen') {
       event.preventDefault();
-      alert('Screenshot is disabled!');
+      this.blockScreenTemporarily();
     }
   }
 
-
-
-
-  @HostListener('document:keydown', ['$event'])
-  onKeydown(event: KeyboardEvent) {
-    // Disable F12 and Ctrl+Shift+I (DevTools)
+  @HostListener('window:keydown', ['$event'])
+  disableKeyShortcuts(event: KeyboardEvent): void {
+    // Disable common shortcuts (Ctrl+S, Ctrl+C, Ctrl+V, F12, etc.)
     if (
+      (event.ctrlKey && (event.key === 's' || event.key === 'c' || event.key === 'v')) ||
       event.key === 'F12' ||
       ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'I')
     ) {
       event.preventDefault();
-      alert('Inspect is disabled!');
+      alert('Shortcut disabled!');
+    }
+  }
+
+  // Detect combinations like Windows + Print Screen, Fn + PrintScreen
+
+
+
+
+  detectScreenRecording(): void {
+    try {
+      navigator.mediaDevices.ondevicechange = () => {
+        console.warn('Screen recording detected!');
+        this.blockScreenTemporarily();
+      };
+    } catch (error) {
+      console.error('Error detecting screen recording:', error);
     }
   }
 
 
-  detectDevTools() {
-    let devtoolsOpened = false;
 
-    // Check for devtools
-    const checkDevTools = () => {
-      const before = performance.now();
-      debugger;  // This pauses in devtools (if open)
-      const after = performance.now();
 
-      // If debugger pause took too long, devtools might be open
-      if (after - before > 100) {
-        if (!devtoolsOpened) {
-          alert('DevTools detected. Please close it.');
-          devtoolsOpened = true;
+
+
+  monitorClipboardForScreenshots(): void {
+    setInterval(async () => {
+      try {
+        const clipboardItems = await navigator.clipboard.read();
+        for (const item of clipboardItems) {
+          const types = item.types;
+          if (types.includes('image/png') || types.includes('image/jpeg')) {
+            console.warn('Screenshot detected from clipboard!');
+            this.blockScreenTemporarily();
+            break;
+          }
         }
-      } else {
-        devtoolsOpened = false;
+      } catch (error) {
+        console.error('Clipboard monitoring error:', error);
       }
-    };
+    }, 2000);
+  }
 
-    setInterval(checkDevTools, 1000);  // Check every second
+
+
+
+
+
+
+
+
+
+
+
+
+
+   // Monitor when tab visibility changes
+   @HostListener('document:visibilitychange', ['$event'])
+   handleVisibilityChange(): void {
+     if (document.visibilityState === 'visible') {
+       this.startClipboardMonitoring();
+     } else {
+       this.stopClipboardMonitoring();
+     }
+   }
+
+
+   startClipboardMonitoring(): void {
+     console.log('Starting clipboard monitoring...');
+     this.clipboardInterval = setInterval(async () => {
+       if (document.visibilityState === 'visible') {
+         try {
+           const clipboardItems = await navigator.clipboard.read();
+           for (const item of clipboardItems) {
+             const types = item.types;
+             if (types.includes('image/png') || types.includes('image/jpeg')) {
+               console.warn('Screenshot detected from clipboard!');
+               this.blockScreenTemporarily();
+               break;
+             }
+           }
+         } catch (error : any) {
+           if (error.name !== 'NotAllowedError') {
+             console.error('Clipboard monitoring error:', error);
+           }
+         }
+       }
+     }, 3000);  // Check every 3 seconds
+   }
+
+   stopClipboardMonitoring(): void {
+     console.log('Stopping clipboard monitoring...');
+     clearInterval(this.clipboardInterval);
+   }
+
+
+
+
+
+
+   private clipboardMonitoring: any;
+
+
+   setupClipboardMonitoring(): void {
+    console.log('Starting clipboard monitoring...');
+    // Check for clipboard access periodically but ensure the document is focused
+    this.clipboardMonitoring = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        this.checkClipboard();
+      }
+    }, 5000); // Check every 5 seconds
+  }
+
+  async checkClipboard(): Promise<void> {
+    if (!document.hasFocus()) {
+      console.log('Clipboard access skipped: Document is not focused.');
+      return; // Skip clipboard access if the page is not in focus
+    }
+
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+          console.warn('Screenshot detected from clipboard!');
+          this.blockScreenTemporarily();
+        }
+      }
+    } catch (error: any) {
+      if (error.name === 'NotAllowedError') {
+        console.log('Clipboard access not allowed or document not focused.');
+      } else {
+        console.error('Unexpected clipboard error:', error);
+      }
+    }
+  }
+  @HostListener('window:mousedown')
+  @HostListener('window:keydown')
+  async onUserInteraction(): Promise<void> {
+    await this.checkClipboard();
+  }
+
+
+  blockScreenTemporarily(): void {
+    this.isScreenBlocked = true;
+    document.body.classList.add('screen-blocked');
+    console.log('Screen blocked for 30 seconds...');
+    setTimeout(() => {
+      this.isScreenBlocked = false;
+      document.body.classList.remove('screen-blocked');
+      console.log('Screen unblocked.');
+    }, 30000); // 30 seconds
+  }
+
+  detectDevToolsTiming(): void {
+    let devToolsOpen = false;
+    const interval = setInterval(() => {
+      const start = performance.now();
+      debugger;
+      const end = performance.now();
+      if (end - start > 100 && !devToolsOpen) {
+        console.warn('DevTools detected!');
+        devToolsOpen = true;
+        this.blockScreenTemporarily();
+      }
+    }, 1000);
   }
 
   @HostListener('window:keydown', ['$event'])
-  disablePrintScreen(event: KeyboardEvent) {
-    if (event.key === 'PrintScreen') {
+  onKeydown(event: KeyboardEvent): void {
+    if (
+      event.key === 'PrintScreen' ||
+      (event.ctrlKey && event.key === 'p') ||
+      (event.ctrlKey && event.shiftKey && event.key === 's')
+    ) {
       event.preventDefault();
-      alert('Screenshots are disabled!');
+      console.warn('Screenshot or print attempt detected.');
+      this.blockScreenTemporarily();
     }
   }
-
-
 }

@@ -1,3 +1,4 @@
+
 <!-- Tab Navigation -->
 <ul class="nav nav-tabs custom-tabs">
   <li class="nav-item">
@@ -13,6 +14,10 @@
 </ul>
 <!-- End of Tab Navigation -->
 
+
+<!-- Popup Overlay -->
+<div id="plotDiv" style="width: 100%; height: 600px;"></div>
+
 <div class="chart-controls">
   <label for="chartType">Select Chart Type:</label>
   <select id="chartType" [(ngModel)]="currentPlotType" (change)="plotData()">
@@ -20,10 +25,6 @@
     <option value="line">Line</option>
   </select>
 </div>
-
-<!-- Popup Overlay -->
-<div id="plotDiv" style="width: 100%; height: 600px;"></div>
-
 <!-- Popup Overlay -->
 <div *ngIf="isPopupVisible" class="popup-overlay">
   <div class="popup-content">

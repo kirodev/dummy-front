@@ -4,7 +4,11 @@
 }
 @import url('https://fonts.googleapis.com/css2?family=Nova+Square&display=swap');
 
-
+@media print {
+  html, body {
+     display: none;  /* hide whole page */
+  }
+}
 
 body {
   font-family: 'Nova Square', 'Poppins', cursive;

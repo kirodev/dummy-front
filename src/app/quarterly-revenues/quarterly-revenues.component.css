@@ -3,11 +3,16 @@
   display: flex;
   list-style: none;
   padding-left: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 0; /* Remove bottom margin */
   border-bottom: 1px solid #ccc;
-  padding-top: 60px;
-
+  padding-top: 10px;
 }
+
+#plotDiv {
+  margin-top: 0 !important; /* Remove any top margin if present */
+  padding: 0 !important; /* Remove padding if needed */
+}
+
 
 .custom-tabs .nav-item {
   margin-bottom: -1px;
@@ -49,11 +54,13 @@
 /* Content container */
 .chart-controls {
   display: flex;
+  justify-content: center; /* Center horizontally */
   align-items: center;
-  margin-bottom: 15px;
-  padding-left: 5px !important;
-
+  padding: 10px 0;
+  text-align: center;
+  gap: 10px; /* Adds spacing between the label and dropdown */
 }
+
 
 .chart-controls label {
   margin-right: 10px;

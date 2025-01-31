@@ -102,9 +102,13 @@
 
 
 .app-container {
-  min-height: 100vh;
+    min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-top: 100px;
+  padding-left: 10px;
+  padding-right: 10px;
+
 }
 
 
@@ -271,4 +275,40 @@
     top: 200px;
     left: 200px;
   }
+}
+
+body {
+  font-family: 'Nova Square', 'Poppins', cursive;
+  background-color: #F2F1EA;
+  user-select: none; /* Disable text selection */
+}
+
+.screen-blocked {
+  background-color: black !important;
+  color: black;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+body::selection {
+  background: transparent; /* Remove highlighted selection */
+}
+
+@media print {
+  html, body {
+    display: none; /* Disable printing */
+  }
+}
+
+.screen-blocked {
+  background-color: black !important;
+  color: black;
+  pointer-events: none;
+  visibility: hidden;
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
 }

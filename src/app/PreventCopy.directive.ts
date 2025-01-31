@@ -1,33 +1,31 @@
 import { Directive, HostListener } from '@angular/core';
 
 @Directive({
-  selector: '[appPreventCopyPaste]'
+  selector: '[appPreventCopy]'
 })
 export class PreventCopyDirective {
 
-  @HostListener('contextmenu', ['$event'])
-  disableRightClick(event: MouseEvent) {
-    event.preventDefault();
-    alert('Right-click is disabled to protect this content.');
-  }
-
   @HostListener('copy', ['$event'])
-  preventCopy(event: ClipboardEvent) {
+  blockCopy(event: ClipboardEvent): void {
     event.preventDefault();
-    alert('Copying this content is not allowed.');
+    alert('Copying is disabled on this site.');
   }
 
-  @HostListener('keydown', ['$event'])
-  disableDevTools(event: KeyboardEvent) {
-    // Disable F12, Ctrl+Shift+I (DevTools), and Print Screen
-    if (event.key === 'F12' || ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'I')) {
-      event.preventDefault();
-      alert('DevTools are disabled.');
-    }
+  @HostListener('cut', ['$event'])
+  blockCut(event: ClipboardEvent): void {
+    event.preventDefault();
+    alert('Cutting is disabled on this site.');
+  }
 
-    if (event.key === 'PrintScreen') {
-      event.preventDefault();
-      alert('Screenshots are disabled.');
-    }
+  @HostListener('paste', ['$event'])
+  blockPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    alert('Pasting is disabled on this site.');
+  }
+
+  @HostListener('contextmenu', ['$event'])
+  blockRightClick(event: MouseEvent): void {
+    event.preventDefault();
+    alert('Right-click is disabled.');
   }
 }
