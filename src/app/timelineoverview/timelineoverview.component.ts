@@ -119,10 +119,7 @@ export class TimelineOverviewComponent implements OnInit {
   /**
    * Normalize licensor names for consistent comparison.
    */
-  private normalizeLicensorName(name: string): string {
-    return name.trim().toLowerCase().replace(/[^\w\s]/gi, '');
-  }
-
+ 
   // ---------------- LIFECYCLE HOOKS ----------------
 
   ngOnInit(): void {
@@ -1035,4 +1032,16 @@ export class TimelineOverviewComponent implements OnInit {
     console.log('Selected Licensor Revenues:', revenues);
     return revenues;
   }
+
+
+  /**
+ * Normalize licensor names for consistent comparison.
+ */
+private normalizeLicensorName(name: string | null | undefined): string {
+  if (!name) {
+    return ''; // Return an empty string if name is null or undefined
+  }
+  return name.trim().toLowerCase().replace(/[^\w\s]/gi, '');
+}
+
 }

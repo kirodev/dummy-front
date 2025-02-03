@@ -18,9 +18,6 @@ export class LoginComponent implements OnInit, AfterViewInit {
   roles: string[] = [];
   username: string = '';
   isFirstLogin = true; // New variable for first-time login
-  captchaResponse: string = '';  // Captures the reCAPTCHA response token
-  isCaptchaInvalid: boolean = false;
-
 
   constructor(
     private authService: AuthService,
@@ -50,32 +47,21 @@ export class LoginComponent implements OnInit, AfterViewInit {
     });
   }
 
-  onCaptchaResolved(captchaResponse: string): void {
-    this.captchaResponse = captchaResponse;
-    this.isCaptchaInvalid = false;  // Reset any previous invalid state
-  }
-
   onSubmit(): void {
-    if (!this.captchaResponse) {
-      this.isCaptchaInvalid = true;  // Show error if captcha is not completed
-      return;
-    }
-
-    const loginPayload = {
-      ...this.form,
-      captchaResponse: this.captchaResponse
-    };
-
-    this.authService.login(loginPayload).subscribe(
+    this.authService.login(this.form).subscribe(
       data => {
         this.tokenStorage.saveToken(data.accessToken);
         this.tokenStorage.saveUser(data);
+
         this.isLoginFailed = false;
         this.isLoggedIn = true;
         const user = this.tokenStorage.getUser();
         this.roles = user.roles;
         this.username = user.username;
+
+        // If this is the first login, set the flag to false for next logins
         this.isFirstLogin = false;
+
         this.reloadPage();
       },
       err => {
@@ -84,6 +70,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
       }
     );
   }
+
 
   reloadPage(): void {
     window.location.reload();
