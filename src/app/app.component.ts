@@ -12,6 +12,7 @@ import { Subscription } from 'rxjs';
 export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
 
   @ViewChild('protectedCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
+  private screenBlockTimeout: any;
 
   isLoggedIn = false;
   username!: string;
@@ -21,20 +22,24 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
   private roleSubscriptions: Subscription[] = [];
   isScreenBlocked = false;
   private clipboardInterval: any;
-
+  private isBlocking = false;
   constructor(
     private tokenStorageService: TokenStorageService,
     private router: Router,
-    private roleService: RoleService
+    private roleService: RoleService,
+
+
   ) {}
 
+  private globalKeyListener(event: KeyboardEvent): void {
+    if (this.isRestrictedKeyCombination(event)) {
+      this.preventAction(event);
+    }
+  }
   ngOnInit(): void {
-    this.setupClipboardMonitoring();
-    this.detectScreenRecording();
-    this.detectDevToolsTiming();
-    this.monitorClipboardForScreenshots();
-    this.detectScreenRecording();
-    this.disableRightClick();
+  this.disableRightClick();
+    document.addEventListener('keydown', this.globalKeyListener.bind(this));
+
     this.isLoggedIn = !!this.tokenStorageService.getToken();
 
     if (this.isLoggedIn) {
@@ -56,24 +61,10 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       );
     }
   }
-  ngAfterViewInit(): void {
-    const canvas = this.canvasRef.nativeElement;
-    const ctx = canvas.getContext('2d');
-
-    if (ctx) {
-      ctx.font = '30px Arial';
-      ctx.fillStyle = 'black';
-      ctx.fillText('Confidential Info - Canvas', 50, 50);
-    }
-  }
 
 
 
-  ngOnDestroy(): void {
-    clearInterval(this.clipboardInterval);
-    this.roleSubscriptions.forEach((sub) => sub.unsubscribe());
 
-  }
   logout(): void {
     this.tokenStorageService.signOut();
     this.router.navigate(['/login']);
@@ -120,18 +111,7 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
     }
   }
 
-  @HostListener('window:keydown', ['$event'])
-  disableKeyShortcuts(event: KeyboardEvent): void {
-    // Disable common shortcuts (Ctrl+S, Ctrl+C, Ctrl+V, F12, etc.)
-    if (
-      (event.ctrlKey && (event.key === 's' || event.key === 'c' || event.key === 'v')) ||
-      event.key === 'F12' ||
-      ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'I')
-    ) {
-      event.preventDefault();
-      alert('Shortcut disabled!');
-    }
-  }
+
 
   // Detect combinations like Windows + Print Screen, Fn + PrintScreen
 
@@ -154,27 +134,34 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
 
 
 
-  monitorClipboardForScreenshots(): void {
-    setInterval(async () => {
-      try {
-        const clipboardItems = await navigator.clipboard.read();
-        for (const item of clipboardItems) {
-          const types = item.types;
-          if (types.includes('image/png') || types.includes('image/jpeg')) {
-            console.warn('Screenshot detected from clipboard!');
-            this.blockScreenTemporarily();
-            break;
-          }
-        }
-      } catch (error) {
-        console.error('Clipboard monitoring error:', error);
-      }
-    }, 2000);
+
+
+
+
+
+
+
+
+
+
+
+
+
+  detectDevToolsTiming(): void {
+    const start = performance.now();
+    debugger;  // DevTools pause detection
+    const end = performance.now();
+    if (end - start > 100) {
+      console.warn('DevTools detected.');
+      alert('DevTools are disabled!');
+      this.blockScreenTemporarily();
+    }
   }
 
 
 
 
+   private clipboardCheckEnabled = false;
 
 
 
@@ -185,127 +172,255 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
 
 
 
-   // Monitor when tab visibility changes
-   @HostListener('document:visibilitychange', ['$event'])
-   handleVisibilityChange(): void {
-     if (document.visibilityState === 'visible') {
-       this.startClipboardMonitoring();
-     } else {
-       this.stopClipboardMonitoring();
+
+
+   @HostListener('window:keyup', ['$event'])
+   onKeyup(event: KeyboardEvent): void {
+     if (event.keyCode === 44) {  // Print Screen key (VK_SNAPSHOT)
+       event.preventDefault();
+       event.stopPropagation();
+
+       console.warn('Print Screen key pressed, blocking screen immediately!');
+       this.showBlackScreen();  // Show the black screen instantly
+
+       // Optional: Start a brief timeout to reset or check clipboard if needed
+       setTimeout(() => {
+         this.hideBlackScreen();  // Optionally hide after 10s or once clipboard is checked
+       }, 10000);
      }
    }
 
 
-   startClipboardMonitoring(): void {
-     console.log('Starting clipboard monitoring...');
-     this.clipboardInterval = setInterval(async () => {
-       if (document.visibilityState === 'visible') {
-         try {
-           const clipboardItems = await navigator.clipboard.read();
-           for (const item of clipboardItems) {
-             const types = item.types;
-             if (types.includes('image/png') || types.includes('image/jpeg')) {
-               console.warn('Screenshot detected from clipboard!');
-               this.blockScreenTemporarily();
-               break;
-             }
-           }
-         } catch (error : any) {
-           if (error.name !== 'NotAllowedError') {
-             console.error('Clipboard monitoring error:', error);
-           }
-         }
-       }
-     }, 3000);  // Check every 3 seconds
-   }
-
-   stopClipboardMonitoring(): void {
-     console.log('Stopping clipboard monitoring...');
-     clearInterval(this.clipboardInterval);
-   }
-
-
-
-
-
-
-   private clipboardMonitoring: any;
-
-
-   setupClipboardMonitoring(): void {
-    console.log('Starting clipboard monitoring...');
-    // Check for clipboard access periodically but ensure the document is focused
-    this.clipboardMonitoring = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        this.checkClipboard();
-      }
-    }, 5000); // Check every 5 seconds
-  }
-
-  async checkClipboard(): Promise<void> {
-    if (!document.hasFocus()) {
-      console.log('Clipboard access skipped: Document is not focused.');
-      return; // Skip clipboard access if the page is not in focus
+   private showBlackScreen(): void {
+    const overlay = document.getElementById('black-screen-overlay');
+    if (overlay) {
+      overlay.style.transition = 'none';  // Disable transitions for instant effect
+      overlay.classList.add('show');  // Show the overlay instantly
     }
-
-    try {
-      const clipboardItems = await navigator.clipboard.read();
-      for (const item of clipboardItems) {
-        if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
-          console.warn('Screenshot detected from clipboard!');
-          this.blockScreenTemporarily();
-        }
-      }
-    } catch (error: any) {
-      if (error.name === 'NotAllowedError') {
-        console.log('Clipboard access not allowed or document not focused.');
-      } else {
-        console.error('Unexpected clipboard error:', error);
-      }
-    }
-  }
-  @HostListener('window:mousedown')
-  @HostListener('window:keydown')
-  async onUserInteraction(): Promise<void> {
-    await this.checkClipboard();
-  }
-
-
-  blockScreenTemporarily(): void {
-    this.isScreenBlocked = true;
-    document.body.classList.add('screen-blocked');
-    console.log('Screen blocked for 30 seconds...');
     setTimeout(() => {
-      this.isScreenBlocked = false;
-      document.body.classList.remove('screen-blocked');
+      this.hideBlackScreen();
+      this.isBlocking = false;
       console.log('Screen unblocked.');
-    }, 30000); // 30 seconds
+    }, 10000);
   }
 
-  detectDevToolsTiming(): void {
-    let devToolsOpen = false;
-    const interval = setInterval(() => {
-      const start = performance.now();
-      debugger;
-      const end = performance.now();
-      if (end - start > 100 && !devToolsOpen) {
-        console.warn('DevTools detected!');
-        devToolsOpen = true;
-        this.blockScreenTemporarily();
-      }
-    }, 1000);
+
+  @HostListener('window:keydown', ['$event'])
+  disableKeyShortcuts(event: KeyboardEvent): void {
+    if (
+      event.key === 'PrntScrn' ||
+    event.key === 'F12' ||
+      event.key === 'PrintScreen' ||                                            // Print Screen
+      (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'i') ||   // Ctrl + Shift + I
+      (event.ctrlKey && event.key.toLowerCase() === 'u') ||                     // Ctrl + U (view source)
+      (event.key === 'F12') ||                                                  // F12 (DevTools)
+      (event.ctrlKey && event.key.toLowerCase() === 's') ||                     // Ctrl + S (save)
+      (event.ctrlKey && event.key.toLowerCase() === 'p')                        // Ctrl + P (print)
+    ) {
+      event.preventDefault();
+      console.warn('Restricted key combination or PrintScreen detected.');
+
+      // Trigger black screen overlay
+      this.showBlackScreen();
+    }
   }
+
+
+
+
+
+  private preventAction(event: KeyboardEvent): void {
+    event.preventDefault();
+    event.stopPropagation();  // Stop it from propagating further
+
+    if (!this.isBlocking) {
+      this.isBlocking = true;
+      this.blockScreenTemporarily();  // Block for 10 seconds
+    }
+  }
+
+
+
+
+
+  private clipboardCheckRunning = false;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ngOnDestroy(): void {
+    console.log('App destroyed');
+  }
+
+  ngAfterViewInit(): void {
+    console.log('App view initialized');
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  private clipboardCheckDone = false;
+
+
+
+
+  private blockScreenTemporarily(): void {
+    console.log('Triggering immediate black screen...');
+    this.showBlackScreen();
+
+    setTimeout(() => {
+      this.hideBlackScreen();
+      this.isBlocking = false;  // Allow future triggers
+      console.log('Screen unblocked.');
+    }, 10000);  // 10 seconds block
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   @HostListener('window:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
-    if (
+    if (this.isRestrictedKeyCombination(event)) {
+      event.preventDefault();  // Prevent the key's default action (if possible)
+      console.warn('Restricted key or Print Screen detected.');
+
+      if (!this.isBlocking) {
+        this.triggerImmediateBlock();  // Show black screen
+        this.checkClipboardOnce();  // Check clipboard once for screenshot
+      }
+    }
+  }
+
+  /**
+   * Checks the clipboard once for image content (screenshots)
+   */
+  private checkClipboardOnce(): void {
+    if (this.clipboardCheckRunning) {
+      console.log('Skipping clipboard check: Already running.');
+      return;
+    }
+
+    this.clipboardCheckRunning = true;
+
+    navigator.clipboard.read().then((clipboardItems) => {
+      for (const item of clipboardItems) {
+        if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+          console.warn('Screenshot detected from clipboard!');
+          this.showBlackScreen();
+          return;
+        }
+      }
+      console.log('No screenshot detected. Hiding black screen early.');
+      this.hideBlackScreen();  // Hide the black screen early if no screenshot is found
+      this.isBlocking = false;
+    }).catch((error) => {
+      console.error('Clipboard read error:', error);
+      this.hideBlackScreen();  // Fallback to hide the black screen in case of error
+      this.isBlocking = false;
+    }).finally(() => {
+      this.clipboardCheckRunning = false;
+    });
+  }
+
+  /**
+   * Triggers the black screen to block content for 10 seconds
+   */
+  private triggerImmediateBlock(): void {
+    this.isBlocking = true;
+    this.showBlackScreen();
+    console.log('Triggering immediate black screen...');
+
+
+  }
+
+  /**
+   * Determines if the key combination is restricted
+   */
+  private isRestrictedKeyCombination(event: KeyboardEvent): boolean {
+    return (
       event.key === 'PrintScreen' ||
-      (event.ctrlKey && event.key === 'p') ||
-      (event.ctrlKey && event.shiftKey && event.key === 's')
-    ) {
-      event.preventDefault();
-      console.warn('Screenshot or print attempt detected.');
-      this.blockScreenTemporarily();
+      event.key === 'F12' ||
+      (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'i') ||
+      (event.ctrlKey && event.key.toLowerCase() === 'u') ||
+      (event.ctrlKey && event.key.toLowerCase() === 's') ||
+      (event.ctrlKey && event.key.toLowerCase() === 'p')
+    );
+  }
+
+
+  /**
+   * Hides the black screen overlay
+   */
+  private hideBlackScreen(): void {
+    const overlay = document.getElementById('black-screen-overlay');
+    if (overlay) {
+      overlay.classList.remove('show');
     }
   }
 }

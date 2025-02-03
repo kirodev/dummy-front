@@ -18,6 +18,19 @@ body {
   -ms-user-select: none;
   user-select: none;
 }
+screen-blocked {
+  background-color: black !important;
+  opacity: 0.95; /* Slight transparency to differentiate it from system errors */
+  color: black;
+  pointer-events: none;
+  visibility: visible;
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
 
 body::selection {
   background: transparent; /* Remove text highlight */

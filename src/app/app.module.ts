@@ -23,7 +23,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { EstimateComponent } from './estimate/estimate.component';
 import { Focallicences2Component } from './focallicences2/focallicences2.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { LicenseTableComponent } from './license-table-component/license-table-component.component';
 import { ExamplePdfViewerComponent } from './example-pdf-viewer/example-pdf-viewer.component';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
@@ -52,6 +52,8 @@ import { SupportHelpComponent } from './support-help/support-help.component';
 import { DocumentationComponent } from './documentation/documentation.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { TabletSalesComponent } from './tablet-sales/tablet-sales.component';
+import { BotInterceptor } from './_services/bot.interceptor';
+import { RecaptchaModule, RecaptchaFormsModule } from 'ng-recaptcha';
 
 @NgModule({
   declarations: [
@@ -112,10 +114,15 @@ import { TabletSalesComponent } from './tablet-sales/tablet-sales.component';
     ToastrModule.forRoot(),
     ClipboardModule,
     ReactiveFormsModule,
+    RecaptchaModule,
+    RecaptchaFormsModule
 
 
   ],
-  providers: [DataSharingService, LicenseTableComponent],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: BotInterceptor, multi: true },
+
+    DataSharingService, LicenseTableComponent],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
