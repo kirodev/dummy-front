@@ -230,22 +230,42 @@
   font-weight: bold;
 }
 
-/* Remove space between tabs and plot content */
-[ngSwitch] {
-  margin: 0;
-  padding: 0;
+div[ngSwitch] > div {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-/* Ensure plots stick directly below the tabs */
 #myDiv,
 #comparisonDiv {
-  margin: 0;
-  padding: 0;
-  width: 100%; /* Full width */
-  height: auto; /* Dynamic height */
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  height: auto;
 }
-
 div[ngSwitch] > div {
   margin: 0;
   padding: 0;
+}
+.chart-controls {
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  padding: 10px 0;
+  text-align: center;
+  gap: 10px;
+}
+
+.chart-controls label {
+  font-weight: bold;
+}
+
+.chart-controls select {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  width:7%; /* Adjusts to content */
+}
+.custom-tabs {
+  margin-bottom: 0 !important; /* Remove space between tabs and content */
 }

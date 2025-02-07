@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit, SimpleChanges } from '@angular/core';
 import { SalesService } from '../sales-service.service';
 import { ActivatedRoute, Router } from '@angular/router';
 declare var Plotly: any;
@@ -10,6 +10,7 @@ declare var Plotly: any;
   styleUrls: ['./sales.component.css']
 })
 export class SalesComponent implements OnInit {
+  @Input() licensee!: string;
 
   salesList: any[] = [];
   private plotlyLoaded = false;
@@ -23,12 +24,33 @@ export class SalesComponent implements OnInit {
   constructor(private salesService: SalesService,private route: ActivatedRoute, private router: Router) { }
 
   ngOnInit(): void {
+    this.loadSalesData();
+
     this.loadSales();
     this.loadPlotlyScript();
     this.route.queryParams.subscribe((params) => {
       this.activeTab = params['tab'] || 'sales';
     });
 
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['licensee'] && !changes['licensee'].isFirstChange()) {
+      this.loadSalesData(); // Reload data when licensee changes
+    }
+  }
+
+
+  loadSalesData(): void {
+    this.salesService.getSalesForLicensee(this.licensee).subscribe(
+      (data: any[]) => {
+        this.salesList = data;
+        console.log('Loaded sales data:', data);
+      },
+      (error: any) => {
+        console.error('Error loading sales data:', error);
+      }
+    );
   }
   ngAfterViewChecked(): void {
     // Re-render the plot when switching tabs
@@ -226,6 +248,9 @@ export class SalesComponent implements OnInit {
 
 
 
+
+
+
   handlePointClick(data: any): void {
     const point = data.points[0];
     const customData = point.customdata;
@@ -233,73 +258,226 @@ export class SalesComponent implements OnInit {
     let infoText = `<strong>Company:</strong> ${this.sanitizeHtml(customData.company)}<br>`;
     infoText += `<strong>Year:</strong> ${this.sanitizeHtml(customData.year)}<br>`;
     infoText += `<strong>Quarter:</strong> ${this.sanitizeHtml(customData.quarter)}<br>`;
-    infoText += `<strong>Sales:</strong> ${customData.sales ? customData.sales.toFixed(2) : 'N/A'}<br><br>`;
+
+    // Handle sales for both plots (array for comparison, direct number for plotData)
+    const salesValue = Array.isArray(customData.sales)
+      ? customData.sales[0]
+      : customData.sales;
+
+    infoText += `<strong>Sales:</strong> ${salesValue.toFixed(2)}<br><br>`;
+
+    if (customData.others !== undefined) {
+      infoText += `<strong>Others:</strong> ${customData.others.toFixed(2)}<br><br>`;
+    }
 
     const extractDomain = (url: string): string => {
-        try {
-            const { hostname } = new URL(url);
-            return hostname.replace(/^www\./, '');
-        } catch (e) {
-            console.error('Invalid URL:', url);
-            return 'Invalid URL';
-        }
+      try {
+        const { hostname } = new URL(url);
+        return hostname.replace(/^www\./, '');
+      } catch (e) {
+        console.error('Invalid URL:', url);
+        return 'Invalid URL';
+      }
     };
 
     const createSafeLink = (url: string): string => {
-        const sanitizedUrl = this.sanitizeUrl(url);
-        const domain = extractDomain(url);
-        return `<a href="${sanitizedUrl}" target="_blank" rel="noopener noreferrer">${this.sanitizeHtml(domain)}</a>`;
+      const sanitizedUrl = this.sanitizeUrl(url);
+      const domain = extractDomain(url);
+      return `<a href="${sanitizedUrl}" target="_blank" rel="noopener noreferrer">${this.sanitizeHtml(domain)}</a>`;
     };
 
-    // Filter out discarded sources
-    const filteredSources = customData.source.filter((source: any) => source.source !== source.discarded);
-
-    // Display sources
-    infoText += '<strong>Source:</strong><br>';
-    filteredSources.forEach((source: any) => {
+    // Display all sources excluding discarded sources
+    infoText += '<strong>Sources:</strong><br>';
+    const allSources = customData.sources || customData.source || [];
+    const displayedSources = allSources.filter((source: any) => source.source !== source.discarded);
+    if (displayedSources.length > 0) {
+      displayedSources.forEach((source: any) => {
         const links = source.link
-            ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
-            : '';
+          ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
+          : 'No link available';
 
         infoText += `${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}<br>`;
-    });
-
-    // Display Used
-    const usedSet = new Set<string>();
-    filteredSources.forEach((source: any) => {
-        if (source.used && source.used.trim() !== '') {
-            const links = source.link
-                ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
-                : '';
-            usedSet.add(`${this.sanitizeHtml(source.used)} ${links ? `(${links})` : ''}`);
-        }
-    });
-    if (usedSet.size > 0) {
-        infoText += '<br><strong>Used:</strong><br>';
-        usedSet.forEach(item => {
-            infoText += `${item}<br>`;
-        });
+      });
+    } else {
+      infoText += 'No valid sources available.<br>';
     }
 
-    // Display Discarded
+    // Display discarded sources
     const discardedSet = new Set<string>();
-    customData.source.forEach((source: any) => {
-        if (source.source === source.discarded) {
-            const links = source.link
-                ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
-                : '';
-            discardedSet.add(`${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}`);
-        }
+    allSources.forEach((source: any) => {
+      if (source.source === source.discarded) {
+        const links = source.link
+          ? source.link.split(';').filter((link: string) => link.trim() !== '').map(createSafeLink).join(', ')
+          : 'No link available';
+        discardedSet.add(`${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}`);
+      }
     });
+
     if (discardedSet.size > 0) {
-        infoText += '<br><strong>Discarded:</strong><br>';
-        discardedSet.forEach(item => {
-            infoText += `${item}<br>`;
-        });
+      infoText += '<br><strong>Discarded:</strong><br>';
+      discardedSet.forEach(item => {
+        infoText += `${item}<br>`;
+      });
     }
 
     this.showPopup(infoText);
-}
+  }
+
+
+  plotComparisonData(): void {
+    if (!this.salesList || this.salesList.length === 0) {
+      console.error('No sales data available');
+      return;
+    }
+
+    const comparisonDiv: any = document.getElementById('comparisonDiv');
+    if (!comparisonDiv) {
+      console.error('Target div for Plotly comparison graph not found');
+      return;
+    }
+
+    const salesMap = new Map<string, { total: number, companies: Map<string, { sales: number, sources: any[] }> }>();
+
+    // Group sales data by year, quarter, and company and gather all sources
+    this.salesList.forEach(item => {
+      if (item.years && item.quarters && item.company && item.sales !== undefined) {
+        const key = `${item.years}|${item.quarters}`;
+        let data = salesMap.get(key);
+        if (!data) {
+          data = { total: Number(item.total || 0), companies: new Map<string, { sales: number, sources: any[] }>() };
+          salesMap.set(key, data);
+        }
+
+        if (!data.companies.has(item.company)) {
+          data.companies.set(item.company, { sales: Number(item.sales), sources: [] });
+        }
+
+        data.companies.get(item.company)!.sources.push({
+          source: item.source,
+          sales: item.source_sales,
+          used: item.used,
+          discarded: item.discarded,
+          link: item.link,
+        });
+      }
+    });
+
+    const xValues = Array.from(salesMap.keys()).sort();
+    const companies = Array.from(new Set(this.salesList.map(item => item.company)));
+
+    const traces: Partial<Plotly.PlotData>[] = [];
+
+    // Create company traces
+    companies.forEach(company => {
+      const yValues: number[] = [];
+      const customData: any[] = [];
+
+      xValues.forEach(key => {
+        const [year, quarter] = key.split('|');
+        const data = salesMap.get(key)?.companies.get(company);
+        if (data) {
+          yValues.push(data.sales);
+          customData.push({
+            company,
+            year,
+            quarter,
+            sales: [data.sales],
+            sources: data.sources,
+          });
+        } else {
+          yValues.push(0);
+          customData.push({
+            company,
+            year,
+            quarter,
+            sales: [0],
+            sources: [],
+          });
+        }
+      });
+
+      traces.push({
+        x: xValues,
+        y: yValues,
+        type: 'bar',
+        name: company,
+        marker: { color: this.generateRandomColor() },
+
+        customdata: customData,
+      });
+    });
+
+    // Calculate initial "Others" trace
+    const initialOthers = xValues.map(key => {
+      const data = salesMap.get(key);
+      if (data) {
+        const companySum = Array.from(data.companies.values()).reduce((sum, val) => sum + val.sales, 0);
+        return Math.max(0, data.total - companySum);
+      }
+      return 0;
+    });
+
+    const othersTrace: Partial<Plotly.PlotData> = {
+      x: xValues,
+      y: [...initialOthers],
+      type: 'bar',
+      name: 'Others',
+      marker: { color: 'lightgrey' },
+      hoverinfo: 'y+name',
+      hovertemplate: '%{y:.1f}<extra></extra>',
+    };
+    traces.push(othersTrace);
+
+    const layout: Partial<Plotly.Layout> = {
+      height: 600,
+      autosize: true,
+      title: 'Volume Of Smartphone Sales Over Quarters by Company',
+      barmode: 'stack',
+      xaxis: {
+        title: 'Year and Quarter',
+        tickangle: -45,
+        tickmode: 'array',
+        tickvals: xValues,
+        ticktext: xValues,
+      },
+      yaxis: {
+        title: 'Sales Amount (in thousands)',
+        type: 'linear',
+        rangemode: 'tozero',
+      },
+      legend: {
+        traceorder: 'normal',
+      },
+    };
+
+    // Plot the graph and set up dynamic recalculation
+    Plotly.newPlot('comparisonDiv', traces, layout).then(() => {
+      comparisonDiv.on('plotly_click', (data: any) => {
+        this.handlePointClick(data);
+      });
+
+      // Dynamic recalculation for "Others" on visibility change
+      comparisonDiv.on('plotly_restyle', (eventData: any) => {
+        const visibilityArray = eventData[0].visible;
+
+        // Recalculate "Others" values dynamically based on visible traces
+        const updatedOthers = xValues.map((key, index) => {
+          const data = salesMap.get(key);
+          if (data) {
+            const visibleCompanySum = Array.from(data.companies.entries())
+              .filter(([company], i) => visibilityArray[i] !== 'legendonly') // Only include visible companies
+              .reduce((sum, [, val]) => sum + val.sales, 0);
+            return Math.max(0, data.total - visibleCompanySum);
+          }
+          return 0;
+        });
+
+        // Update the "Others" trace dynamically
+        Plotly.restyle('comparisonDiv', { y: [updatedOthers] }, [traces.length - 1]);
+      });
+    });
+  }
+
 
 
 
@@ -332,129 +510,8 @@ export class SalesComponent implements OnInit {
   }
 
 
-  plotComparisonData(): void {
-    if (!this.salesList || this.salesList.length === 0) {
-      console.error('No sales data available');
-      return;
-    }
 
-    const comparisonDiv: any = document.getElementById('comparisonDiv');
-    if (!comparisonDiv) {
-      console.error('Target div for Plotly comparison graph not found');
-      return;
-    }
 
-    const salesMap = new Map<string, { total: number, companies: Map<string, number> }>();
-
-    // Group sales data by year, quarter, and company
-    this.salesList.forEach(item => {
-      if (item.years && item.quarters && item.company && item.total !== undefined && item.sales !== undefined) {
-        const key = `${item.years}|${item.quarters}`;
-        let data = salesMap.get(key);
-        if (!data) {
-          data = { total: Number(item.total), companies: new Map<string, number>() };
-          salesMap.set(key, data);
-        } else {
-          // Update total if it's larger (in case of inconsistent data)
-          data.total = Math.max(data.total, Number(item.total));
-        }
-        data.companies.set(item.company, Number(item.sales));
-      }
-    });
-
-    const xValues = Array.from(salesMap.keys()).sort();
-    const companies = Array.from(new Set(this.salesList.map(item => item.company)));
-
-    const traces: Partial<Plotly.PlotData>[] = [];
-
-    // Create company traces
-    companies.forEach(company => {
-      const yValues = xValues.map(key => salesMap.get(key)?.companies.get(company) || 0);
-      traces.push({
-        x: xValues,
-        y: yValues,
-        type: 'bar',
-        name: company,
-        marker: { color: this.generateRandomColor() },
-        hoverinfo: 'y+name',
-        hovertemplate: '%{y:.1f}<extra></extra>'
-      });
-    });
-
-    // Calculate and add "Others" trace
-    const othersTrace: Partial<Plotly.PlotData> = {
-      x: xValues,
-      y: xValues.map(key => {
-        const data = salesMap.get(key);
-        if (data) {
-          const companySum = Array.from(data.companies.values()).reduce((sum, sales) => sum + sales, 0);
-          return Math.max(0, data.total - companySum); // Ensure non-negative value
-        }
-        return 0;
-      }),
-      type: 'bar',
-      name: 'Others',
-      marker: { color: 'lightgrey' },
-      hoverinfo: 'y+name',
-      hovertemplate: '%{y:.1f}<extra></extra>'
-    };
-    traces.push(othersTrace);
-
-    const layout: Partial<Plotly.Layout> = {
-      height: 600,
-      autosize: true,
-      title: 'Comparison of Sales and Others',
-      barmode: 'stack',
-      xaxis: {
-        title: 'Year and Quarter',
-        tickangle: -45,
-        tickmode: 'array',
-        tickvals: xValues,
-        ticktext: xValues
-      },
-      yaxis: {
-        title: 'Sales Amount (in thousands)',
-        type: 'linear',
-        rangemode: 'tozero'
-      },
-      legend: {
-        traceorder: 'normal'
-      }
-    };
-
-    // Wait for Plotly to be loaded
-    const interval = setInterval(() => {
-      if (window['Plotly']) {
-        clearInterval(interval);
-        Plotly.newPlot('comparisonDiv', traces, layout).then(() => {
-          console.log('Comparison graph plotted successfully');
-
-          comparisonDiv.on('plotly_restyle', () => {
-            const updatedTraces = comparisonDiv.data;
-            const othersTrace = updatedTraces[updatedTraces.length - 1];
-
-            othersTrace.y = xValues.map((key, index) => {
-              const periodData = salesMap.get(key);
-              if (periodData) {
-                let visibleSum = 0;
-                updatedTraces.forEach((trace: any, traceIndex: number) => {
-                  if (traceIndex < updatedTraces.length - 1 && trace.visible !== 'legendonly') {
-                    visibleSum += trace.y[index] || 0;
-                  }
-                });
-                return Math.max(0, periodData.total - visibleSum);
-              }
-              return 0;
-            });
-
-            Plotly.redraw('comparisonDiv');
-          });
-        }).catch((error: any) => {
-          console.error('Error plotting comparison graph:', error);
-        });
-      }
-    }, 100);
-}
 
   showPopup(infoText: string): void {
     this.popupText = infoText;

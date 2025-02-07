@@ -186,7 +186,7 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
        // Optional: Start a brief timeout to reset or check clipboard if needed
        setTimeout(() => {
          this.hideBlackScreen();  // Optionally hide after 10s or once clipboard is checked
-       }, 10000);
+       }, 1000);
      }
    }
 
@@ -201,7 +201,7 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       this.hideBlackScreen();
       this.isBlocking = false;
       console.log('Screen unblocked.');
-    }, 10000);
+    }, 1000);
   }
 
 
@@ -304,7 +304,7 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       this.hideBlackScreen();
       this.isBlocking = false;  // Allow future triggers
       console.log('Screen unblocked.');
-    }, 10000);  // 10 seconds block
+    }, 1000);  // 10 seconds block
   }
 
 

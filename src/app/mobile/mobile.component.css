@@ -520,6 +520,7 @@ td {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 600px !important;
   z-index: 1000; /* Ensure the popup is above other content */
 }
 
@@ -958,4 +959,79 @@ th, td {
 
 .btn-close:hover {
   color: #b81212; /* Change the "X" color on hover */
+}
+.no-data-message {
+  text-align: center;
+  vertical-align: middle;
+  height: 250px; /* Slightly larger to allow overlapping */
+  width: 100%;
+}
+
+.message-container {
+  position: relative; /* To position the text relative to the GIF */
+  display: inline-block; /* Allow GIF and text stacking in the same block */
+}
+
+.loading-gif {
+  width: 200px;
+  height: 200px;
+}
+
+.loading-text {
+  position: absolute;
+  bottom: 50px; /* Move the text upwards towards the GIF */
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  color: #333;
+  background-color: rgba(255, 255, 255, 0.116); /* Optional: a light background to make text visible */
+  padding: 2px 5px; /* Small padding for readability */
+  border-radius: 4px; /* Rounded edges for text background */
+}
+div .loading-text {
+ width: 500px;
+}
+
+.filter-section {
+  margin-bottom: 20px;
+}
+
+#licensorSortOrder {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.apply-filters-btn {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.apply-filters-btn:hover {
+  background-color: #0056b3;
+}
+.filter-section {
+  margin-bottom: 20px;
+}
+
+#licensorSortOrder {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+.clickable-header {
+  cursor: pointer;
+  text-decoration: underline;
+  color: blue;
+}
+
+.clickable-header:hover {
+  color: darkblue;
 }

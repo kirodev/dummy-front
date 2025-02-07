@@ -43,8 +43,8 @@ export class RevenuesComponent implements OnInit {
   isPopupVisible = false;
   popupText = '';
   currentPlotType: 'line' | 'stackedBar' = 'stackedBar'; // Default to stackedBar
-
-  constructor(
+  isLoading: boolean = true;
+  isError: boolean = false;  constructor(
     private paymentConnection: PaymentConnection,
     private pdfLibraryService: PdfLibraryService,
     private http: HttpClient
@@ -54,8 +54,33 @@ export class RevenuesComponent implements OnInit {
     this.fetchAnnualRevenues();
     this.fetchLibraryFiles();
     this.loadPlotlyScript();
-  }
+    this.loadDataAndPlot();
+    this.loadChart();
 
+  }
+  loadDataAndPlot(): void {
+    this.isLoading = true;
+    this.isError = false;
+
+    Promise.all([
+      this.paymentConnection.getAnnualRevenues().toPromise(),
+      this.pdfLibraryService.getExistingFiles().toPromise(),
+    ])
+      .then(([annualRevenues, pdfLibrary]) => {
+        if (!annualRevenues || annualRevenues.length === 0 || !pdfLibrary || pdfLibrary.length === 0) {
+          throw new Error('No data available for plotting.');
+        }
+
+        this.annualRevenues = annualRevenues;
+        this.pdfLibrary = pdfLibrary;
+        this.loadPlotlyScript();
+      })
+      .catch((error) => {
+        console.error('Error fetching data:', error);
+        this.isError = true;
+        this.isLoading = false; // Hide loading overlay on error
+      });
+  }
   loadPlotlyScript(): void {
     const scriptElement = document.createElement('script');
     scriptElement.src = 'https://cdn.plot.ly/plotly-2.25.2.min.js';
@@ -316,5 +341,17 @@ export class RevenuesComponent implements OnInit {
     const match = path.match(/\[\d{4}\]\s*(.*)\.pdf$/i);
     return match && match[1] ? match[1].toLowerCase().replace(/[^a-z0-9\s]/g, '').trim() : '';
   }
+
+
+  loadChart(): void {
+    this.isLoading = true; // Show loading overlay
+
+    setTimeout(() => {
+      this.plotData(); // Plot the chart when data is ready
+      this.isLoading = false; // Hide loading overlay
+    }, 2000); // Adjust the timeout as needed based on fetch time
+  }
+
+
 
 }

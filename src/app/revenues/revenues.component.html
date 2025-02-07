@@ -15,16 +15,34 @@
 <!-- End of Tab Navigation -->
 
 
-<!-- Popup Overlay -->
-<div id="plotDiv" style="width: 100%; height: 600px;"></div>
+<div class="plot-container">
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="message-container">
+      <img src="assets/4.gif" alt="Loading" class="loading-gif">
+      <span class="loading-text">Loading data, please wait...</span>
+    </div>
+  </div>
 
-<div class="chart-controls">
-  <label for="chartType">Select Chart Type:</label>
-  <select id="chartType" [(ngModel)]="currentPlotType" (change)="plotData()">
-    <option value="stackedBar">Stacked Bar</option> <!-- Match 'stackedBar' -->
-    <option value="line">Line</option>
-  </select>
+  <!-- Always available Plotly container -->
+  <div id="plotDiv"></div>
+  <div class="chart-controls">
+    <label for="chartType">Select Chart Type:</label>
+    <select id="chartType" [(ngModel)]="currentPlotType" (change)="loadChart()">
+      <option value="stackedBar">Stacked Bar</option>
+      <option value="line">Line</option>
+    </select>
+  </div>
+
 </div>
+
+
+<div *ngIf="isError" class="error-message">
+  <p>Error loading the chart. Please try again later.</p>
+</div>
+
+
+
+
 <!-- Popup Overlay -->
 <div *ngIf="isPopupVisible" class="popup-overlay">
   <div class="popup-content">

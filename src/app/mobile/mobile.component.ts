@@ -1,13 +1,16 @@
 // mobile.component.ts
 
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CellSelectionService } from '../cell-selection-service.service';
 import { ConnectionService } from '../connection.service';
 import { PaymentConnection } from '../payment-connection.service';
 import { CompanyTypeService, CompanyType } from '../company-type.service';
+import { EquationsPaymentsService } from '../equations-payments.service';
+import { SalesService } from '../sales-service.service';
+declare var Plotly: any;
 
 @Component({
   selector: 'app-mobile',
@@ -22,7 +25,7 @@ export class MobileComponent implements OnInit {
   isPopupVisible: boolean = false; // Tracks popup visibility
   popupText: string = ''; // Content to display in the popup
   selectedLicensor: string | null = null;
-
+  selectedLicensee: string = '';
   // Mapping between normalized and original licensee names
   normalizedToOriginalLicenseeMap: Map<string, string> = new Map(); // New mapping
 
@@ -48,101 +51,181 @@ export class MobileComponent implements OnInit {
   isSideNavOpen: boolean = false;
   private originalLicensees: string[] = [];
   private originalTableData: string[][] = [];
+  licensorRevenues: Map<string, number> = new Map(); // Store revenue data for licensors
+  private originalLicensors: string[] = [];
 
-
-  dateFilterType:
-    | 'exactDate'
-    | 'fullPeriod'
-    | 'startDateInside'
-    | 'endDateInside'
-    | 'anyDateInside' = 'exactDate';
+  isDataReady: boolean = false;
+  dateFilterType: 'None' | 'exactDate' | 'fullPeriod' | 'startDateInside' | 'endDateInside' | 'anyDateInside' = 'None';
+  licensee!: string;
 
   constructor(
     private router: Router,
     private cellSelectionService: CellSelectionService,
     private connectionService: ConnectionService,
     private paymentConnection: PaymentConnection,
-    private companyTypeService: CompanyTypeService // Inject CompanyTypeService
+    private companyTypeService: CompanyTypeService,
+    private equationsPaymentsService: EquationsPaymentsService,
+    private route: ActivatedRoute,
+    private salesService: SalesService
   ) {}
 
+  licensorSortOrder: 'default' | 'alphabetical' | 'revenue' = 'default'; // Updated type
+
   ngOnInit(): void {
-    // Check for saved state in localStorage
-    localStorage.removeItem('filterState');
-
-    const savedFilterState = localStorage.getItem('filterState');
-    if (savedFilterState) {
-      const filterState = JSON.parse(savedFilterState);
-      this.searchTerm = filterState.searchTerm || '';
-      this.startDate = filterState.startDate || '';
-      this.endDate = filterState.endDate || '';
-      this.dateFilterType = filterState.dateFilterType || 'exactDate';
-      this.typeFilter = filterState.typeFilter || 'all'; // Ensure 'all' is default
-      this.sortOrder = filterState.sortOrder || 'default'; // Ensure 'default' is used
-    } else {
-      // Set defaults explicitly
-      this.typeFilter = 'all';
-      this.sortOrder = 'default';
-    }
-
-    // Fetch all necessary data
+    this.isDataReady = false;
+    this.loadPlotlyScript()
+    .then(() => {
+      console.log('Plotly.js script loaded successfully');
+      if (this.salesList.length > 0) {
+        this.plotSalesData();
+      }
+    })
+    .catch((error) => {
+      console.error('Error loading Plotly.js script:', error);
+    });
+    // Load saved filter state before fetching data
+    this.loadFilterState();
+    this.route.queryParams.subscribe(params => {
+      this.selectedLicensee = params['licensee'] || '';
+      if (this.selectedLicensee) {
+        this.loadSalesData();
+      }
+    });
+    // Fetch necessary data
     forkJoin({
       companyTypes: this.companyTypeService.getCompanyTypes(),
       licenseData: this.connectionService.getData(),
       payments: this.paymentConnection.getPayments(),
       multiplePayments: this.paymentConnection.getMultiplePayments(),
       multipleLicenses: this.connectionService.getMultipleLicenses(),
+      annualRevenues: this.equationsPaymentsService.getAllAnnualRevenues(),
     }).subscribe({
-      next: ({
-        companyTypes,
-        licenseData,
-        payments,
-        multiplePayments,
-        multipleLicenses,
-      }) => {
-        this.companyTypes = companyTypes;
-        this.mapLicenseeTypes();
+      next: (response) => {
+        this.handleFetchedData(response);
 
-        this.fetchedData = licenseData;
-        this.licensors = [
-          ...new Set(this.fetchedData.map((item) => item.licensor)),
-        ].filter((licensor) => licensor !== null);
-        this.allLicensees = [
-          ...new Set(this.fetchedData.map((item) => item.licensee)),
-        ].filter((licensee) => licensee !== 'Unknown' && licensee !== null);
-
-        // Include payments data
-        this.paymentsData = payments;
-        const paymentLicensors = [
-          ...new Set(payments.map((item) => item.licensor)),
-        ].filter((licensor) => licensor !== null);
-        const paymentLicensees = [
-          ...new Set(payments.map((item) => item.licensee)),
-        ].filter((licensee) => licensee !== 'Unknown' && licensee !== null);
-
-        this.licensors = [
-          ...new Set([...this.licensors, ...paymentLicensors]),
-        ];
-        this.allLicensees = [
-          ...new Set([...this.allLicensees, ...paymentLicensees]),
-        ];
-
-        // Include multiple payments and licenses
-        this.multiplePayments = multiplePayments;
-        this.multipleLicenses = multipleLicenses;
-
-        this.initializeTableData();
-
-        // Apply default filters and sorting after fetching data
-        this.applyFilters(); // Ensure type filter defaults to 'all'
-        this.sortLicensees(); // Ensure sorting defaults to 'default'
+        // Apply sorting after data is fetched
+        this.sortLicensors();
       },
       error: (error) => {
         console.error('Error fetching data:', error);
       },
     });
-
   }
 
+  loadPlotlyScript(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      if (typeof Plotly !== 'undefined') {
+        resolve();
+      } else {
+        const scriptElement = document.createElement('script');
+        scriptElement.src = 'https://cdn.plot.ly/plotly-2.25.2.min.js';
+        scriptElement.type = 'text/javascript';
+        scriptElement.onload = () => resolve();
+        scriptElement.onerror = (event: Event | string) => reject(event);
+        document.head.appendChild(scriptElement);
+      }
+    });
+  }
+
+
+   saveFilterState(): void {
+    const filterState = {
+      searchTerm: this.searchTerm,
+      startDate: this.startDate,
+      endDate: this.endDate,
+      dateFilterType: this.dateFilterType,
+      typeFilter: this.typeFilter,
+      sortOrder: this.sortOrder,
+      licensorSortOrder: this.licensorSortOrder, // Saving correctly here
+    };
+    localStorage.setItem('filterState', JSON.stringify(filterState));
+  }
+
+
+
+  private loadFilterState(): void {
+    const savedFilterState = localStorage.getItem('filterState');
+    if (savedFilterState) {
+      const filterState = JSON.parse(savedFilterState);
+      this.searchTerm = filterState.searchTerm || '';
+      this.startDate = filterState.startDate || '';
+      this.endDate = filterState.endDate || '';
+      this.dateFilterType = filterState.dateFilterType || 'None';
+      this.typeFilter = filterState.typeFilter || 'all';
+      this.sortOrder = filterState.sortOrder || 'default';
+      this.licensorSortOrder = filterState.licensorSortOrder || 'default'; // Restored correctly
+    }
+  }
+
+  onLicensorSortOrderChange(): void {
+    console.log('Licensor sort order changed to:', this.licensorSortOrder); // Debug
+    this.sortLicensors(); // Apply sorting based on the new selection
+    this.saveFilterState(); // Save the new sort order to localStorage
+  }
+
+  logout(): void {
+    localStorage.removeItem('filterState'); // Clear saved filters
+    localStorage.removeItem('unselectedCells'); // Clear any temporary cell selections
+    console.log('User has logged out. Filters and states have been reset.');
+    this.resetFilters(); // Ensure everything is in default state
+  }
+
+  /**
+   * Handles the data fetched from multiple services and sets up the necessary table and filters.
+   */
+  private handleFetchedData(response: any): void {
+    // Destructure response to access all fetched data
+    const { companyTypes, licenseData, payments, multiplePayments, multipleLicenses, annualRevenues } = response;
+
+    // Store fetched data
+    this.companyTypes = companyTypes;
+    this.fetchedData = licenseData;
+    this.paymentsData = payments;
+    this.multiplePayments = multiplePayments;
+    this.multipleLicenses = multipleLicenses;
+
+    // Map licensee types for filtering and sorting
+    this.mapLicenseeTypes();
+
+    // Process and store original licensors and licensees
+    this.processLicensorsAndLicensees(licenseData, payments);
+    this.originalLicensors = [...this.licensors]; // Store original licensor order
+
+    // Process annual revenues for licensors
+    this.fetchedLicensorsAndData(licenseData, annualRevenues);
+
+    // Initialize the table and apply initial filters and sorting
+    this.initializeTableData();
+    this.applyFilters();
+    this.sortLicensees(); // Sort licensees if needed
+    this.sortLicensors(); // Sort licensors if needed
+
+    // Indicate that data is ready for display
+    this.isDataReady = true;
+  }
+
+
+
+  private processLicensorsAndLicensees(licenseData: any[], payments: any[]): void {
+    this.licensors = [
+      ...new Set([
+        ...licenseData.map((item) => item.licensor),
+        ...payments.map((item) => item.licensor),
+      ]),
+    ].filter((licensor) => licensor !== null);
+
+    this.allLicensees = [
+      ...new Set([
+        ...licenseData.map((item) => item.licensee),
+        ...payments.map((item) => item.licensee),
+      ]),
+    ].filter((licensee) => licensee !== 'Unknown' && licensee !== null);
+  }
+
+
+  /**
+   * Sort licensors by the selected criteria or do nothing if default is selected.
+   */
 
   /**
    * Toggle the visibility of the side nav.
@@ -183,7 +266,7 @@ export class MobileComponent implements OnInit {
    * Initialize table data by normalizing licensee names and setting up the table structure.
    */
   initializeTableData(): void {
-    // Normalize allLicensees and populate mapping
+    // Normalize all licensees and populate mapping
     this.normalizedToOriginalLicenseeMap.clear();
     this.allLicensees = this.allLicensees
       .map((originalLicensee) => {
@@ -194,10 +277,9 @@ export class MobileComponent implements OnInit {
         }
         return ''; // Return empty string for invalid licensee
       })
-      .filter(licensee => licensee !== ''); // Remove empty strings
+      .filter((licensee) => licensee !== ''); // Remove empty strings
 
     console.log('Normalized All Licensees:', this.allLicensees);
-    console.log('Normalized to Original Licensee Map:', this.normalizedToOriginalLicenseeMap);
 
     // Initialize tableData with normalized licensees
     this.tableData = Array(this.licensors.length)
@@ -214,6 +296,7 @@ export class MobileComponent implements OnInit {
     this.originalLicensees = [...this.allLicensees];
     this.originalTableData = this.tableData.map((row) => [...row]);
 
+    // Initialize filtered licensees and table data
     this.filteredLicensees = [...this.allLicensees];
     this.filteredTableData = this.tableData.map((row) => [...row]);
   }
@@ -243,55 +326,68 @@ export class MobileComponent implements OnInit {
    * The order ensures that type filter is applied first, followed by search and date filters.
    */
   applyFilters(): void {
+    // Step 1: Apply the type filter first
     this.filterByType();
+
+    // Step 2: Apply the search filter
     this.filterBySearch();
-    this.updateFilteredTableData();
-    this.applyDateFilter(); // Ensure date filter is applied on the already filtered data
+
+    // Step 3: Update filteredTableData based on the current filteredLicensees and licensors
+    this.filteredTableData = this.licensors.map((licensor) => {
+      return this.filteredLicensees.map((licensee) => {
+        const licensorIndex = this.originalLicensors.indexOf(licensor);
+        const licenseeIndex = this.originalLicensees.indexOf(licensee);
+
+        // Ensure we fetch the correct cell based on the filtered lists
+        return licensorIndex !== -1 && licenseeIndex !== -1
+          ? this.originalTableData[licensorIndex][licenseeIndex]
+          : 'white'; // Default color for unmatched cells
+      });
+    });
+
+    // **NEW:** Apply the sorting logic after filtering
+    this.sortLicensees();
+
+    console.log('Updated table after applying filters and sorting:', this.filteredTableData);
   }
+
+
 
   /**
    * Filter licensees based on the select dropdown state (include or exclude Type 1 & 10).
    */
   filterByType(): void {
     if (this.typeFilter === 'include') {
-      // Show only licensees with Type 1 or 10, but exclude Type 0
       this.filteredLicensees = this.allLicensees.filter((licensee) => {
         const type = this.licenseeTypeMap.get(licensee);
-        console.log(`Including Licensee: ${licensee}, Type: ${type}`);
-        return type !== undefined && [1, 10].includes(type) && type !== 0;
+        return type !== undefined && [1, 10].includes(type);
       });
     } else if (this.typeFilter === 'exclude') {
-      // Exclude licensees with Type 1 or 10 and also exclude Type 0
       this.filteredLicensees = this.allLicensees.filter((licensee) => {
         const type = this.licenseeTypeMap.get(licensee);
-        console.log(`Excluding Licensee: ${licensee}, Type: ${type}`);
-        return (type === undefined || ![1, 10].includes(type)) && type !== 0;
+        return type === undefined || ![1, 10].includes(type);
       });
-    } else if (this.typeFilter === 'all') {
-      // Show all licensees except Type 0
-      this.filteredLicensees = this.allLicensees.filter((licensee) => {
-        const type = this.licenseeTypeMap.get(licensee);
-        return type !== 0;
-      });
-      console.log('Showing all licensees (OEM + Others), excluding Type 0.');
+    } else {
+      this.filteredLicensees = [...this.allLicensees];  // Reset to all licensees
     }
 
-    console.log('Filtered Licensees after Type Filter:', this.filteredLicensees);
+    console.log('Filtered licensees after type filter:', this.filteredLicensees);
   }
 
 
 
+
+
   filterBySearch(): void {
-    const lowerCaseSearchTerm = this.searchTerm.toLowerCase();
-    if (lowerCaseSearchTerm) {
-      this.filteredLicensees = this.filteredLicensees.filter((licensee) =>
-        this.normalizedToOriginalLicenseeMap
-          .get(licensee)!
-          .toLowerCase()
-          .includes(lowerCaseSearchTerm)
-      );
+    const searchTermLower = this.searchTerm.toLowerCase();
+    if (searchTermLower) {
+      this.filteredLicensees = this.filteredLicensees.filter((licensee) => {
+        const originalName = this.normalizedToOriginalLicenseeMap.get(licensee) || licensee;
+        return originalName.toLowerCase().includes(searchTermLower);
+      });
     }
-    console.log('Filtered Licensees after Search Filter:', this.filteredLicensees);
+
+    console.log('Filtered licensees after search filter:', this.filteredLicensees);
   }
 
   /**
@@ -299,18 +395,16 @@ export class MobileComponent implements OnInit {
    * Ensures that the table aligns with the current filtered and sorted licensees.
    */
   updateFilteredTableData(): void {
-    this.filteredTableData = this.licensors.map((licensor) =>
-      this.filteredLicensees.map((licensee) => {
-        const licenseeIndex = this.allLicensees.indexOf(licensee);
-        if (licenseeIndex === -1) return 'white'; // Default to 'white' if not found
-
-        return this.tableData[this.licensors.indexOf(licensor)][licenseeIndex] === 'green'
-          ? 'green'
-          : 'white';
-      })
-    );
-    console.log('Filtered Table Data:', this.filteredTableData);
+    this.filteredTableData = this.licensors.map((licensor) => {
+      return this.filteredLicensees.map((licensee) => {
+        const licensorIndex = this.originalLicensors.indexOf(licensor);
+        const licenseeIndex = this.originalLicensees.indexOf(licensee);
+        return this.originalTableData[licensorIndex][licenseeIndex];
+      });
+    });
+    console.log('Updated table data after applying both filters:', this.filteredTableData);
   }
+
 
   /**
    * Toggle handler for the Type Filter select dropdown.
@@ -454,8 +548,6 @@ export class MobileComponent implements OnInit {
 
 
 
-
-
   /**
    * Apply date filter to the filtered table data.
    * Updates cell colors based on whether the licensee meets the date criteria.
@@ -510,17 +602,32 @@ export class MobileComponent implements OnInit {
         { sensitivity: 'base' }
       )
     );
-    this.updateFilteredTableData();
+
+    // Realign columns in the table data to match the new order of licensees
+    this.filteredTableData = this.filteredTableData.map((row) => {
+      return this.filteredLicensees.map((licensee) => {
+        const licenseeIndex = this.allLicensees.indexOf(licensee);
+        return row[licenseeIndex];  // Align columns correctly
+      });
+    });
+
+    console.log('Licensees sorted alphabetically.');
   }
 
-  /**
-   * Sort licensees by the total number of 'green' cells (total statements).
-   * Licensees with more 'green' cells appear first.
-   */
   sortLicenseesByCount(): void {
     this.filteredLicensees.sort((a, b) => this.getLicenseeCount(b) - this.getLicenseeCount(a));
-    this.updateFilteredTableData();
+
+    // Realign columns in the table data to match the new order of licensees
+    this.filteredTableData = this.filteredTableData.map((row) => {
+      return this.filteredLicensees.map((licensee) => {
+        const licenseeIndex = this.allLicensees.indexOf(licensee);
+        return row[licenseeIndex];  // Align columns correctly
+      });
+    });
+
+    console.log('Licensees sorted by count.');
   }
+
 
   /**
    * Get the count of 'green' cells for a specific licensee.
@@ -535,22 +642,24 @@ export class MobileComponent implements OnInit {
    */
   resetFilters(): void {
     this.typeFilter = 'all'; // Reset to All
-    this.sortOrder = 'default'; // Reset to Default
+    this.sortOrder = 'default'; // Reset licensees to default sorting
+    this.licensorSortOrder = 'default'; // Reset licensors to default sorting
+    this.dateFilterType = 'None'; // Reset date filter type to None
 
     this.searchTerm = '';
     this.startDate = '';
     this.endDate = '';
-    this.dateFilterType = 'exactDate';
 
+    // Reset filtered licensees and licensors to original state
     this.filteredLicensees = [...this.originalLicensees];
+    this.licensors = [...this.originalLicensors];
     this.filteredTableData = this.originalTableData.map((row) => [...row]);
 
     // Remove saved state from localStorage
     localStorage.removeItem('filterState');
 
-    console.log('Filters have been reset to defaults.');
+    console.log('Filters and sorting have been reset to defaults.');
   }
-
 
 
 
@@ -559,25 +668,90 @@ export class MobileComponent implements OnInit {
    */
   sortLicensees(): void {
     if (this.sortOrder === 'default') {
-      console.log('Default sort selected');
+      console.log('Default sort selected for licensees.');
 
-      // Reset the filtered licensees to the original order
+      // Reset licensees to their original order
       this.filteredLicensees = [...this.originalLicensees];
 
-      // Reset the filtered table data to its original state
-      this.filteredTableData = this.originalTableData.map((row) => [...row]);
+      // Correctly map the columns to the original licensee order
+      this.filteredTableData = this.filteredTableData.map((row, rowIndex) => {
+        return this.originalLicensees.map((licensee) => {
+          const licenseeIndex = this.allLicensees.indexOf(licensee);
+          return this.originalTableData[rowIndex][licenseeIndex];  // Correctly align columns
+        });
+      });
 
-      console.log('Filters have been reset to default.');
-      return;
-    }
-
-    if (this.sortOrder === 'alphabetical') {
+      console.log('Licensees reset to default order.');
+    } else if (this.sortOrder === 'alphabetical') {
       this.sortLicenseesAlphabetically();
     } else if (this.sortOrder === 'count') {
       this.sortLicenseesByCount();
     }
+
+    // Ensure the table is correctly displayed
+    this.updateFilteredTableData();
   }
 
+
+
+  sortLicensors(): void {
+    if (this.licensorSortOrder === 'default') {
+      console.log('Default sort selected for licensors.');
+
+      // Reset to original licensor order
+      this.licensors = [...this.originalLicensors];
+
+      // Reset rows in the table data to match the original licensor order
+      this.filteredTableData = this.originalLicensors.map((licensor) => {
+        const licensorIndex = this.originalLicensors.indexOf(licensor);
+        return [...this.originalTableData[licensorIndex]];
+      });
+
+      console.log('Licensors reset to default order.');
+      return;
+    }
+
+    if (this.licensorSortOrder === 'alphabetical') {
+      this.sortLicensorsAlphabetically();
+    } else if (this.licensorSortOrder === 'revenue') {
+      this.sortLicensorsByRevenue();
+    }
+
+    // Ensure columns remain aligned with current licensee sorting
+    this.updateFilteredTableData();  }
+
+  private updateColumnsAfterLicensorSort(): void {
+    this.filteredTableData = this.filteredTableData.map((row) => {
+      return this.filteredLicensees.map((licensee) => {
+        const licenseeIndex = this.allLicensees.indexOf(licensee);
+        return row[licenseeIndex];  // Realign columns to current licensee order
+      });
+    });
+  }
+
+  sortLicensorsByRevenue(): void {
+    const combinedData = this.licensors.map((licensor, index) => ({
+      licensor,
+      revenue: this.licensorRevenues.get(licensor) || 0,  // Use 0 if revenue is not found
+      tableRow: this.filteredTableData[index]
+    }));
+
+    combinedData.sort((a, b) => b.revenue - a.revenue);
+
+    // Update the licensor and table data order
+    this.licensors = combinedData.map(item => item.licensor);
+    this.filteredTableData = combinedData.map(item => item.tableRow);
+  }
+
+  sortLicensorsAlphabetically(): void {
+    this.licensors.sort((a, b) => a.localeCompare(b));
+
+    // Update filteredTableData to reflect the new licensor order
+    this.filteredTableData = this.licensors.map((licensor) => {
+      const originalIndex = this.originalLicensors.indexOf(licensor);
+      return [...this.originalTableData[originalIndex]];
+    });
+  }
 
   /**
    * Get the description for a table cell, used for tooltips.
@@ -683,6 +857,108 @@ export class MobileComponent implements OnInit {
     if (this.selectedLicensor) {
       this.router.navigate(['/timeline-overview', this.selectedLicensor]);
       this.hidePopup();
+    }
+  }
+
+
+  private fetchedLicensorsAndData(licenseData: any[], annualRevenues: any[]): void {
+    // Extract licensors and initialize the table
+    this.licensors = [...new Set(licenseData.map((item) => item.licensor))].filter((licensor) => licensor !== null);
+    this.tableData = Array(this.licensors.length).fill(null).map(() => Array(this.allLicensees.length).fill('white'));
+
+    // Map revenues to licensors
+    annualRevenues.forEach((revenue) => {
+      this.licensorRevenues.set(revenue.licensor, revenue.total_revenue);
+    });
+
+    console.log('Licensors:', this.licensors);
+    console.log('Licensor Revenues:', this.licensorRevenues);
+  }
+
+
+  isSalesPopupVisible = false; // Tracks visibility of the sales popup
+  salesList: any[] = []; // Declare the salesList property
+
+
+
+ 
+
+
+  showPopupForLicensee(licensee: string): void {
+    this.selectedLicensee = licensee;
+    this.isSalesPopupVisible = true;
+    this.loadSalesData();
+  }
+
+  hideSalesPopup(): void {
+    this.isSalesPopupVisible = false;
+    this.salesList = [];  // Clear previous sales data when hiding popup
+  }
+
+  loadSalesData(): void {
+    this.salesService.getSalesForLicensee(this.selectedLicensee).subscribe(
+      (data) => {
+        this.salesList = data;
+        console.log('Loaded sales data for licensee:', this.salesList);
+        this.plotSalesData();  // Call the plotting function
+      },
+      (error) => {
+        console.error('Error loading sales data:', error);
+      }
+    );
+  }
+
+  plotSalesData(): void {
+    const filteredData = this.salesList.filter((item) => item.licensee === this.selectedLicensee);
+
+    if (filteredData.length === 0) {
+      console.warn('No data available for the selected licensee');
+      return;
+    }
+
+    const xValues: string[] = [];
+    const yValues: number[] = [];
+    const customData: any[] = [];
+
+    // Populate arrays for Plotly
+    filteredData.forEach((item) => {
+      xValues.push(`${item.years} Q${item.quarters}`);
+      yValues.push(item.sales);
+      customData.push({
+        year: item.years,
+        quarter: item.quarters,
+        source: item.source,
+      });
+    });
+
+    const trace = {
+      x: xValues,
+      y: yValues,
+      mode: 'lines+markers',
+      type: 'scatter',
+      marker: { color: '#17BECF' },
+      name: this.selectedLicensee,
+      customdata: customData,
+      hovertemplate: `
+        <b>Licensee:</b> ${this.selectedLicensee}<br>
+        <b>Year & Quarter:</b> %{x}<br>
+        <b>Sales:</b> %{y}<br>
+        <b>Source:</b> %{customdata.source}<extra></extra>
+      `,
+    };
+
+    const layout = {
+      title: `Sales Data for ${this.selectedLicensee}`,
+      xaxis: { title: 'Year and Quarter' },
+      yaxis: { title: 'Sales Amount' },
+      height: 600,
+      margin: { t: 40, l: 50, r: 50, b: 100 },
+    };
+
+    // Render plot inside the popup
+    const plotDiv = document.getElementById('salesPlot');
+    if (plotDiv) {
+      Plotly.newPlot(plotDiv, [trace], layout);
     }
   }
 

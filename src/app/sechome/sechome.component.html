@@ -1,31 +1,28 @@
 <div class="container">
   <div class="frand-container">
-    <a href="https://www.figma.com/proto/NZyzXthTp6je1e3Io1QvX5/FRANDLY-platform-visual-mockup?page-id=834%3A3898&node-id=834-4464&viewport=-4742%2C702%2C0.5&t=Xwpxn88lOj1d8tH5-8&scaling=scale-down&hide-ui=1"
-      class="rec grey-square center-button">
-      <h1>FRAND</h1>
-    </a>
+    <button class="rec grey-square center-button" onclick="window.open('https://www.figma.com/proto/NZyzXthTp6je1e3Io1QvX5/FRANDLY-platform-visual-mockup?page-id=834%3A3898&node-id=834-4464&viewport=-4742%2C702%2C0.5&t=Xwpxn88lOj1d8tH5-8&scaling=scale-down&hide-ui=1', '_blank')">
+      <span>FRAND</span>
+    </button>
   </div>
+
   <div class="square-container">
-     <a routerLink="/mobile" class="big-square">
+    <a routerLink="/mobile" class="big-square">
       <h1>Known Licenses</h1>
-      <p></p>
     </a>
     <a routerLink="/revenues" class="big-square">
       <h1>Licensing Revenues</h1>
-      <p class="grey-text"></p>
     </a>
-
-  </div>
-  <div class="square-container">
     <a routerLink="/sales" class="big-square">
       <h1>Product Market Sales</h1>
-      <p></p>
     </a>
-
     <a routerLink="/library" class="big-square">
       <h1>Documents Library</h1>
-      <p class="grey-text"></p>
     </a>
+  </div>
+  <div class="frand-container">
+    <button routerLink="/timeline-overview" class="rec timeline-button">
+      <span>Timeline</span>
+    </button>
   </div>
   <section id="Background" class="Background">
     <div (click)="activeSquare($event)" class="Square"></div>

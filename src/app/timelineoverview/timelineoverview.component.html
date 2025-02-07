@@ -1,50 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Licensing Overview</title>
-</head>
-<body>
-  <header>
-    <nav class="navbar">
-        <h1>Licensing revenues</h1>
-    </nav>
-  </header>
+<main class="content-wrapper">
+  <section class="licensing-overview">
+    <div *ngIf="groupedLicenseData.length === 0 && !isLoading" class="alert alert-danger">
+      <p>No data available for this licensor.</p>
+    </div>
+    <!-- Dropdown for Licensor Selection -->
+    <div class="licensing-revenues-container">
+      <div *ngIf="!hideSelectInput">
+        <label for="licensorSelect">Select Licensor:</label>
+        <select
+          id="licensorSelect"
+          [(ngModel)]="selectedLicensor"
+          (change)="onLicensorChange()"
+          class="shared-input-style"
+          
+        >
+          <option *ngFor="let licensor of licensors" [value]="licensor">
+            {{ licensor }}
+          </option>
+        </select>
+        <button class="shared-button-style" (click)="onLicensorChange()">🔍</button>
+      </div>
+    </div>
 
-  <main class="content-wrapper">
-    <section class="licensing-overview">
+    <div class="plot-container">
+      <div class="combined-plots">
+        <!-- Both plots inside the combined-plots container -->
+        <div id="licensorPaymentsPlot" class="individual-plot"></div>
 
-      <!-- Dropdown for Licensor Selection -->
-      <div class="licensing-revenues-container">
-        <div *ngIf="!hideSelectInput">
-          <!-- Apply shared-input-style class to the select element -->
-          <label for="licensorSelect">Select Licensor:</label>
-          <select id="licensorSelect" [(ngModel)]="selectedLicensor" (change)="onLicensorChange()" class="shared-input-style">
-            <option *ngFor="let licensor of licensors" [value]="licensor">{{ licensor }}</option>
-          </select>
-          <button class="shared-button-style" (click)="onLicensorChange()">🔍</button>
+        <div id="overallDiv" class="individual-plot"></div>
+
+        <!-- Loading overlay covering both plots -->
+        <div *ngIf="isLoading" class="loading-overlay">
+          <div class="message-container">
+            <img src="assets/4.gif" alt="Loading..." class="loading-gif" />
+            <span>Loading data, please wait...</span>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Plot Containers -->
-      <div class="plot-container">
-        <div id="licensorPaymentsPlot"></div>
-        <div id="overallDiv"></div>
-      </div>
+    <!-- No Data Message -->
 
-      <!-- No Data Message -->
-      <div *ngIf="groupedLicenseData.length === 0">
-        <p>No data available for this licensor.</p>
-      </div>
-
-      <!-- Loading Template -->
-      <ng-template #loading>
-        <p>Loading...</p>
-      </ng-template>
-    </section>
-  </main>
-
-
-</body>
-</html>
+  </section>
+</main>

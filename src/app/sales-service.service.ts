@@ -46,4 +46,12 @@ export class SalesService {
     return this.http.get<any[]>(`${this.baseTUrl}`, { headers }).pipe(
       catchError(this.handleError)
     );  }
+
+    getSalesForLicensee(licensee: string): Observable<any[]> {
+      const headers = this.getHeaders();
+      return this.http.get<any[]>(`${this.baseUrl}?licensee=${encodeURIComponent(licensee)}`, { headers }).pipe(
+        catchError(this.handleError)
+      );
+    }
+
 }

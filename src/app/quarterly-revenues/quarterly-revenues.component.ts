@@ -19,6 +19,7 @@ export class QuarterlyRevenuesComponent implements OnInit {
   quarterlyRevenues: QuarterlyRevenue[] = [];
   plotRendered: boolean = false;
   currentPlotType: 'bar' | 'line' = 'bar';
+  isLoading: boolean = true;
 
   constructor(private paymentConnection: PaymentConnection) {}
 
@@ -34,6 +35,8 @@ export class QuarterlyRevenuesComponent implements OnInit {
       .catch((error) => {
         console.error('Error loading Plotly.js script:', error);
       });
+      this.loadChart();
+
   }
 
   loadPlotlyScript(): Promise<void> {
@@ -186,4 +189,15 @@ export class QuarterlyRevenuesComponent implements OnInit {
 
     return quarterA - quarterB;
   }
+
+  loadChart(): void {
+    this.isLoading = true; // Show loading overlay
+
+    setTimeout(() => {
+      this.plotData(); // Plot the chart when data is ready
+      this.isLoading = false; // Hide loading overlay
+    }, 2000); // Adjust the timeout as needed based on fetch time
+  }
+
+
 }

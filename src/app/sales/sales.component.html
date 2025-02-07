@@ -1,45 +1,43 @@
 <ul class="nav nav-tabs custom-tabs">
   <li class="nav-item">
     <a
-      class="nav-link"
-      [class.active]="activeTab === 'sales'"
+      class="nav-link active"
+      [class.active]="activeTab === 'sales' || activeTab === 'comparison'"
       (click)="setActiveTab('sales')"
-      >Sales Over Time</a
     >
+      Sales Over Time
+    </a>
   </li>
-  <li class="nav-item">
-    <a
-      class="nav-link"
-      [class.active]="activeTab === 'comparison'"
-      (click)="setActiveTab('comparison')"
-      >Sales Comparison</a
-    >
-  </li>
+
   <li class="nav-item">
     <a
       class="nav-link"
       routerLink="/tablet-sales"
       routerLinkActive="active"
-      >Tablet Sales</a
     >
+      Tablet Sales
+    </a>
   </li>
 </ul>
 
-
-<!-- Tab content -->
-<div [ngSwitch]="activeTab">
-  <div *ngSwitchCase="'sales'">
-    <div id="myDiv"></div>
-  </div>
-  <div *ngSwitchCase="'comparison'">
-    <div id="comparisonDiv"></div>
-  </div>
+<!-- Replace Sales plot by Comparison dynamically -->
+<div>
+  <h3 *ngIf="activeTab === 'sales'" style="margin: 0; padding: 0;"></h3>
+  <h3 *ngIf="activeTab === 'comparison'" style="margin: 0; padding: 0;"></h3>
+  <div [id]="activeTab === 'sales' ? 'myDiv' : 'comparisonDiv'" style="margin: 0; padding: 0;"></div>
 </div>
 
 <!-- Popup Overlay -->
 <div *ngIf="isPopupVisible" class="popup-overlay">
   <div class="popup-content">
-    <button class="popup-close" (click)="hidePopup()">×</button>
+    <button class="popup-close" (click)="hidePopup()">&times;</button>
     <div [innerHTML]="popupText"></div>
   </div>
+</div>
+<div class="chart-controls">
+  <label for="chartType">Select Chart Type:</label>
+  <select id="chartType" [(ngModel)]="activeTab" class="form-select">
+    <option value="sales">Lines</option>
+    <option value="comparison">Stacked Bars</option>
+  </select>
 </div>
