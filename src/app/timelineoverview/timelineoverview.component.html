@@ -1,8 +1,6 @@
 <main class="content-wrapper">
   <section class="licensing-overview">
-    <div *ngIf="groupedLicenseData.length === 0 && !isLoading" class="alert alert-danger">
-      <p>No data available for this licensor.</p>
-    </div>
+
     <!-- Dropdown for Licensor Selection -->
     <div class="licensing-revenues-container">
       <div *ngIf="!hideSelectInput">
@@ -12,7 +10,7 @@
           [(ngModel)]="selectedLicensor"
           (change)="onLicensorChange()"
           class="shared-input-style"
-          
+
         >
           <option *ngFor="let licensor of licensors" [value]="licensor">
             {{ licensor }}

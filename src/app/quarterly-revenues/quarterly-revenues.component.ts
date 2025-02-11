@@ -29,13 +29,12 @@ export class QuarterlyRevenuesComponent implements OnInit {
       .then(() => {
         console.log('Plotly.js script loaded successfully');
         if (this.quarterlyRevenues.length > 0) {
-          this.plotData();
+          this.loadChart();
         }
       })
       .catch((error) => {
         console.error('Error loading Plotly.js script:', error);
       });
-      this.loadChart();
 
   }
 
@@ -163,7 +162,7 @@ export class QuarterlyRevenuesComponent implements OnInit {
     Plotly.newPlot('quarterlyRevenuesChart', traces, layout, config).catch((error: any) => {
       console.error('Error plotting graph:', error);
     });
-
+    this.isLoading = false;
     this.plotRendered = true;
   }
 
@@ -191,12 +190,9 @@ export class QuarterlyRevenuesComponent implements OnInit {
   }
 
   loadChart(): void {
-    this.isLoading = true; // Show loading overlay
+    this.isLoading = true;
+    this.plotData();
 
-    setTimeout(() => {
-      this.plotData(); // Plot the chart when data is ready
-      this.isLoading = false; // Hide loading overlay
-    }, 2000); // Adjust the timeout as needed based on fetch time
   }
 
 

@@ -107,7 +107,7 @@ export class RevenuesComponent implements OnInit {
 
   switchPlotType(type: 'line' | 'stackedBar' ): void {
     this.currentPlotType = type;
-    this.plotData(); // Re-plot data with the selected type
+    this.loadChart(); // Re-plot data with the selected type
   }
   plotData(): void {
     if (!this.annualRevenues || this.annualRevenues.length === 0 || !this.pdfLibrary || this.pdfLibrary.length === 0) {
@@ -205,6 +205,7 @@ export class RevenuesComponent implements OnInit {
     };
 
     Plotly.newPlot('plotDiv', traces, layout).then(() => {
+      this.isLoading = false;
       plotDiv.on('plotly_click', (data: any) => {
         this.handlePointClick(data);
       });
@@ -247,18 +248,20 @@ export class RevenuesComponent implements OnInit {
       if (item.netLicenses && item.source && item.path) {
         const sharedLink = this.getSharedLink(item.path, this.extractYearFromPath(item.path) || year, item.source || '');
         licensesHtml += `
-          <div>
+<hr>
+        <div>
             <strong>Net Licenses USD ${index + 1}:</strong> ${item.netLicenses || 'N/A'}<br>
             <strong>Source:</strong> ${item.source || 'N/A'}<br>
             <strong>Path:</strong> ${item.path || 'N/A'}<br>
             <a href="${sharedLink}" target="_blank" rel="noopener noreferrer" >[Go to Source]</a>
           </div>
-          <hr>
+
         `;
       }
     });
 
     const infoText = `
+      <hr>
       <div style="text-align: left;">
         <div>
           <strong>Licensor:</strong> ${this.sanitizeHtml(customData[0] || 'N/A')}<br>
@@ -270,6 +273,8 @@ export class RevenuesComponent implements OnInit {
           ${licensesHtml}
         </div>
       </div>
+      <hr>
+
     `;
 
     this.showPopup(infoText);
@@ -344,12 +349,8 @@ export class RevenuesComponent implements OnInit {
 
 
   loadChart(): void {
+    this.plotData();
     this.isLoading = true; // Show loading overlay
-
-    setTimeout(() => {
-      this.plotData(); // Plot the chart when data is ready
-      this.isLoading = false; // Hide loading overlay
-    }, 2000); // Adjust the timeout as needed based on fetch time
   }
 
 

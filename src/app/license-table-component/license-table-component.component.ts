@@ -101,6 +101,10 @@ export class LicenseTableComponent implements OnInit {
   showPopup: boolean = false;
   showAdminBoard = false;
   showModeratorBoard = false;
+  isLoading: boolean = true;
+  maxCounter: number = 0; // Class-level variable to store the maximum counter value
+  mappingIdCounter: Map<number, number> = new Map();
+  
   item = {
     id: 'Mapping Id',
     selectedMappingId: 'Mapping Id '  // initialize with empty string to show the placeholder
@@ -121,7 +125,7 @@ form: any;
     this.loadPlotlyScript().then(() => {
       console.log('Plotly.js script loaded successfully');
       this.fetchTimelineData();
-      this.plotData();
+      this.loadChart();
     }).catch(error => {
       console.error('Error loading Plotly.js script:', error);
     });
@@ -569,10 +573,13 @@ plotData(): void {
 
 
 
+loadChart(): void {
+  this.plotData();
+  setTimeout(() => {
+    this.isLoading = false; // Show loading overlay
 
-
-
-
+  }, 2000);
+}
 
   confirmAction(message: string, action: () => void): void {
     const confirmDialog = confirm(message);
@@ -878,7 +885,7 @@ fetchMultipleLicensesData(): void {
   }
 
 
-  openFeedbackAfterUndoML(item: any): void {
+openFeedbackAfterUndoML(item: any): void {
     this.undoUpdateML(item);
   }
 
@@ -970,8 +977,7 @@ populateUniqueMappingIds(): Promise<void> {
 
 
 
-maxCounter: number = 0; // Class-level variable to store the maximum counter value
-mappingIdCounter: Map<number, number> = new Map();
+
 
 AddMappingId(itemId: number, item: any, tableType: 'licenses' | 'multipleLicenses', useMPMappingId: boolean = false): void {
   console.log('AddMappingId function called for table:', tableType);

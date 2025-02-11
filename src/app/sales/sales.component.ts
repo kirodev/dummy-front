@@ -15,12 +15,16 @@ export class SalesComponent implements OnInit {
   salesList: any[] = [];
   private plotlyLoaded = false;
   private dataLoaded = false;
+  isLoading: boolean = true;
 
   isPopupVisible = false;
   popupText = '';
   activeTab = 'sales'; // Default active tab
   private plotRendered = false;
   private comparisonPlotRendered = false;
+
+
+
   constructor(private salesService: SalesService,private route: ActivatedRoute, private router: Router) { }
 
   ngOnInit(): void {
@@ -236,6 +240,8 @@ export class SalesComponent implements OnInit {
         clearInterval(interval);
         Plotly.newPlot('myDiv', traces, layout).then(() => {
           console.log('Graph plotted successfully');
+          this.isLoading = false; // Stop loading once plot is rendered
+
           myDiv.on('plotly_click', (data: any) => {
             this.handlePointClick(data);
           });
@@ -264,10 +270,10 @@ export class SalesComponent implements OnInit {
       ? customData.sales[0]
       : customData.sales;
 
-    infoText += `<strong>Sales:</strong> ${salesValue.toFixed(2)}<br><br>`;
+    infoText += `<strong>Sales:</strong> ${salesValue.toFixed(2)}<br>`;
 
     if (customData.others !== undefined) {
-      infoText += `<strong>Others:</strong> ${customData.others.toFixed(2)}<br><br>`;
+      infoText += `<strong>Others:</strong> ${customData.others.toFixed(2)}<br>`;
     }
 
     const extractDomain = (url: string): string => {
@@ -287,7 +293,7 @@ export class SalesComponent implements OnInit {
     };
 
     // Display all sources excluding discarded sources
-    infoText += '<strong>Sources:</strong><br>';
+    infoText += '<hr><strong>Sources:</strong><br>';
     const allSources = customData.sources || customData.source || [];
     const displayedSources = allSources.filter((source: any) => source.source !== source.discarded);
     if (displayedSources.length > 0) {
@@ -314,7 +320,7 @@ export class SalesComponent implements OnInit {
     });
 
     if (discardedSet.size > 0) {
-      infoText += '<br><strong>Discarded:</strong><br>';
+      infoText += '<hr><strong>Discarded:</strong><br>';
       discardedSet.forEach(item => {
         infoText += `${item}<br>`;
       });
@@ -452,12 +458,16 @@ export class SalesComponent implements OnInit {
 
     // Plot the graph and set up dynamic recalculation
     Plotly.newPlot('comparisonDiv', traces, layout).then(() => {
+      this.isLoading = false; // Stop loading once plot is rendered
+
       comparisonDiv.on('plotly_click', (data: any) => {
         this.handlePointClick(data);
       });
 
       // Dynamic recalculation for "Others" on visibility change
       comparisonDiv.on('plotly_restyle', (eventData: any) => {
+        this.isLoading = false; // Stop loading once plot is rendered
+
         const visibilityArray = eventData[0].visible;
 
         // Recalculate "Others" values dynamically based on visible traces

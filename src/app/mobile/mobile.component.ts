@@ -881,7 +881,7 @@ export class MobileComponent implements OnInit {
 
 
 
- 
+
 
 
   showPopupForLicensee(licensee: string): void {

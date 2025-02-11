@@ -11,12 +11,14 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
   tabletSalesList: any[] = [];
   private plotlyLoaded = false;
   private dataLoaded = false;
+  isLoading: boolean = true;
 
   isPopupVisible = false;
   popupText = '';
   activeTab = 'sales'; // Default active tab
   private plotRendered = false;
   private comparisonPlotRendered = false;
+  currentPlotType: 'bar' | 'line' = 'bar';
 
   constructor(private salesService: SalesService) {}
 
@@ -72,6 +74,11 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
     if (this.plotlyLoaded && this.dataLoaded) {
       this.plotData();
     }
+  }
+  togglePlotType(): void {
+    this.currentPlotType = this.currentPlotType === 'bar' ? 'line' : 'bar';
+    this.plotRendered = false; // Reset the render flag
+    this.plotData(); // Re-render the chart
   }
 
   plotData(): void {
@@ -167,17 +174,21 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       traces.push({
         x: values.x,
         y: values.y,
-        type: 'bar',
+        type: this.currentPlotType as Plotly.PlotType, // Dynamic type based on the selected chart type
+        mode: this.currentPlotType === 'line' ? 'lines+markers' : undefined, // Show markers in line charts
         name: company,
         customdata: values.customdata,
         hovertemplate: `${company}<br>Average Sales: %{y}<extra></extra>`,
-        marker: { color: this.generateRandomColor() },
+        marker: { color: this.generateRandomColor(), size: this.currentPlotType === 'line' ? 8 : undefined }, // Adjust marker size
+        line: { width: this.currentPlotType === 'line' ? 2 : undefined }, // Line width for visibility
       });
     });
 
     const layout: Partial<Plotly.Layout> = {
-      title: 'Average Tablet Sales by Year and Quarter (Stacked by Company)',
-      barmode: 'stack',
+      title: this.currentPlotType === 'bar'
+        ? 'Average Tablet Sales by Year and Quarter (Stacked by Company)'
+        : 'Average Tablet Sales Trend by Year and Quarter',
+      barmode: 'stack', // Only applies when type is 'bar'
       xaxis: {
         title: 'Year and Quarter',
         tickangle: -45,
@@ -192,10 +203,12 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
     const tabletSalesDiv = document.getElementById('tabletSalesDiv') as any;
     if (tabletSalesDiv) {
       Plotly.newPlot('tabletSalesDiv', traces, layout).then(() => {
+        this.isLoading = false;
         tabletSalesDiv.on('plotly_click', (data: any) => this.handlePointClick(data));
       });
     }
   }
+
 
 
   private getQuarterValue(quarter: string): number {
@@ -218,7 +231,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
 
     let popupContent = `<strong>Company:</strong> ${customData.company}<br>`;
     popupContent += `<strong>Year and Quarter:</strong> ${customData.yearQuarter}<br>`;
-    popupContent += `<strong>Average Sales:</strong> ${customData.averageSales.toLocaleString()}<br><br>`;
+    popupContent += `<strong>Average Sales:</strong> ${customData.averageSales.toLocaleString()}<br>`;
 
     // Calculate the total sales and show individual sales details
     let totalSales = 0;
@@ -227,20 +240,20 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
 
       const displayedLink = this.extractDomain(salesEntry.link);
       return `
-        - <strong>Source:</strong> ${salesEntry.source} <br>
+        <strong>Source:</strong> ${salesEntry.source} <br>
         <strong>Sales:</strong> ${salesEntry.sales.toLocaleString()} <br>
-        ${salesEntry.link ? `<strong>Link:</strong> <a href="${salesEntry.link}" target="_blank">${displayedLink}</a><br>` : ''}
+        ${salesEntry.link ? `<strong>Link:</strong> <a href="${salesEntry.link}" target="_blank">${displayedLink}</a><hr>` : ''}
       `;
     });
 
     const averageCalculated = (totalSales / customData.individualSales.length).toLocaleString();
 
-    popupContent += `<strong>How Average was Calculated:</strong><br>`;
+    popupContent += `<hr><strong>How Average was Calculated:</strong><br>`;
     popupContent += `Sum of Sales: ${totalSales.toLocaleString()}<br>`;
     popupContent += `Number of Entries: ${customData.individualSales.length}<br>`;
     popupContent += `Calculated Average: ${averageCalculated}<br><br>`;
 
-    popupContent += `<strong>Individual Sales Details:</strong><br>${salesDetails.join('<br>')}`;
+    popupContent += `<hr><strong>Individual Sales Details:</strong><br>${salesDetails.join('<br>')}`;
 
     this.showPopup(popupContent);
   }

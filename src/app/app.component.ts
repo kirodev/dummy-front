@@ -13,7 +13,9 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
 
   @ViewChild('protectedCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
   private screenBlockTimeout: any;
-
+  private holdTimeout: any;
+  private holdDuration = 500;
+  private isHolding = false;
   isLoggedIn = false;
   username!: string;
   showAdminBoard = false;
@@ -23,6 +25,9 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
   isScreenBlocked = false;
   private clipboardInterval: any;
   private isBlocking = false;
+  private isDragging = false;
+  private dragTimeout: any;
+
   constructor(
     private tokenStorageService: TokenStorageService,
     private router: Router,
@@ -38,6 +43,8 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
   }
   ngOnInit(): void {
   this.disableRightClick();
+  this.setupHoldListeners();
+
     document.addEventListener('keydown', this.globalKeyListener.bind(this));
 
     this.isLoggedIn = !!this.tokenStorageService.getToken();
@@ -61,8 +68,6 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       );
     }
   }
-
-
 
 
   logout(): void {
@@ -101,8 +106,6 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
   }
 
 
-
-
   @HostListener('window:keydown', ['$event'])
   disablePrintScreen(event: KeyboardEvent): void {
     if (event.key === 'PrintScreen') {
@@ -110,12 +113,6 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       this.blockScreenTemporarily();
     }
   }
-
-
-
-  // Detect combinations like Windows + Print Screen, Fn + PrintScreen
-
-
 
 
   detectScreenRecording(): void {
@@ -128,23 +125,6 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       console.error('Error detecting screen recording:', error);
     }
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   detectDevToolsTiming(): void {
@@ -160,48 +140,53 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
 
 
 
+  @HostListener('window:keyup', ['$event'])
+  async onKeyup(event: KeyboardEvent): Promise<void> {
+    if (event.key === 'PrintScreen' || event.keyCode === 44) {
+      event.preventDefault();
+      event.stopPropagation();
 
-   private clipboardCheckEnabled = false;
+      console.warn('Print Screen key pressed, replacing clipboard content.');
 
+      // Show the black screen overlay
+      this.showBlackScreen();
 
+      try {
+        // Create an image blob from restricted.PNG
+        const imageBlob = await this.getImageBlob('assets/restricted.PNG');
+        await this.copyImageToClipboard(imageBlob);
 
+        console.log('Successfully replaced clipboard content with a restricted image.');
+      } catch (error) {
+        console.error('Error replacing clipboard content:', error);
+      }
 
-
-
-
-
-
-
-
-
-   @HostListener('window:keyup', ['$event'])
-   onKeyup(event: KeyboardEvent): void {
-     if (event.keyCode === 44) {  // Print Screen key (VK_SNAPSHOT)
-       event.preventDefault();
-       event.stopPropagation();
-
-       console.warn('Print Screen key pressed, blocking screen immediately!');
-       this.showBlackScreen();  // Show the black screen instantly
-
-       // Optional: Start a brief timeout to reset or check clipboard if needed
-       setTimeout(() => {
-         this.hideBlackScreen();  // Optionally hide after 10s or once clipboard is checked
-       }, 1000);
-     }
-   }
-
-
-   private showBlackScreen(): void {
-    const overlay = document.getElementById('black-screen-overlay');
-    if (overlay) {
-      overlay.style.transition = 'none';  // Disable transitions for instant effect
-      overlay.classList.add('show');  // Show the overlay instantly
+      // Optional: Hide the black screen after a delay
+      setTimeout(() => {
+        this.hideBlackScreen();
+      }, 1000);
     }
-    setTimeout(() => {
-      this.hideBlackScreen();
-      this.isBlocking = false;
-      console.log('Screen unblocked.');
-    }, 1000);
+  }
+
+  /**
+   * Fetch the image as a Blob.
+   * @param imagePath Path to the image.
+   */
+  private async getImageBlob(imagePath: string): Promise<Blob> {
+    const response = await fetch(imagePath);
+    if (!response.ok) {
+      throw new Error('Failed to load image for clipboard replacement.');
+    }
+    return await response.blob();
+  }
+
+  /**
+   * Copy the given image blob to the clipboard.
+   * @param imageBlob The image blob to copy.
+   */
+  private async copyImageToClipboard(imageBlob: Blob): Promise<void> {
+    const clipboardItem = new ClipboardItem({ 'image/png': imageBlob });
+    await navigator.clipboard.write([clipboardItem]);
   }
 
 
@@ -225,10 +210,6 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
     }
   }
 
-
-
-
-
   private preventAction(event: KeyboardEvent): void {
     event.preventDefault();
     event.stopPropagation();  // Stop it from propagating further
@@ -239,61 +220,15 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
     }
   }
 
-
-
-
-
   private clipboardCheckRunning = false;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   ngOnDestroy(): void {
-    console.log('App destroyed');
+    this.removeHoldListeners();
   }
 
   ngAfterViewInit(): void {
     console.log('App view initialized');
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  private clipboardCheckDone = false;
-
-
 
 
   private blockScreenTemporarily(): void {
@@ -306,43 +241,6 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       console.log('Screen unblocked.');
     }, 1000);  // 10 seconds block
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   @HostListener('window:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
@@ -395,8 +293,6 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
     this.isBlocking = true;
     this.showBlackScreen();
     console.log('Triggering immediate black screen...');
-
-
   }
 
   /**
@@ -413,9 +309,41 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
     );
   }
 
+  private setupHoldListeners(): void {
+    document.addEventListener('mousedown', this.onMouseDown.bind(this));
+    document.addEventListener('mouseup', this.onMouseUp.bind(this));
+  }
+
+  private removeHoldListeners(): void {
+    document.removeEventListener('mousedown', this.onMouseDown.bind(this));
+    document.removeEventListener('mouseup', this.onMouseUp.bind(this));
+  }
+
+
 
   /**
-   * Hides the black screen overlay
+   *
+   * Handle mouse down event.
+   */
+
+
+  /**
+   * Show the black screen overlay.
+   */
+  private showBlackScreen(): void {
+    const overlay = document.getElementById('black-screen-overlay');
+    if (overlay) {
+      overlay.classList.add('show');
+    }
+
+    // Automatically hide the overlay after a short duration
+    setTimeout(() => {
+      this.hideBlackScreen();
+    }, 3000); // 3 seconds display duration
+  }
+
+  /**
+   * Hide the black screen overlay.
    */
   private hideBlackScreen(): void {
     const overlay = document.getElementById('black-screen-overlay');
@@ -423,4 +351,45 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       overlay.classList.remove('show');
     }
   }
+
+
+
+
+  private onMouseDown(event: MouseEvent): void {
+    const isScrollbarClicked = this.isScrollbarRegion(event);
+
+    if (isScrollbarClicked) {
+      console.log('Scrollbar clicked, skipping hold logic.');
+      return; // Skip the hold logic if the scrollbar is clicked
+    }
+
+    this.isHolding = false;
+
+    // Start a timer to trigger the black screen after 0.5 seconds
+    this.holdTimeout = setTimeout(() => {
+      this.isHolding = true;
+      this.showBlackScreen();
+    }, this.holdDuration);
+  }
+
+  private isScrollbarRegion(event: MouseEvent): boolean {
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const scrollBarHeight = window.innerHeight - document.documentElement.clientHeight;
+
+    // Check if click is in vertical or horizontal scrollbar regions
+    const isVerticalScrollBar = event.clientX >= window.innerWidth - scrollBarWidth;
+    const isHorizontalScrollBar = event.clientY >= window.innerHeight - scrollBarHeight;
+
+    return isVerticalScrollBar || isHorizontalScrollBar;
+  }
+
+  private onMouseUp(): void {
+    clearTimeout(this.holdTimeout);
+
+    // If the user releases early, reset the hold state and hide the black screen
+    if (!this.isHolding) {
+      this.hideBlackScreen(); // Ensure it doesn't stay on if the user released quickly
+    }
+  }
+
 }

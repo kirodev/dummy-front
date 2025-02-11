@@ -48,6 +48,7 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
   showModeratorBoard = false;
   showAdminBoard = false;
   activeTooltipId: string = '';
+  isLoading:boolean = true; // Show loading overlay
 
   constructor(
     private paymentConnection: PaymentConnection,
@@ -71,7 +72,7 @@ export class PaymentTableComponent  implements OnInit, AfterViewInit {
 
     this.loadPlotlyScript().then(() => {
       console.log('Plotly.js script loaded successfully');
-      this.plotData();
+      this.loadChart();
     }).catch(error => {
       console.error('Error loading Plotly.js script:', error);
     });
@@ -1122,7 +1123,12 @@ plotData(): void {
     }
   }
 
-
+  loadChart(): void {
+    this.plotData();
+    setTimeout(() => {
+      this.isLoading = false; // Show loading overlay
+    }, 10000);
+  }
 
 
   initializeUniquePayments(): void {

@@ -18,7 +18,6 @@
 
 
 <!-- Main Content -->
-<div *ngIf="!isLoading">
   <div class="filter-container mt-3">
     <!-- Search Input -->
     <div class="search-input">
@@ -109,27 +108,30 @@
     <span>Synchronizing with Dropbox...</span>
   </div>
 
-  <!-- Optional: Display message when no files match -->
-  <div *ngIf="filteredPdfFiles.length === 0" class="alert alert-warning mt-3">
-    No files found matching the selected criteria.
-  </div>
 
   <!-- Card Container -->
-  <div class="card-container mt-4">
-    <div class="card mb-3" *ngFor="let file of filteredPdfFiles; trackBy: trackByPath">
-      <div class="card-body">
-        <!-- Details Container -->
-        <div class="card-details">
-          <p><strong>Title:</strong> {{ file.title | titlecase }}</p>
-          <p><strong>Year:</strong> {{ file.year }}</p>
-          <p><strong>Type:</strong> {{ file.type }}</p>
-        </div>
-        <!-- View PDF Button -->
-        <div class="button-container">
-          <button class="btn btn-primary" (click)="redirectToLink(file.sharedLink)">
-            View PDF
-          </button>
-        </div>
+<div class="card-container">
+  <!-- Loading overlay within the card container -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="message-container">
+      <img src="assets/4.gif" alt="Loading" class="loading-gif">
+      <span class="loading-text">Loading data, please wait...</span>
+    </div>
+  </div>
+
+  <div class="card mb-3" *ngFor="let file of filteredPdfFiles; trackBy: trackByPath">
+    <div class="card-body">
+      <!-- Details Container -->
+      <div class="card-details">
+        <p><strong>Title:</strong> {{ file.title | titlecase }}</p>
+        <p><strong>Year:</strong> {{ file.year }}</p>
+        <p><strong>Type:</strong> {{ file.type }}</p>
+      </div>
+      <!-- View PDF Button -->
+      <div class="button-container">
+        <button class="btn btn-primary" (click)="redirectToLink(file.sharedLink)">
+          View PDF
+        </button>
       </div>
     </div>
   </div>

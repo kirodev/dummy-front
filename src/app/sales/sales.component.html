@@ -5,7 +5,7 @@
       [class.active]="activeTab === 'sales' || activeTab === 'comparison'"
       (click)="setActiveTab('sales')"
     >
-      Sales Over Time
+      Smartphones
     </a>
   </li>
 
@@ -15,13 +15,22 @@
       routerLink="/tablet-sales"
       routerLinkActive="active"
     >
-      Tablet Sales
+      Tablets
     </a>
   </li>
 </ul>
 
+
+
 <!-- Replace Sales plot by Comparison dynamically -->
-<div>
+<div class="plot-container">
+
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="message-container">
+      <img src="assets/4.gif" alt="Loading" class="loading-gif">
+      <span class="loading-text">Loading data, please wait...</span>
+    </div>
+  </div>
   <h3 *ngIf="activeTab === 'sales'" style="margin: 0; padding: 0;"></h3>
   <h3 *ngIf="activeTab === 'comparison'" style="margin: 0; padding: 0;"></h3>
   <div [id]="activeTab === 'sales' ? 'myDiv' : 'comparisonDiv'" style="margin: 0; padding: 0;"></div>

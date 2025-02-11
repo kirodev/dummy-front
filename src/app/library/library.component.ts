@@ -37,6 +37,7 @@ export class LibraryComponent implements OnInit {
   searchByTitle: boolean = false;
   searchByDetails: boolean = false;
   selectedYear: string = '';
+  isLoading: boolean = false;
 
   showPopup: boolean = false;
   showPDFViewer: boolean = false;
@@ -53,40 +54,38 @@ export class LibraryComponent implements OnInit {
   }
 
   loadPdfFiles(): void {
+    this.isLoading = true; // Start loading
+
     this.pdfLibraryService.getPdfFilesFromAllTables().subscribe({
       next: (files: PdfFile[]) => {
         const cld = new Cloudinary({
           cloud: { cloudName: 'himbuyrbv' }
         });
 
+        // Process and map files
         this.pdfFiles = files.map((file: PdfFile) => {
           let title = 'Unknown Title';
           let date = 'Unknown Year';
 
           if (file.directory_path) {
             const normalizedPath = file.directory_path.replace(/\\/g, '/');
-
-            // Use original file name with specific formatting for Cloudinary URL
             const originalFileName = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
 
-            // Format the file name for Cloudinary by removing brackets and ensuring underscores
-            const formattedFileNameForCloudinary = originalFileName
-            .replace(/\[(\d{4})\]/, '$1')     // Remove square brackets around the year
-            .replace(/\s+/g, '_')             // Replace spaces with underscores
-            .replace(/[()]/g, '')            // Replace parentheses with underscores
-            .replace('.pdf', '');             // Remove '.pdf' extension
+            // Format the Cloudinary URL and other details
+            const formattedFileName = originalFileName
+              .replace(/\[(\d{4})\]/, '$1')
+              .replace(/\s+/g, '_')
+              .replace(/[()]/g, '')
+              .replace('.pdf', '');
 
-            // Display title: Remove the year and format for readability
-            const displayTitle = formattedFileNameForCloudinary
-              .replace(/^\d{4}_/, '')         // Remove the year and underscore at the beginning
-              .replace(/_/g, ' ')             // Replace underscores with spaces for display
+            const displayTitle = formattedFileName
+              .replace(/^\d{4}_/, '')
+              .replace(/_/g, ' ')
               .trim();
 
-            // Construct Cloudinary URL using the exact format with year and underscores
-            const cloudinaryPublicId = `Data Library/${normalizedPath.replace(originalFileName, formattedFileNameForCloudinary)}`;
+            const cloudinaryPublicId = `Data Library/${normalizedPath.replace(originalFileName, formattedFileName)}`;
             const cloudinaryUrl = `https://res.cloudinary.com/hgljhe0wl/image/upload/${cloudinaryPublicId}.pdf`;
 
-            // Extract the date (year) from the path
             const dateMatch = normalizedPath.match(/\b\d{4}\b/);
             if (dateMatch) {
               date = dateMatch[0];
@@ -95,27 +94,30 @@ export class LibraryComponent implements OnInit {
             return {
               ...file,
               directory_path: normalizedPath,
-              title: displayTitle,            // Display title without year
+              title: displayTitle,
               date: date,
               cloudinaryPublicId: cloudinaryPublicId,
-              cloudinaryUrl: cloudinaryUrl,    // URL with year and underscores for Cloudinary
-              showDetails: false
+              cloudinaryUrl: cloudinaryUrl,
+              showDetails: false,
             };
           } else {
             return file;
           }
-
         });
 
-        // Unique dates and sorting logic
-        this.uniqueDates = Array.from(new Set(
-          this.pdfFiles.map(file => file.date).filter((date): date is string => date !== 'Unknown Year')
-        ));
-        this.uniqueDates.sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
+        // Extract and sort unique dates
+        this.uniqueDates = Array.from(
+          new Set(
+            this.pdfFiles
+              .map(file => file.date)
+              .filter((date): date is string => date !== 'Unknown Year' && date !== undefined)
+          )
+        );
+                this.uniqueDates.sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
 
-        // Filter unique files
+        // Filter and combine unique files
         const uniqueFilesMap = new Map<string, PdfFile[]>();
-        this.pdfFiles.forEach((file: PdfFile) => {
+        this.pdfFiles.forEach(file => {
           const key = `${file.title}_${file.date}`;
           if (uniqueFilesMap.has(key)) {
             uniqueFilesMap.get(key)?.push(file);
@@ -127,49 +129,36 @@ export class LibraryComponent implements OnInit {
         this.pdfFiles = Array.from(uniqueFilesMap.values()).map(groupedFiles => {
           const baseFile = groupedFiles[0];
 
-          // Collect all detail lines from each file.
-          const allLines: string[] = [];
-          for (const file of groupedFiles) {
-            if (file.details) {
-              const lines = file.details
-                .split('\n---\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0);
-              allLines.push(...lines);
-            }
-          }
-
-          // Remove duplicates using a Set
-          const uniqueLines = Array.from(new Set(allLines));
-
-          // Join back into a single string
-          const combinedDetails = uniqueLines.join('\n---\n');
+          // Combine and deduplicate details from grouped files
+          const combinedDetails = Array.from(
+            new Set(
+              groupedFiles.flatMap(file => (file.details || '').split('\n---\n').map(line => line.trim()).filter(line => line))
+            )
+          ).join('\n---\n');
 
           return {
             ...baseFile,
             details: combinedDetails || baseFile.details,
-            showDetails: false
+            showDetails: false,
           };
         });
 
-        // Optional: If you previously sorted the files by date, retain that logic here.
+        // Sort the files by date
         this.pdfFiles.sort((a, b) => {
           if (a.date === 'Unknown Year' && b.date !== 'Unknown Year') return 1;
           if (b.date === 'Unknown Year' && a.date !== 'Unknown Year') return -1;
-          const yearA = parseInt(a.date ?? '0', 10);
-          const yearB = parseInt(b.date ?? '0', 10);
-          return yearB - yearA;
+          return parseInt(b.date ?? '0', 10) - parseInt(a.date ?? '0', 10);
         });
 
-
-        this.filteredPdfFiles = this.pdfFiles;
+        this.filteredPdfFiles = [...this.pdfFiles];
+        this.isLoading = false; // Stop loading
       },
       error: (err: any) => {
         console.error('Error loading PDF files', err);
+        this.isLoading = false; // Stop loading even on error
       }
     });
   }
-
 
 
   searchFiles(): void {

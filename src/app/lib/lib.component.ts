@@ -48,6 +48,8 @@ export class LIBComponent implements OnInit {
 
 
   ngOnInit(): void {
+    this.isLoading = true;
+
     this.loadExistingFiles();
 
     // Initialize the debounce for search
@@ -64,7 +66,6 @@ export class LIBComponent implements OnInit {
    * Loads existing PDF files and displays them immediately.
    */
   loadExistingFiles(): void {
-    this.isLoading = true;
     this.errorMessage = ''; // Reset error message
 
     this.pdfLibraryService.getExistingFiles().subscribe({
@@ -84,9 +85,8 @@ export class LIBComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error fetching existing files:', err);
-        this.errorMessage =
-          'Failed to load existing PDF files. Please try again later.';
-        this.isLoading = false;
+   
+        this.isLoading = false; // Stop loading even on error
       },
     });
   }

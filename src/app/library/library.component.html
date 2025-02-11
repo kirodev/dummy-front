@@ -62,25 +62,27 @@
   </select>
 </div>
 
+
+<!-- Main content: display after loading -->
 <div class="card-container">
+  <!-- Loading overlay within the card container -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="message-container">
+      <img src="assets/4.gif" alt="Loading" class="loading-gif">
+      <span class="loading-text">Loading data, please wait...</span>
+    </div>
+  </div>
+
   <div *ngFor="let file of filteredPdfFiles" class="card">
     <div class="card-content">
-      <!-- Display title -->
       <h3>{{ file.title || 'Unknown Title' }}</h3>
       <p>Year: {{ file.date || 'Unknown Date' }}</p>
-
-      <!-- View PDF button -->
       <button (click)="openPDFViewer(file, $event)">View</button>
-
-      <!-- "View Highlights" button is always shown -->
-      <button
-        *ngIf="file.details"
-        (click)="toggleDetails(file, $event)">
-        <span *ngIf="!file.showDetails">&#9662; View Highlights</span> <!-- Down arrow -->
-        <span *ngIf="file.showDetails">&#9652; Hide Highlights</span> <!-- Up arrow -->
+      <button *ngIf="file.details" (click)="toggleDetails(file, $event)">
+        <span *ngIf="!file.showDetails">&#9662; View Highlights</span>
+        <span *ngIf="file.showDetails">&#9652; Hide Highlights</span>
       </button>
 
-      <!-- Display matching details -->
       <div *ngIf="file.showDetails">
         <table class="details-table">
           <tr *ngFor="let detail of file.highlightedDetails">
@@ -91,7 +93,6 @@
     </div>
   </div>
 </div>
-
 
 
 

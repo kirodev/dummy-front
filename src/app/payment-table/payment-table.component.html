@@ -12,8 +12,18 @@
   </li>
 </ul>
 <div *ngIf="showAdminBoard || showModeratorBoard">
-  <div id='myDiv'></div>
-  <div class="outer-container">
+  <div class="plot-container">
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="message-container">
+        <img src="assets/4.gif" alt="Loading" class="loading-gif">
+        <span class="loading-text">Loading data, please wait...</span>
+      </div>
+    </div>
+
+    <div id='myDiv'></div>
+
+  </div>
+    <div class="outer-container">
     <div class="center-container">
       <div class="center-content">
         <div *ngIf="groupedTableData">

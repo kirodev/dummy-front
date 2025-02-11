@@ -17,7 +17,21 @@
 
 
 <div *ngIf="showAdminBoard || showModeratorBoard">
+
+
+<div class="plot-container">
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="message-container">
+      <img src="assets/4.gif" alt="Loading" class="loading-gif">
+      <span class="loading-text">Loading data, please wait...</span>
+    </div>
+  </div>
+
   <div id='myDiv'></div>
+
+</div>
+
+
   <h1>Summary Table:</h1>
   <br>
   <table class="license-table">
@@ -108,8 +122,8 @@
               This summary encapsulates several statements into a unified insight. Click "Show" to view the underlying records for further details.
             </div>
           </td>
-
         </tr>
+
         <ng-container *ngIf="group.isExpanded">
           <ng-container *ngFor="let item of group.licenses">
             <tr>

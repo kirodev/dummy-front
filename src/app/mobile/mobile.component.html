@@ -139,14 +139,12 @@
       <tr>
         <th class="empty-header"></th>
         <th *ngFor="let licensee of displayLicensees"
-        class="vertical-header clickable-header"
-        (click)="showPopupForLicensee(licensee)">  <!-- Trigger the popup here -->
-      {{ licensee }}
-    </th>
-
+            class="vertical-header clickable-header"
+            (click)="showPopupForLicensee(licensee)">
+          {{ licensee }}
+        </th>
       </tr>
     </thead>
-
     <tbody>
       <tr *ngFor="let licensor of licensors; let rowIndex = index">
         <td class="row-name">
@@ -158,13 +156,13 @@
           *ngFor="let cell of filteredTableData[rowIndex]; let colIndex = index"
           [ngClass]="{
             'green-cell': cell === 'green',
-            'white-cell': cell === 'white'
+            'white-cell': cell === 'white',
+            'self-reference-cell': licensors[rowIndex] === displayLicensees[colIndex]
           }"
           (click)="cellClick(rowIndex, colIndex)"
-          [title]="getCellDescription(rowIndex, colIndex)">
+          [title]="licensors[rowIndex] === displayLicensees[colIndex] ? 'Self-reference ' : getCellDescription(rowIndex, colIndex)">
         </td>
       </tr>
-
       <tr *ngIf="displayLicensees.length === 0">
         <div class="no-data-message">
           <div class="message-container">
@@ -175,6 +173,7 @@
       </tr>
     </tbody>
   </table>
+
 </div>
 
 <div *ngIf="isSalesPopupVisible" class="popup-overlay">

@@ -288,6 +288,7 @@ td.vertical-header:not(:first-child)::before {
   z-index: 2; /* Above the overlay and side nav */
   box-shadow: 0 2px 5px rgba(0,0,0,0.3);
   transition: background-color 0.3s ease; /* Smooth transition */
+
 }
 
 .side-nav-toggle:hover {
@@ -325,7 +326,7 @@ td.vertical-header:not(:first-child)::before {
   overflow-x: hidden; /* Disable horizontal scroll */
   transition: width 0.5s; /* Smooth transition */
   padding-top: 60px; /* Place content 60px from the top */
-  z-index: 1002; /* Above the overlay */
+  z-index: 9999; /* Above the overlay */
   box-shadow: -2px 0 5px rgba(0,0,0,0.3);
 }
 
@@ -654,13 +655,16 @@ td {
 }
 
 .licensor-link {
-  color: #1f77b4; /* Hypertext color */
+  color: #4E7EBF; /* Hypertext color */
   text-decoration: underline;
   cursor: pointer;
 }
 
 .licensor-link:hover {
   text-decoration: none; /* Prevent underlining on hover */
+  color: #FC5900; /* Hypertext color */
+
+
 }
 
 .close-button {
@@ -1029,9 +1033,17 @@ div .loading-text {
 .clickable-header {
   cursor: pointer;
   text-decoration: underline;
-  color: blue;
+  color: #FC5900;
 }
 
 .clickable-header:hover {
-  color: darkblue;
+  color: #0056B3;
+  text-decoration: none; /* Prevent underlining on hover */
+
+}
+.self-reference-cell {
+  background-color: white;
+}
+.green-cell {
+  background-color: #4CAF50; /* Green for available */
 }

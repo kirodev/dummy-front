@@ -269,3 +269,66 @@ div[ngSwitch] > div {
 .custom-tabs {
   margin-bottom: 0 !important; /* Remove space between tabs and content */
 }
+/* Content container */
+.chart-controls {
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center;
+  padding: 10px 0;
+  text-align: center;
+  gap: 10px; /* Adds spacing between the label and dropdown */
+}
+
+
+.chart-controls label {
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+.chart-controls select {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+.plot-container {
+  position: relative;
+  width: 100%;
+  height: 600px; /* Adjust based on your chart's size */
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(241, 241, 234, 0.8); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.message-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-gif {
+  width: 300px; /* Adjust size as needed */
+  height: 300px;
+}
+
+.loading-text {
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  color: #333;
+  background-color: rgba(255, 255, 255, 0.9); /* Light background for text visibility */
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-align: center;
+  margin-top: -100px; /* Bring the text 1px closer to the GIF */
+}
