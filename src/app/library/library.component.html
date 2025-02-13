@@ -38,29 +38,48 @@
       Search by Statements
     </label>
   </div>
-
-  <!-- Report Type Select -->
-  <div class="report-type-select">
-    <label for="reportType">Select Report Type:</label>
-    <select id="reportType" [(ngModel)]="selectedReportType" (change)="searchFiles()">
-      <option value="" disabled>All Types</option>
-      <option value="Annual report">Annual Report</option>
-      <option value="Quarterly report">Quarterly Report</option>
-      <option value="Press Release">Press Release</option>
-      <option value="Judicial_documents">Judicial Documents</option>
-      <option value="Licensing programs">Licensing Programs</option>
-      <option value= 'Licensing Terms Statements'>Licensing Terms Statements</option>
-      <option value= 'Reports'>Reports</option>
-      <option value= 'Papers'>Papers</option>
-    </select>
-  </div>
-
-  <label>Search by Year: </label>
-  <select [(ngModel)]="selectedDate" (change)="searchFiles()">
-    <option value="" disabled>All Years</option>
-    <option *ngFor="let date of uniqueDates" [value]="date">{{ date }}</option>
+<!-- Report Type Select -->
+<div class="report-type-select">
+  <label for="reportType">Select Report Type:</label>
+  <select id="reportType" [(ngModel)]="selectedReportType" (change)="onReportTypeChange()">
+    <option value="">All Types</option>
+    <option value="Annual Report">Annual Report</option>
+    <option value="Quarterly Report">Quarterly Report</option>
+    <option value="Current Reports">Current Reports</option>
+    <option value="Press Release">Press Release</option>
+    <option value="judicial_documents">Judicial Documents</option>
+    <option value="Licensing Programs">Licensing Programs</option>
+    <option value="Licensing Terms Statements">Licensing Terms Statements</option>
+    <option value="Reports">Reports</option>
+    <option value="Papers">Papers</option>
   </select>
+
+  <!-- Judicial subcategories checkboxes -->
+  <div *ngIf="uniqueJudicialSubCategories.length > 0" class="subcategory-options">
+    <div *ngFor="let subCategory of uniqueJudicialSubCategories" class="subcategory-option">
+      <input
+        type="checkbox"
+        [id]="subCategory"
+        [value]="subCategory"
+        [checked]="selectedJudicialSubCategories.includes(subCategory)"
+        (change)="onSubCategoryChange($event, subCategory)"
+      />
+      <label [for]="subCategory">{{ subCategory }}</label>
+    </div>
+  </div>
 </div>
+
+
+<!-- Year Select -->
+<label>Search by Year: </label>
+<select [(ngModel)]="selectedDate" (change)="searchFiles()">
+  <option value="">All Years</option>
+  <option *ngFor="let date of uniqueDates" [value]="date">{{ date }}</option>
+</select>
+
+
+
+
 
 
 <!-- Main content: display after loading -->

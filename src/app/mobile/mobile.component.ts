@@ -223,9 +223,6 @@ export class MobileComponent implements OnInit {
   }
 
 
-  /**
-   * Sort licensors by the selected criteria or do nothing if default is selected.
-   */
 
   /**
    * Toggle the visibility of the side nav.
@@ -238,6 +235,7 @@ export class MobileComponent implements OnInit {
    * Utility function to normalize licensee names.
    * Converts to lowercase, trims whitespace, and removes periods and commas.
    */
+
   normalizeName(name: string | null | undefined): string {
     return name
       ? name
@@ -251,6 +249,7 @@ export class MobileComponent implements OnInit {
    * Map licensee names to their types for easy lookup.
    * Populates the `licenseeTypeMap`.
    */
+
   mapLicenseeTypes(): void {
     this.companyTypes.forEach((ct) => {
       const normalizedLicensee = this.normalizeName(ct.licensee);
@@ -265,6 +264,7 @@ export class MobileComponent implements OnInit {
   /**
    * Initialize table data by normalizing licensee names and setting up the table structure.
    */
+
   initializeTableData(): void {
     // Normalize all licensees and populate mapping
     this.normalizedToOriginalLicenseeMap.clear();
@@ -960,6 +960,16 @@ export class MobileComponent implements OnInit {
     if (plotDiv) {
       Plotly.newPlot(plotDiv, [trace], layout);
     }
+  }
+
+
+  openSalesPage(licensee: string): void {
+    // Set the licensee whose sales you want to show.
+    this.selectedLicensee = licensee;
+    // Show the sales popup overlay.
+    this.isSalesPopupVisible = true;
+    // Load the sales data and, once retrieved, plot it.
+    this.loadSalesData();
   }
 
 }

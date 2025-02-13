@@ -87,126 +87,162 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       return;
     }
 
-    const tabletSalesMap = new Map<
-      string,
-      {
-        company: string;
-        yearQuarter: string;
-        year: number;
-        averageSales: number;
-        individualSales: { source: string; link: string; sales: number }[];
-      }
-    >();
+    // STEP 1: Build a company map and collect all year–quarter labels.
+    const companyMap = new Map<string, { x: string[]; y: number[]; customdata: any[] }>();
+    const allYearQuarterSet = new Set<string>();
 
-    // Aggregate data by company, year, and quarter
     this.tabletSalesList.forEach((item) => {
       const year = Number(item.year?.toString().trim());
       const quarter = this.getQuarterValue(item.quarter?.toString().trim());
-
       if (isNaN(year) || isNaN(quarter) || year < 2010 || year > 2024) {
         console.warn(`Skipping invalid or out-of-range year/quarter: ${item.year}, ${item.quarter}`);
         return;
       }
+      const yearQuarter = `${year} Q${quarter}`;
+      allYearQuarterSet.add(yearQuarter);
 
-      const yearQuarterKey = `${year} Q${quarter}`;
-      let data = tabletSalesMap.get(`${item.company}|${yearQuarterKey}`);
-
-      if (!data) {
-        data = {
-          company: item.company,
-          yearQuarter: yearQuarterKey,
-          year: year,
-          averageSales: item.average_sales,
-          individualSales: [],
-        };
-        tabletSalesMap.set(`${item.company}|${yearQuarterKey}`, data);
+      if (!companyMap.has(item.company)) {
+        companyMap.set(item.company, { x: [], y: [], customdata: [] });
       }
-
-      data.individualSales.push({ source: item.source, link: item.link, sales: item.sales });
+      const compData = companyMap.get(item.company)!;
+      compData.x.push(yearQuarter);
+      compData.y.push(item.average_sales);
+      compData.customdata.push(item);
     });
 
-    // Create traces for each company
-    const companyMap = new Map<string, { x: string[]; y: number[]; customdata: any[] }>();
-
-    const allYearQuarterSet = new Set<string>();
-
-    tabletSalesMap.forEach((data, key) => {
-      if (data.averageSales > 0) {
-        const [company, yearQuarter] = key.split('|');
-        allYearQuarterSet.add(yearQuarter);
-        if (!companyMap.has(company)) {
-          companyMap.set(company, { x: [], y: [], customdata: [] });
-        }
-        companyMap.get(company)?.x.push(yearQuarter);
-        companyMap.get(company)?.y.push(data.averageSales);
-        companyMap.get(company)?.customdata.push(data);
-      }
-    });
-
-    // Correctly sort by year and quarter
+    // STEP 2: Create a sorted array of year–quarter labels.
     const sortedYearQuarters = Array.from(allYearQuarterSet)
-      .map((yearQuarter) => {
-        const [year, quarter] = yearQuarter.split(' Q');
-        return { year: Number(year), quarter: Number(quarter), yearQuarter };
+      .map((yq) => {
+        const [year, quarter] = yq.split(' Q');
+        return { year: Number(year), quarter: Number(quarter), yq };
       })
       .sort((a, b) => a.year - b.year || a.quarter - b.quarter)
-      .map((item) => item.yearQuarter);
+      .map((item) => item.yq);
 
-    // Ensure each company's x and y values are ordered correctly
-    companyMap.forEach((values) => {
-      const sortedIndices = values.x
-        .map((yearQuarter, index) => ({
-          yearQuarter,
-          index,
-        }))
-        .sort((a, b) => sortedYearQuarters.indexOf(a.yearQuarter) - sortedYearQuarters.indexOf(b.yearQuarter))
-        .map((item) => item.index);
-
-      // Reorder arrays
-      values.x = sortedIndices.map((i) => values.x[i]);
-      values.y = sortedIndices.map((i) => values.y[i]);
-      values.customdata = sortedIndices.map((i) => values.customdata[i]);
+    // STEP 3: Align each company’s data to the full sorted list of quarters.
+    companyMap.forEach((data) => {
+      const alignedY = sortedYearQuarters.map((q) => {
+        const idx = data.x.indexOf(q);
+        return idx !== -1 ? data.y[idx] : 0;
+      });
+      data.x = sortedYearQuarters.slice();
+      data.y = alignedY;
     });
 
-    // Create traces for Plotly
+    // STEP 4: Sort companies by their total sales and split into top and others.
+    const sortedCompanies = Array.from(companyMap.keys()).sort((a, b) => {
+      const sumA = companyMap.get(a)!.y.reduce((acc, v) => acc + v, 0);
+      const sumB = companyMap.get(b)!.y.reduce((acc, v) => acc + v, 0);
+      return sumB - sumA;
+    });
+    const TOP_N = 5; // Adjust the number of top companies as needed.
+    const topCompanies = sortedCompanies.slice(0, TOP_N);
+    const otherCompanies = sortedCompanies.slice(TOP_N);
+
+    // STEP 5: Build traces for the top companies.
+    // Also store each top company’s y-data for dynamic recalculation.
     const traces: Partial<Plotly.PlotData>[] = [];
-    companyMap.forEach((values, company) => {
+    const topCompanyYs: number[][] = [];
+
+    topCompanies.forEach((company) => {
+      const data = companyMap.get(company)!;
+      topCompanyYs.push(data.y.slice()); // Copy y-values.
       traces.push({
-        x: values.x,
-        y: values.y,
-        type: this.currentPlotType as Plotly.PlotType, // Dynamic type based on the selected chart type
-        mode: this.currentPlotType === 'line' ? 'lines+markers' : undefined, // Show markers in line charts
+        x: data.x,
+        y: data.y,
+        type: this.currentPlotType as Plotly.PlotType,
+        mode: this.currentPlotType === 'line' ? 'lines+markers' : undefined,
         name: company,
-        customdata: values.customdata,
+        customdata: data.customdata,
         hovertemplate: `${company}<br>Average Sales: %{y}<extra></extra>`,
-        marker: { color: this.generateRandomColor(), size: this.currentPlotType === 'line' ? 8 : undefined }, // Adjust marker size
-        line: { width: this.currentPlotType === 'line' ? 2 : undefined }, // Line width for visibility
+        marker: {
+          color: this.generateRandomColor(),
+          size: this.currentPlotType === 'line' ? 8 : undefined,
+        },
+        line: { width: this.currentPlotType === 'line' ? 2 : undefined },
       });
     });
 
+    // STEP 6: Compute the static "Others" values from companies not in the top group.
+    const othersStatic = sortedYearQuarters.map((_, idx) => {
+      let sum = 0;
+      otherCompanies.forEach((company) => {
+        const data = companyMap.get(company)!;
+        sum += data.y[idx];
+      });
+      return sum;
+    });
+    // Initially, Others equals the static base because all top companies are visible.
+    const initialOthers = othersStatic.slice();
+
+    // Create the "Others" trace.
+    traces.push({
+      x: sortedYearQuarters,
+      y: initialOthers,
+      type: this.currentPlotType as Plotly.PlotType,
+      mode: this.currentPlotType === 'line' ? 'lines+markers' : undefined,
+      name: 'Others',
+      hovertemplate: `Others<br>Average Sales: %{y}<extra></extra>`,
+      marker: { color: '#D3D3D3', size: this.currentPlotType === 'line' ? 8 : undefined },
+      line: { width: this.currentPlotType === 'line' ? 2 : undefined },
+    });
+
+    // STEP 7: Define the layout.
     const layout: Partial<Plotly.Layout> = {
-      title: this.currentPlotType === 'bar'
-        ? 'Average Tablet Sales by Year and Quarter (Stacked by Company)'
-        : 'Average Tablet Sales Trend by Year and Quarter',
-      barmode: 'stack', // Only applies when type is 'bar'
+      title:
+        this.currentPlotType === 'bar'
+          ? 'Average Tablet Sales by Year and Quarter (Stacked by Company)'
+          : 'Average Tablet Sales Trend by Year and Quarter',
+      barmode: 'stack',
       xaxis: {
         title: 'Year and Quarter',
         tickangle: -45,
-        categoryorder: 'array', // Explicitly set the order
-        categoryarray: sortedYearQuarters, // Provide the correct order
+        categoryorder: 'array',
+        categoryarray: sortedYearQuarters,
       },
       yaxis: { title: 'Average Sales' },
       height: 600,
     };
 
-    // Render the plot
+    // STEP 8: Render the plot.
     const tabletSalesDiv = document.getElementById('tabletSalesDiv') as any;
-    if (tabletSalesDiv) {
-      Plotly.newPlot('tabletSalesDiv', traces, layout).then(() => {
-        this.isLoading = false;
-        tabletSalesDiv.on('plotly_click', (data: any) => this.handlePointClick(data));
-      });
+    if (!tabletSalesDiv) {
+      console.error('Target div for Plotly not found');
+      return;
     }
+
+    Plotly.newPlot('tabletSalesDiv', traces, layout).then(() => {
+      this.isLoading = false;
+      tabletSalesDiv.on('plotly_click', (data: any) => this.handlePointClick(data));
+
+      // Use a flag to avoid infinite recursion during dynamic updates.
+      let isUpdatingOthers = false;
+
+      // STEP 9: Dynamically recalculate the "Others" trace when a top company is toggled.
+      tabletSalesDiv.on('plotly_restyle', (eventData: any) => {
+        if (isUpdatingOthers) return;
+        isUpdatingOthers = true;
+
+        // Get current plot data.
+        const currentData: any[] = tabletSalesDiv.data;
+        // For each quarter, recalc Others: start with the static value, then add hidden top companies.
+        const updatedOthers = sortedYearQuarters.map((_, idx) => {
+          let sum = othersStatic[idx];
+          // Top companies are in traces indices 0 to TOP_N-1.
+          for (let i = 0; i < topCompanies.length; i++) {
+            if (currentData[i].visible === 'legendonly') {
+              sum += topCompanyYs[i][idx];
+            }
+          }
+          return sum;
+        });
+
+        // Update the "Others" trace (assumed to be the last trace).
+        Plotly.restyle('tabletSalesDiv', { y: [updatedOthers] }, [traces.length - 1])
+          .then(() => { isUpdatingOthers = false; })
+          .catch(() => { isUpdatingOthers = false; });
+      });
+    });
   }
 
 

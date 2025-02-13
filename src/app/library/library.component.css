@@ -101,6 +101,10 @@ select {
   background-color: #DED8C4;
 }
 
+
+.card button:active {
+  background-color: #DED8C4;
+}
 /* Popup overlay and content styles */
 .popup-overlay {
   position: fixed;

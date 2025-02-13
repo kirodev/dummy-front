@@ -21,10 +21,10 @@
         <li class="nav-item" *ngIf="showAdminBoard">
           <a href="/sechome" class="nav-link" routerLink="sechome">Home</a>
         </li>
-        <li class="nav-item" *ngIf="showModeratorBoard">
+        <li class="nav-item" *ngIf="showModeratorBoard || showModeratorBoard">
           <a href="/sechome" class="nav-link" routerLink="sechome">Home</a>
         </li>
-        <div class="dropdown" *ngIf="showAdminBoard">
+        <div class="dropdown" *ngIf="showAdminBoard || showModeratorBoard">
           <a class="nav-link" href="#" (click)="toggleDropdown($event)">
             Features
             <span id="dropdownArrow" class="ms-2">
