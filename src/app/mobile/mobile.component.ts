@@ -328,7 +328,7 @@ export class MobileComponent implements OnInit {
   applyFilters(): void {
     // Step 1: Apply the type filter first
     this.filterByType();
-
+    this.sortLicensees();
     // Step 2: Apply the search filter
     this.filterBySearch();
 
@@ -346,7 +346,7 @@ export class MobileComponent implements OnInit {
     });
 
     // **NEW:** Apply the sorting logic after filtering
-    this.sortLicensees();
+
 
     console.log('Updated table after applying filters and sorting:', this.filteredTableData);
   }
