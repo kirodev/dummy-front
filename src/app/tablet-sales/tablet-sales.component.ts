@@ -82,8 +82,21 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
   }
 
   plotData(): void {
+    // 1) Purge any existing plot so we start fresh
+    Plotly.purge('tabletSalesDiv');
+
+    // 2) Check if there's any data at all
     if (!this.tabletSalesList || this.tabletSalesList.length === 0) {
       console.error('No sales data available');
+      return;
+    }
+
+    // 3) Filter out items with an empty or blank company name
+    const filteredList = this.tabletSalesList.filter(
+      (item) => item.company && item.company.trim()
+    );
+    if (filteredList.length === 0) {
+      console.warn('No valid companies after filtering out empty names');
       return;
     }
 
@@ -91,7 +104,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
     const companyMap = new Map<string, { x: string[]; y: number[]; customdata: any[] }>();
     const allYearQuarterSet = new Set<string>();
 
-    this.tabletSalesList.forEach((item) => {
+    filteredList.forEach((item) => {
       const year = Number(item.year?.toString().trim());
       const quarter = this.getQuarterValue(item.quarter?.toString().trim());
       if (isNaN(year) || isNaN(quarter) || year < 2010 || year > 2024) {
@@ -107,7 +120,12 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       const compData = companyMap.get(item.company)!;
       compData.x.push(yearQuarter);
       compData.y.push(item.average_sales);
-      compData.customdata.push(item);
+      compData.customdata.push({
+        ...item,
+        yearQuarter,
+        averageSales: item.average_sales,
+        individualSales: item.individual_sales
+      });
     });
 
     // STEP 2: Create a sorted array of year–quarter labels.
@@ -125,28 +143,21 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
         const idx = data.x.indexOf(q);
         return idx !== -1 ? data.y[idx] : 0;
       });
-      data.x = sortedYearQuarters.slice();
+      data.x = [...sortedYearQuarters];
       data.y = alignedY;
     });
 
-    // STEP 4: Sort companies by their total sales and split into top and others.
+    // STEP 4: Sort companies by total sales.
     const sortedCompanies = Array.from(companyMap.keys()).sort((a, b) => {
       const sumA = companyMap.get(a)!.y.reduce((acc, v) => acc + v, 0);
       const sumB = companyMap.get(b)!.y.reduce((acc, v) => acc + v, 0);
       return sumB - sumA;
     });
-    const TOP_N = 5; // Adjust the number of top companies as needed.
-    const topCompanies = sortedCompanies.slice(0, TOP_N);
-    const otherCompanies = sortedCompanies.slice(TOP_N);
 
-    // STEP 5: Build traces for the top companies.
-    // Also store each top company’s y-data for dynamic recalculation.
+    // STEP 5: Build individual traces for ALL companies.
     const traces: Partial<Plotly.PlotData>[] = [];
-    const topCompanyYs: number[][] = [];
-
-    topCompanies.forEach((company) => {
+    sortedCompanies.forEach((company) => {
       const data = companyMap.get(company)!;
-      topCompanyYs.push(data.y.slice()); // Copy y-values.
       traces.push({
         x: data.x,
         y: data.y,
@@ -163,36 +174,27 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       });
     });
 
-    // STEP 6: Compute the static "Others" values from companies not in the top group.
-    const othersStatic = sortedYearQuarters.map((_, idx) => {
-      let sum = 0;
-      otherCompanies.forEach((company) => {
-        const data = companyMap.get(company)!;
-        sum += data.y[idx];
-      });
-      return sum;
-    });
-    // Initially, Others equals the static base because all top companies are visible.
-    const initialOthers = othersStatic.slice();
-
-    // Create the "Others" trace.
+    // STEP 6: Add an "Others" trace that sums sales of hidden companies.
+    // Initially, no companies are hidden so aggregated values are all zero.
+    const initialOthers = sortedYearQuarters.map(() => 0);
     traces.push({
       x: sortedYearQuarters,
       y: initialOthers,
       type: this.currentPlotType as Plotly.PlotType,
       mode: this.currentPlotType === 'line' ? 'lines+markers' : undefined,
       name: 'Others',
-      hovertemplate: `Others<br>Average Sales: %{y}<extra></extra>`,
+      hovertemplate: `Others<br>Hidden Sales: %{y}<extra></extra>`,
       marker: { color: '#D3D3D3', size: this.currentPlotType === 'line' ? 8 : undefined },
       line: { width: this.currentPlotType === 'line' ? 2 : undefined },
+      showlegend: false,  // initially not in the legend
+      visible: false      // initially hidden
     });
 
     // STEP 7: Define the layout.
     const layout: Partial<Plotly.Layout> = {
-      title:
-        this.currentPlotType === 'bar'
-          ? 'Average Tablet Sales by Year and Quarter (Stacked by Company)'
-          : 'Average Tablet Sales Trend by Year and Quarter',
+      title: this.currentPlotType === 'bar'
+        ? 'Average Tablet Sales by Year and Quarter'
+        : 'Average Tablet Sales Trend by Year and Quarter',
       barmode: 'stack',
       xaxis: {
         title: 'Year and Quarter',
@@ -211,40 +213,55 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       return;
     }
 
+    // Log your final traces to see exactly what's being passed:
+    console.log('Final traces:', traces);
+
     Plotly.newPlot('tabletSalesDiv', traces, layout).then(() => {
       this.isLoading = false;
       tabletSalesDiv.on('plotly_click', (data: any) => this.handlePointClick(data));
 
-      // Use a flag to avoid infinite recursion during dynamic updates.
+      // STEP 9: Dynamically recalculate the "Others" trace based on hidden companies.
       let isUpdatingOthers = false;
-
-      // STEP 9: Dynamically recalculate the "Others" trace when a top company is toggled.
-      tabletSalesDiv.on('plotly_restyle', (eventData: any) => {
+      tabletSalesDiv.on('plotly_restyle', () => {
         if (isUpdatingOthers) return;
         isUpdatingOthers = true;
 
-        // Get current plot data.
         const currentData: any[] = tabletSalesDiv.data;
-        // For each quarter, recalc Others: start with the static value, then add hidden top companies.
+        const othersIndex = currentData.length - 1;
         const updatedOthers = sortedYearQuarters.map((_, idx) => {
-          let sum = othersStatic[idx];
-          // Top companies are in traces indices 0 to TOP_N-1.
-          for (let i = 0; i < topCompanies.length; i++) {
+          let sum = 0;
+          // Loop through all company traces (exclude the last trace which is Others).
+          for (let i = 0; i < currentData.length - 1; i++) {
             if (currentData[i].visible === 'legendonly') {
-              sum += topCompanyYs[i][idx];
+              sum += currentData[i].y[idx];
             }
           }
           return sum;
         });
 
-        // Update the "Others" trace (assumed to be the last trace).
-        Plotly.restyle('tabletSalesDiv', { y: [updatedOthers] }, [traces.length - 1])
-          .then(() => { isUpdatingOthers = false; })
-          .catch(() => { isUpdatingOthers = false; });
+        const maxOthers = Math.max(...updatedOthers);
+        // If maxOthers is greater than 0, we want Others to show.
+        const newVisible = maxOthers > 0;
+        const newShowLegend = maxOthers > 0;
+        const newName = maxOthers > 0 ? 'Others' : '';
+
+        // Use Plotly.update to update multiple trace properties, including the name.
+        Plotly.update(
+          'tabletSalesDiv',
+          {
+            y: [updatedOthers],
+            visible: [newVisible],
+            showlegend: [newShowLegend],
+            name: [newName]
+          },
+          {},
+          [othersIndex]
+        )
+        .then(() => { isUpdatingOthers = false; })
+        .catch(() => { isUpdatingOthers = false; });
       });
     });
   }
-
 
 
   private getQuarterValue(quarter: string): number {
