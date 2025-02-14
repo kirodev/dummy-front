@@ -415,4 +415,5 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
   hidePopup(): void {
     this.isPopupVisible = false;
   }
+  
 }

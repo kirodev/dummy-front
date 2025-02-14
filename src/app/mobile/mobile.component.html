@@ -140,12 +140,11 @@
         <th class="empty-header"></th>
         <th *ngFor="let licensee of displayLicensees"
             class="vertical-header clickable-header"
-            (click)="openSalesPage(licensee)">
+            (click)="showPopupForLicensee(licensee)">
           {{ licensee }}
         </th>
       </tr>
     </thead>
-
     <tbody>
       <tr *ngFor="let licensor of licensors; let rowIndex = index">
         <td class="row-name">

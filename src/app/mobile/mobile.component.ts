@@ -223,6 +223,9 @@ export class MobileComponent implements OnInit {
   }
 
 
+  /**
+   * Sort licensors by the selected criteria or do nothing if default is selected.
+   */
 
   /**
    * Toggle the visibility of the side nav.
@@ -235,7 +238,6 @@ export class MobileComponent implements OnInit {
    * Utility function to normalize licensee names.
    * Converts to lowercase, trims whitespace, and removes periods and commas.
    */
-
   normalizeName(name: string | null | undefined): string {
     return name
       ? name
@@ -249,7 +251,6 @@ export class MobileComponent implements OnInit {
    * Map licensee names to their types for easy lookup.
    * Populates the `licenseeTypeMap`.
    */
-
   mapLicenseeTypes(): void {
     this.companyTypes.forEach((ct) => {
       const normalizedLicensee = this.normalizeName(ct.licensee);
@@ -264,7 +265,6 @@ export class MobileComponent implements OnInit {
   /**
    * Initialize table data by normalizing licensee names and setting up the table structure.
    */
-
   initializeTableData(): void {
     // Normalize all licensees and populate mapping
     this.normalizedToOriginalLicenseeMap.clear();
@@ -325,32 +325,6 @@ export class MobileComponent implements OnInit {
    * Apply all filters: type, search, and date.
    * The order ensures that type filter is applied first, followed by search and date filters.
    */
-  applyFilters(): void {
-    // Step 1: Apply the type filter first
-    this.filterByType();
-    this.sortLicensees();
-    // Step 2: Apply the search filter
-    this.filterBySearch();
-
-    // Step 3: Update filteredTableData based on the current filteredLicensees and licensors
-    this.filteredTableData = this.licensors.map((licensor) => {
-      return this.filteredLicensees.map((licensee) => {
-        const licensorIndex = this.originalLicensors.indexOf(licensor);
-        const licenseeIndex = this.originalLicensees.indexOf(licensee);
-
-        // Ensure we fetch the correct cell based on the filtered lists
-        return licensorIndex !== -1 && licenseeIndex !== -1
-          ? this.originalTableData[licensorIndex][licenseeIndex]
-          : 'white'; // Default color for unmatched cells
-      });
-    });
-
-    // **NEW:** Apply the sorting logic after filtering
-
-
-    console.log('Updated table after applying filters and sorting:', this.filteredTableData);
-  }
-
 
 
   /**
@@ -670,18 +644,22 @@ export class MobileComponent implements OnInit {
     if (this.sortOrder === 'default') {
       console.log('Default sort selected for licensees.');
 
-      // Reset licensees to their original order
-      this.filteredLicensees = [...this.originalLicensees];
-
-      // Correctly map the columns to the original licensee order
-      this.filteredTableData = this.filteredTableData.map((row, rowIndex) => {
-        return this.originalLicensees.map((licensee) => {
-          const licenseeIndex = this.allLicensees.indexOf(licensee);
-          return this.originalTableData[rowIndex][licenseeIndex];  // Correctly align columns
+      // Only reset to originalLicensees if no type filter (i.e., typeFilter === 'all')
+      if (this.typeFilter === 'all') {
+        this.filteredLicensees = [...this.originalLicensees];
+        // Realign columns based on the original order
+        this.filteredTableData = this.filteredTableData.map((row, rowIndex) => {
+          return this.originalLicensees.map((licensee) => {
+            const licenseeIndex = this.allLicensees.indexOf(licensee);
+            return this.originalTableData[rowIndex][licenseeIndex];
+          });
         });
-      });
-
-      console.log('Licensees reset to default order.');
+        console.log('Licensees reset to default order.');
+      } else {
+        // If a type filter is applied, we just update the table data based on current filteredLicensees
+        this.updateFilteredTableData();
+        console.log('Licensees kept in filtered order (by type).');
+      }
     } else if (this.sortOrder === 'alphabetical') {
       this.sortLicenseesAlphabetically();
     } else if (this.sortOrder === 'count') {
@@ -691,6 +669,7 @@ export class MobileComponent implements OnInit {
     // Ensure the table is correctly displayed
     this.updateFilteredTableData();
   }
+
 
 
 
@@ -882,6 +861,32 @@ export class MobileComponent implements OnInit {
 
 
 
+  applyFilters(): void {
+    // Step 1: Apply the type filter first
+    this.filterByType();
+
+    // Step 2: Apply the search filter
+    this.filterBySearch();
+
+    // Step 3: Update filteredTableData based on the current filteredLicensees and licensors
+    this.filteredTableData = this.licensors.map((licensor) => {
+      return this.filteredLicensees.map((licensee) => {
+        const licensorIndex = this.originalLicensors.indexOf(licensor);
+        const licenseeIndex = this.originalLicensees.indexOf(licensee);
+        return licensorIndex !== -1 && licenseeIndex !== -1
+          ? this.originalTableData[licensorIndex][licenseeIndex]
+          : 'white';
+      });
+    });
+
+    // Step 4: Sort the licensees
+    this.sortLicensees();
+
+    // **NEW STEP**: Re-apply the date filter after sorting
+    this.applyDateFilter();
+
+    console.log('Updated table after applying filters, sorting, and date filter:', this.filteredTableData);
+  }
 
 
   showPopupForLicensee(licensee: string): void {
@@ -960,16 +965,6 @@ export class MobileComponent implements OnInit {
     if (plotDiv) {
       Plotly.newPlot(plotDiv, [trace], layout);
     }
-  }
-
-
-  openSalesPage(licensee: string): void {
-    // Set the licensee whose sales you want to show.
-    this.selectedLicensee = licensee;
-    // Show the sales popup overlay.
-    this.isSalesPopupVisible = true;
-    // Load the sales data and, once retrieved, plot it.
-    this.loadSalesData();
   }
 
 }

@@ -17,7 +17,8 @@ export class SalesService {
     const token = this.tokenStorageService.getToken(); // Get the JWT token from your token storage service
     return new HttpHeaders({
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // Include the JWT token in the Authorization header
+      'Authorization': `Bearer ${token}`,
+      'Content-Security-Policy': "default-src 'self'; frame-src 'self'; script-src 'self' 'unsafe-inline'"
     });
   }
 
@@ -33,7 +34,9 @@ export class SalesService {
     console.error(errorMessage);
     return throwError(errorMessage);
   }
-
+  getData(url: string) {
+    return this.http.get(url, { headers: this.getHeaders() });
+  }
   getAllSales(): Observable<any[]> {
     const headers = this.getHeaders(); // Get the headers including the JWT token
     return this.http.get<any[]>(`${this.baseUrl}`, { headers }).pipe(

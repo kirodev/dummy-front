@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { TokenStorageService } from './_services/token-storage.service';
 import { RoleService } from './role.service';
 import { Subscription } from 'rxjs';
+import { OcrDetectionService } from './ocr-detection.service';
 
 @Component({
   selector: 'app-root',
@@ -32,9 +33,11 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
     private tokenStorageService: TokenStorageService,
     private router: Router,
     private roleService: RoleService,
+    private ocrDetectionService: OcrDetectionService
 
 
   ) {}
+
 
   private globalKeyListener(event: KeyboardEvent): void {
     if (this.isRestrictedKeyCombination(event)) {
@@ -391,5 +394,7 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
       this.hideBlackScreen(); // Ensure it doesn't stay on if the user released quickly
     }
   }
+
+
 
 }
