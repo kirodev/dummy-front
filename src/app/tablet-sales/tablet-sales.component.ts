@@ -132,7 +132,6 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       });
     });
 
-
     // STEP 2: Create a sorted array of year–quarter labels.
     const sortedYearQuarters = Array.from(allYearQuarterSet)
       .map((yq) => {
@@ -179,21 +178,37 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       });
     });
 
-    // STEP 4: Add an "Others" trace that sums sales of hidden companies.
-    const initialOthers = sortedYearQuarters.map(() => 0);
+    // STEP 4: Build the initial "Others" trace.
+    // Instead of initializing with zeros, we initialize with the value from the CSV column "others".
+    const othersMap = new Map<string, number>();
+    // Loop over all rows in the filtered list to get the "others" value for each quarter.
+    filteredList.forEach((item) => {
+      const year = Number(item.year?.toString().trim());
+      const quarter = this.getQuarterValue(item.quarter?.toString().trim());
+      if (isNaN(year) || isNaN(quarter)) return;
+      const yearQuarter = `${year} Q${quarter}`;
+      // Check for the "others" column (try both lowercase and capitalized)
+      if (item.others || item.Others) {
+        const val = Number(item.others || item.Others);
+        if (!isNaN(val)) {
+          othersMap.set(yearQuarter, val);
+        }
+      }
+    });
+    const initialOthers = sortedYearQuarters.map((q) => othersMap.get(q) || 0);
     traces.push({
       x: sortedYearQuarters,
       y: initialOthers,
       type: this.currentPlotType as Plotly.PlotType,
       mode: this.currentPlotType === 'line' ? 'lines+markers' : undefined,
       name: 'Others',
-      hovertemplate: `Others<br>Hidden Sales: %{y}<extra></extra>`,
+      hovertemplate: `Others<br>Sales: %{y}<extra></extra>`,
       marker: { color: '#D3D3D3', size: this.currentPlotType === 'line' ? 8 : undefined },
       line: { width: this.currentPlotType === 'line' ? 2 : undefined },
-      showlegend: false,
-      visible: false
+      // Remove or update these flags so that Others shows by default:
+      // showlegend: false,
+      // visible: false
     });
-
     // STEP 5: Define the layout.
     const layout: Partial<Plotly.Layout> = {
       title: this.currentPlotType === 'bar'
@@ -229,7 +244,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
         });
       });
 
-      // Bind restyle event on chartDiv as well
+      // Bind restyle event on chartDiv as well (to update "Others" when companies are hidden)
       let isUpdatingOthers = false;
       chartDiv.on('plotly_restyle', () => {
         if (isUpdatingOthers) return;
@@ -237,7 +252,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
 
         const currentData: any[] = chartDiv.data;
         const othersIndex = currentData.length - 1;
-        const updatedOthers = sortedYearQuarters.map((_, idx) => {
+        const updatedOthers = sortedYearQuarters.map((q, idx) => {
           let sum = 0;
           // Loop through all company traces (exclude the last trace which is Others).
           for (let i = 0; i < currentData.length - 1; i++) {
@@ -245,7 +260,8 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
               sum += currentData[i].y[idx];
             }
           }
-          return sum;
+          // Add the original "others" value from the database.
+          return (othersMap.get(q) || 0) + sum;
         });
 
         const maxOthers = Math.max(...updatedOthers);
@@ -296,7 +312,6 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
 
     // Check if total_discarded values are numeric across the group.
     const allNumeric = groupData.every((row: any) => !isNaN(Number(row.total_discarded)) && row.total_discarded !== '');
-
     let discardedDisplay: string;
     if (allNumeric) {
       // If numeric, sum them.
@@ -305,7 +320,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       }, 0);
       discardedDisplay = sumDiscarded.toLocaleString();
     } else {
-      // Otherwise, just show the value from the first row (or choose your preferred behavior).
+      // Otherwise, just show the value from the first row.
       discardedDisplay = groupData.length > 0 ? groupData[0].total_discarded : '';
     }
 
