@@ -195,12 +195,12 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
     if (
       event.key === 'PrntScrn' ||
     event.key === 'F12' ||
-      event.key === 'PrintScreen' ||                                            // Print Screen
-      (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'i') ||   // Ctrl + Shift + I
-      (event.ctrlKey && event.key.toLowerCase() === 'u') ||                     // Ctrl + U (view source)
-      (event.key === 'F12') ||                                                  // F12 (DevTools)
-      (event.ctrlKey && event.key.toLowerCase() === 's') ||                     // Ctrl + S (save)
-      (event.ctrlKey && event.key.toLowerCase() === 'p')                        // Ctrl + P (print)
+      event.key === 'PrintScreen' ||
+      (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'i') ||
+      (event.ctrlKey && event.key.toLowerCase() === 'u') ||
+      (event.key === 'F12') ||
+      (event.ctrlKey && event.key.toLowerCase() === 's') ||
+      (event.ctrlKey && event.key.toLowerCase() === 'p')
     ) {
       event.preventDefault();
       console.warn('Restricted key combination or PrintScreen detected.');
@@ -339,7 +339,7 @@ export class AppComponent implements OnInit,AfterViewInit, OnDestroy {
     // Automatically hide the overlay after a short duration
     setTimeout(() => {
       this.hideBlackScreen();
-    }, 3000); // 3 seconds display duration
+    }, 1000); // 3 seconds display duration
   }
 
   /**
