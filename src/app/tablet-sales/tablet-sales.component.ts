@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, AfterViewChecked, NgZone } from '@angular/core';
 import { SalesService } from './../sales-service.service'; // Replace with your service
 declare var Plotly: any;
 
@@ -20,7 +20,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
   private comparisonPlotRendered = false;
   currentPlotType: 'bar' | 'line' = 'bar';
 
-  constructor(private salesService: SalesService) {}
+  constructor(private salesService: SalesService,  private ngZone: NgZone ) {}
 
   ngOnInit(): void {
     this.loadTabletSales();
@@ -100,8 +100,9 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       return;
     }
 
-    // STEP 1: Build a company map and collect all year–quarter labels.
-    const companyMap = new Map<string, { x: string[]; y: number[]; customdata: any[] }>();
+    // STEP 1: Group data by company and yearQuarter.
+    // We'll use a nested map: company -> (yearQuarter -> array of rows)
+    const companyGroupMap = new Map<string, Map<string, any[]>>();
     const allYearQuarterSet = new Set<string>();
 
     filteredList.forEach((item) => {
@@ -114,19 +115,23 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       const yearQuarter = `${year} Q${quarter}`;
       allYearQuarterSet.add(yearQuarter);
 
-      if (!companyMap.has(item.company)) {
-        companyMap.set(item.company, { x: [], y: [], customdata: [] });
+      if (!companyGroupMap.has(item.company)) {
+        companyGroupMap.set(item.company, new Map<string, any[]>());
       }
-      const compData = companyMap.get(item.company)!;
-      compData.x.push(yearQuarter);
-      compData.y.push(item.average_sales);
-      compData.customdata.push({
+      const quarterMap = companyGroupMap.get(item.company)!;
+      if (!quarterMap.has(yearQuarter)) {
+        quarterMap.set(yearQuarter, []);
+      }
+      // Map the CSV fields.
+      quarterMap.get(yearQuarter)!.push({
         ...item,
         yearQuarter,
-        averageSales: item.average_sales,
-        individualSales: item.individual_sales
+        averageSales: item.average_sales, // use the CSV field for average sales
+        source: item.Source || item.source || '',
+        total_discarded: item.total_discarded || item.Total_Discarded || '', // try both variations
       });
     });
+
 
     // STEP 2: Create a sorted array of year–quarter labels.
     const sortedYearQuarters = Array.from(allYearQuarterSet)
@@ -137,34 +142,34 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       .sort((a, b) => a.year - b.year || a.quarter - b.quarter)
       .map((item) => item.yq);
 
-    // STEP 3: Align each company’s data to the full sorted list of quarters.
-    companyMap.forEach((data) => {
-      const alignedY = sortedYearQuarters.map((q) => {
-        const idx = data.x.indexOf(q);
-        return idx !== -1 ? data.y[idx] : 0;
-      });
-      data.x = [...sortedYearQuarters];
-      data.y = alignedY;
-    });
-
-    // STEP 4: Sort companies by total sales.
-    const sortedCompanies = Array.from(companyMap.keys()).sort((a, b) => {
-      const sumA = companyMap.get(a)!.y.reduce((acc, v) => acc + v, 0);
-      const sumB = companyMap.get(b)!.y.reduce((acc, v) => acc + v, 0);
-      return sumB - sumA;
-    });
-
-    // STEP 5: Build individual traces for ALL companies.
+    // STEP 3: Build traces for each company.
     const traces: Partial<Plotly.PlotData>[] = [];
-    sortedCompanies.forEach((company) => {
-      const data = companyMap.get(company)!;
+    companyGroupMap.forEach((quarterMap, company) => {
+      const x: string[] = [];
+      const y: number[] = [];
+      const customdata: any[] = [];
+
+      // For each quarter, use the group's first row's averageSales as the y-value,
+      // and store the full group as customdata.
+      sortedYearQuarters.forEach((q) => {
+        x.push(q);
+        if (quarterMap.has(q)) {
+          const group = quarterMap.get(q)!;
+          y.push(group[0].averageSales);
+          customdata.push(group);
+        } else {
+          y.push(0);
+          customdata.push([]);
+        }
+      });
+
       traces.push({
-        x: data.x,
-        y: data.y,
+        x,
+        y,
         type: this.currentPlotType as Plotly.PlotType,
         mode: this.currentPlotType === 'line' ? 'lines+markers' : undefined,
         name: company,
-        customdata: data.customdata,
+        customdata, // Each element is an array (group) for that quarter.
         hovertemplate: `${company}<br>Average Sales: %{y}<extra></extra>`,
         marker: {
           color: this.generateRandomColor(),
@@ -174,8 +179,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       });
     });
 
-    // STEP 6: Add an "Others" trace that sums sales of hidden companies.
-    // Initially, no companies are hidden so aggregated values are all zero.
+    // STEP 4: Add an "Others" trace that sums sales of hidden companies.
     const initialOthers = sortedYearQuarters.map(() => 0);
     traces.push({
       x: sortedYearQuarters,
@@ -186,11 +190,11 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       hovertemplate: `Others<br>Hidden Sales: %{y}<extra></extra>`,
       marker: { color: '#D3D3D3', size: this.currentPlotType === 'line' ? 8 : undefined },
       line: { width: this.currentPlotType === 'line' ? 2 : undefined },
-      showlegend: false,  // initially not in the legend
-      visible: false      // initially hidden
+      showlegend: false,
+      visible: false
     });
 
-    // STEP 7: Define the layout.
+    // STEP 5: Define the layout.
     const layout: Partial<Plotly.Layout> = {
       title: this.currentPlotType === 'bar'
         ? 'Average Tablet Sales by Year and Quarter'
@@ -206,27 +210,32 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       height: 600,
     };
 
-    // STEP 8: Render the plot.
+    // STEP 6: Render the plot.
     const tabletSalesDiv = document.getElementById('tabletSalesDiv') as any;
     if (!tabletSalesDiv) {
       console.error('Target div for Plotly not found');
       return;
     }
 
-    // Log your final traces to see exactly what's being passed:
     console.log('Final traces:', traces);
-
-    Plotly.newPlot('tabletSalesDiv', traces, layout).then(() => {
+    Plotly.newPlot('tabletSalesDiv', traces, layout).then((chartDiv: any) => {
       this.isLoading = false;
-      tabletSalesDiv.on('plotly_click', (data: any) => this.handlePointClick(data));
 
-      // STEP 9: Dynamically recalculate the "Others" trace based on hidden companies.
+      // Bind click event on chartDiv
+      chartDiv.on('plotly_click', (data: any) => {
+        console.log('Bar clicked!', data);
+        this.ngZone.run(() => {
+          this.handlePointClick(data);
+        });
+      });
+
+      // Bind restyle event on chartDiv as well
       let isUpdatingOthers = false;
-      tabletSalesDiv.on('plotly_restyle', () => {
+      chartDiv.on('plotly_restyle', () => {
         if (isUpdatingOthers) return;
         isUpdatingOthers = true;
 
-        const currentData: any[] = tabletSalesDiv.data;
+        const currentData: any[] = chartDiv.data;
         const othersIndex = currentData.length - 1;
         const updatedOthers = sortedYearQuarters.map((_, idx) => {
           let sum = 0;
@@ -240,12 +249,10 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
         });
 
         const maxOthers = Math.max(...updatedOthers);
-        // If maxOthers is greater than 0, we want Others to show.
         const newVisible = maxOthers > 0;
         const newShowLegend = maxOthers > 0;
         const newName = maxOthers > 0 ? 'Others' : '';
 
-        // Use Plotly.update to update multiple trace properties, including the name.
         Plotly.update(
           'tabletSalesDiv',
           {
@@ -264,6 +271,9 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
   }
 
 
+
+
+
   private getQuarterValue(quarter: string): number {
     return Number(quarter.replace('Q', ''));
   }
@@ -280,36 +290,57 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
 
   handlePointClick(data: any): void {
     const point = data.points[0];
-    const customData = point.customdata;
+    // Each point's customdata is an array (group) for that quarter.
+    const groupData = Array.isArray(point.customdata) ? point.customdata : [];
+    console.log('Group data on click:', groupData);
 
-    let popupContent = `<strong>Company:</strong> ${customData.company}<br>`;
-    popupContent += `<strong>Year and Quarter:</strong> ${customData.yearQuarter}<br>`;
-    popupContent += `<strong>Average Sales:</strong> ${customData.averageSales.toLocaleString()}<br>`;
+    // Check if total_discarded values are numeric across the group.
+    const allNumeric = groupData.every((row: any) => !isNaN(Number(row.total_discarded)) && row.total_discarded !== '');
 
-    // Calculate the total sales and show individual sales details
+    let discardedDisplay: string;
+    if (allNumeric) {
+      // If numeric, sum them.
+      const sumDiscarded = groupData.reduce((acc: number, row: any) => {
+        return acc + Number(row.total_discarded || 0);
+      }, 0);
+      discardedDisplay = sumDiscarded.toLocaleString();
+    } else {
+      // Otherwise, just show the value from the first row (or choose your preferred behavior).
+      discardedDisplay = groupData.length > 0 ? groupData[0].total_discarded : '';
+    }
+
+    let popupContent = `<strong>Company:</strong> ${point.data.name}<br>`;
+    popupContent += `<strong>Year and Quarter:</strong> ${point.x}<br>`;
+    popupContent += `<strong>Average Sales:</strong> ${point.y.toLocaleString()}<br>`;
+    popupContent += `<strong>Discarded:</strong> ${discardedDisplay}<br>`;
+
     let totalSales = 0;
-    const salesDetails = customData.individualSales.map((salesEntry: any) => {
-      totalSales += salesEntry.sales;
-
-      const displayedLink = this.extractDomain(salesEntry.link);
+    const detailsArr = groupData.map((row: any) => {
+      totalSales += Number(row.sales);
+      const displayedLink = this.extractDomain(row.link);
       return `
-        <strong>Source:</strong> ${salesEntry.source} <br>
-        <strong>Sales:</strong> ${salesEntry.sales.toLocaleString()} <br>
-        ${salesEntry.link ? `<strong>Link:</strong> <a href="${salesEntry.link}" target="_blank">${displayedLink}</a><hr>` : ''}
+        <br><strong>Source:</strong> ${row.source} <br>
+        <strong>Sales:</strong> ${Number(row.sales).toLocaleString()} <br>
+        ${row.link ? `<strong>Link:</strong> <a href="${row.link}" target="_blank">${displayedLink}</a><br>` : ''}
       `;
     });
 
-    const averageCalculated = (totalSales / customData.individualSales.length).toLocaleString();
+    const detailsStr = detailsArr.length > 0
+      ? detailsArr.join('<br>')
+      : '<em>No individual sales details available.</em>';
+    const averageCalculated = groupData.length > 0
+      ? (totalSales / groupData.length).toLocaleString()
+      : 'N/A';
 
-    popupContent += `<hr><strong>How Average was Calculated:</strong><br>`;
+    popupContent += `<hr><strong>How Average was Calculated:</strong><br><br>`;
     popupContent += `Sum of Sales: ${totalSales.toLocaleString()}<br>`;
-    popupContent += `Number of Entries: ${customData.individualSales.length}<br>`;
+    popupContent += `Number of Entries: ${groupData.length}<br>`;
     popupContent += `Calculated Average: ${averageCalculated}<br><br>`;
-
-    popupContent += `<hr><strong>Individual Sales Details:</strong><br>${salesDetails.join('<br>')}`;
+    popupContent += `<hr><strong>Individual Sales Details:</strong><br>${detailsStr}`;
 
     this.showPopup(popupContent);
   }
+
 
 
   extractDomain(url: string): string {
@@ -317,7 +348,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       const domain = new URL(url).hostname;
       const parts = domain.split('.');
       if (parts.length >= 2) {
-        return parts[parts.length - 2]; // Return the main domain (e.g., `canalys` or `idc`)
+        return parts[parts.length - 2];
       }
       return domain;
     } catch (e) {
