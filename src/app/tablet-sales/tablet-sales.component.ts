@@ -132,7 +132,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       });
     });
 
-    // STEP 2: Create a sorted array of year–quarter labels.
+    // STEP 2: Create a sorted array of year–quarter labels (used for bar charts)
     const sortedYearQuarters = Array.from(allYearQuarterSet)
       .map((yq) => {
         const [year, quarter] = yq.split(' Q');
@@ -144,23 +144,38 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
     // STEP 3: Build traces for each company.
     const traces: Partial<Plotly.PlotData>[] = [];
     companyGroupMap.forEach((quarterMap, company) => {
-      const x: string[] = [];
-      const y: number[] = [];
-      const customdata: any[] = [];
+      let x: string[] = [];
+      let y: number[] = [];
+      let customdata: any[] = [];
 
-      // For each quarter, use the group's first row's averageSales as the y-value,
-      // and store the full group as customdata.
-      sortedYearQuarters.forEach((q) => {
-        x.push(q);
-        if (quarterMap.has(q)) {
+      if (this.currentPlotType === 'line') {
+        // For line charts, use only quarters that have data so the line connects the dots.
+        // Sort the company's quarters.
+        const companyQuarters = Array.from(quarterMap.keys()).sort((a, b) => {
+          const [yearA, qA] = a.split(' Q').map(Number);
+          const [yearB, qB] = b.split(' Q').map(Number);
+          return yearA === yearB ? qA - qB : yearA - yearB;
+        });
+        companyQuarters.forEach((q) => {
           const group = quarterMap.get(q)!;
+          x.push(q);
           y.push(group[0].averageSales);
           customdata.push(group);
-        } else {
-          y.push(0);
-          customdata.push([]);
-        }
-      });
+        });
+      } else {
+        // For bar charts, fill in all quarters (using 0 for missing quarters)
+        sortedYearQuarters.forEach((q) => {
+          x.push(q);
+          if (quarterMap.has(q)) {
+            const group = quarterMap.get(q)!;
+            y.push(group[0].averageSales);
+            customdata.push(group);
+          } else {
+            y.push(0);
+            customdata.push([]);
+          }
+        });
+      }
 
       traces.push({
         x,
@@ -178,16 +193,14 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       });
     });
 
-    // STEP 4: Build the initial "Others" trace.
-    // Instead of initializing with zeros, we initialize with the value from the CSV column "others".
+    // STEP 4: Build the "Others" trace.
+    // For the "others" values, we pull directly from the CSV column "others"/"Others".
     const othersMap = new Map<string, number>();
-    // Loop over all rows in the filtered list to get the "others" value for each quarter.
     filteredList.forEach((item) => {
       const year = Number(item.year?.toString().trim());
       const quarter = this.getQuarterValue(item.quarter?.toString().trim());
       if (isNaN(year) || isNaN(quarter)) return;
       const yearQuarter = `${year} Q${quarter}`;
-      // Check for the "others" column (try both lowercase and capitalized)
       if (item.others || item.Others) {
         const val = Number(item.others || item.Others);
         if (!isNaN(val)) {
@@ -195,20 +208,38 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
         }
       }
     });
-    const initialOthers = sortedYearQuarters.map((q) => othersMap.get(q) || 0);
+    // For bar charts, fill with the CSV value for each quarter.
+    // For line charts, use only quarters that are available in othersMap.
+    let othersX: string[] = [];
+    let othersY: number[] = [];
+    if (this.currentPlotType === 'line') {
+      othersX = Array.from(othersMap.keys()).sort((a, b) => {
+        const [yearA, qA] = a.split(' Q').map(Number);
+        const [yearB, qB] = b.split(' Q').map(Number);
+        return yearA === yearB ? qA - qB : yearA - yearB;
+      });
+      othersX.forEach(q => {
+        othersY.push(othersMap.get(q) || 0);
+      });
+    } else {
+      othersX = sortedYearQuarters;
+      othersY = othersX.map(q => othersMap.get(q) || 0);
+    }
     traces.push({
-      x: sortedYearQuarters,
-      y: initialOthers,
+      x: othersX,
+      y: othersY,
       type: this.currentPlotType as Plotly.PlotType,
       mode: this.currentPlotType === 'line' ? 'lines+markers' : undefined,
       name: 'Others',
-      hovertemplate: `Others<br>Sales: %{y}<extra></extra>`,
+      hovertemplate: `Others<br>Hidden Sales: %{y}<extra></extra>`,
       marker: { color: '#D3D3D3', size: this.currentPlotType === 'line' ? 8 : undefined },
       line: { width: this.currentPlotType === 'line' ? 2 : undefined },
-      // Remove or update these flags so that Others shows by default:
-      // showlegend: false,
-      // visible: false
+      // Decide if you want this trace visible by default:
+      // For now, we'll show it by default.
+      showlegend: true,
+      visible: true,
     });
+
     // STEP 5: Define the layout.
     const layout: Partial<Plotly.Layout> = {
       title: this.currentPlotType === 'bar'
@@ -218,8 +249,10 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       xaxis: {
         title: 'Year and Quarter',
         tickangle: -45,
-        categoryorder: 'array',
-        categoryarray: sortedYearQuarters,
+        // When in line mode, Plotly will connect the points automatically.
+        // For bar mode, we keep the full sorted categories.
+        categoryorder: this.currentPlotType === 'bar' ? 'array' : undefined,
+        categoryarray: this.currentPlotType === 'bar' ? sortedYearQuarters : undefined,
       },
       yaxis: { title: 'Average Sales' },
       height: 600,
@@ -252,7 +285,10 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
 
         const currentData: any[] = chartDiv.data;
         const othersIndex = currentData.length - 1;
-        const updatedOthers = sortedYearQuarters.map((q, idx) => {
+        const updatedOthers = (this.currentPlotType === 'bar'
+          ? sortedYearQuarters
+          : othersX
+        ).map((q, idx) => {
           let sum = 0;
           // Loop through all company traces (exclude the last trace which is Others).
           for (let i = 0; i < currentData.length - 1; i++) {
@@ -290,6 +326,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
 
 
 
+
   private getQuarterValue(quarter: string): number {
     return Number(quarter.replace('Q', ''));
   }
@@ -314,13 +351,11 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
     const allNumeric = groupData.every((row: any) => !isNaN(Number(row.total_discarded)) && row.total_discarded !== '');
     let discardedDisplay: string;
     if (allNumeric) {
-      // If numeric, sum them.
       const sumDiscarded = groupData.reduce((acc: number, row: any) => {
         return acc + Number(row.total_discarded || 0);
       }, 0);
       discardedDisplay = sumDiscarded.toLocaleString();
     } else {
-      // Otherwise, just show the value from the first row.
       discardedDisplay = groupData.length > 0 ? groupData[0].total_discarded : '';
     }
 
