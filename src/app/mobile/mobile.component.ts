@@ -28,6 +28,9 @@ export class MobileComponent implements OnInit {
   selectedLicensee: string = '';
   // Mapping between normalized and original licensee names
   normalizedToOriginalLicenseeMap: Map<string, string> = new Map(); // New mapping
+  isLoading: boolean = true;
+  isSmallPopup: boolean = true; // Set this to true or false based on your requirements
+  isSalesPopupVisible: boolean = false; // Controls plot popup visibility
 
   // Table Data
   tableData: string[][] = [];
@@ -73,6 +76,8 @@ export class MobileComponent implements OnInit {
 
   ngOnInit(): void {
     this.isDataReady = false;
+    this.isLoading= true;
+
     this.loadPlotlyScript()
     .then(() => {
       console.log('Plotly.js script loaded successfully');
@@ -770,7 +775,9 @@ export class MobileComponent implements OnInit {
     localStorage.setItem('filterState', JSON.stringify(filterState));
 
     this.cellSelectionService.addUnselectedCell({ row: rowIndex, col: colIndex });
-
+    if (cellColor === 'white') {
+      return;
+    }
     if (cellColor === 'green') {
       this.router.navigate(['/license']);
     } else {
@@ -819,16 +826,6 @@ export class MobileComponent implements OnInit {
     );
   }
 
-  showPopup(licensor: string): void {
-    this.isPopupVisible = true;
-    this.selectedLicensor = licensor; // Set the selected licensor
-  }
-
-  // Hide popup
-  hidePopup(): void {
-    this.isPopupVisible = false;
-    this.selectedLicensor = null;
-  }
 
 
   // Navigate to the timeline page for the selected licensor
@@ -855,7 +852,6 @@ export class MobileComponent implements OnInit {
   }
 
 
-  isSalesPopupVisible = false; // Tracks visibility of the sales popup
   salesList: any[] = []; // Declare the salesList property
 
 
@@ -889,23 +885,27 @@ export class MobileComponent implements OnInit {
   }
 
 
+
+
+
+  openSalesPopup(licensee: string) {
+    this.selectedLicensee = licensee;
+    this.isSalesPopupVisible = true;
+  }
   showPopupForLicensee(licensee: string): void {
     this.selectedLicensee = licensee;
     this.isSalesPopupVisible = true;
     this.loadSalesData();
   }
 
-  hideSalesPopup(): void {
-    this.isSalesPopupVisible = false;
-    this.salesList = [];  // Clear previous sales data when hiding popup
-  }
+
 
   loadSalesData(): void {
     this.salesService.getSalesForLicensee(this.selectedLicensee).subscribe(
       (data) => {
         this.salesList = data;
-        console.log('Loaded sales data for licensee:', this.salesList);
-        this.plotSalesData();  // Call the plotting function
+        console.log('Loaded sales data:', this.salesList);
+        this.plotSalesData();
       },
       (error) => {
         console.error('Error loading sales data:', error);
@@ -914,57 +914,246 @@ export class MobileComponent implements OnInit {
   }
 
   plotSalesData(): void {
-    const filteredData = this.salesList.filter((item) => item.licensee === this.selectedLicensee);
 
-    if (filteredData.length === 0) {
-      console.warn('No data available for the selected licensee');
+    if (!this.salesList || this.salesList.length === 0) {
+      console.error('No sales data available for:', this.selectedLicensee);
       return;
     }
 
-    const xValues: string[] = [];
+    const myDiv: any = document.getElementById('salesPlot');
+    if (!myDiv) {
+      console.error('Target div for Plotly graph not found');
+      return;
+    }
+
+    // Create a map to store sales data by time period
+    const salesMap = new Map<string, {
+      sales: number,
+      source: {
+        source: string,
+        sales: number,
+        used: string,
+        discarded: string,
+        link: string
+      }[]
+    }>();
+
+    // Filter data for selected licensee and populate the map
+    this.salesList
+      .filter(item => item.company === this.selectedLicensee)
+      .forEach(item => {
+        if (item.years && item.quarters && item.sales) {
+          const key = `${item.years}|${item.quarters}`;
+          let data = salesMap.get(key);
+          if (!data) {
+            data = { sales: 0, source: [] };
+            salesMap.set(key, data);
+          }
+          data.sales = item.sales;
+          data.source.push({
+            source: item.source,
+            sales: item.source_sales,
+            used: item.used,
+            discarded: item.discarded,
+            link: item.link
+          });
+        }
+      });
+
+    // Convert map data to arrays for plotting
+    const timePeriodsArray = Array.from(salesMap.keys())
+      .map(key => {
+        const [year, quarter] = key.split('|');
+        return `${year} Q${quarter}`;
+      })
+      .sort();
+
     const yValues: number[] = [];
     const customData: any[] = [];
 
-    // Populate arrays for Plotly
-    filteredData.forEach((item) => {
-      xValues.push(`${item.years} Q${item.quarters}`);
-      yValues.push(item.sales);
-      customData.push({
-        year: item.years,
-        quarter: item.quarters,
-        source: item.source,
-      });
+    timePeriodsArray.forEach(timePeriod => {
+      const [year, quarterFull] = timePeriod.split(' ');
+      const quarter = quarterFull.substring(1); // Remove 'Q' prefix
+      const key = `${year}|${quarter}`;
+      const data = salesMap.get(key);
+
+      if (data) {
+        yValues.push(data.sales);
+        customData.push({
+          year,
+          quarter,
+          sales: data.sales,
+          source: data.source
+        });
+      }
     });
 
-    const trace = {
-      x: xValues,
+    const trace: Partial<Plotly.PlotData> = {
+      x: timePeriodsArray,
       y: yValues,
       mode: 'lines+markers',
       type: 'scatter',
-      marker: { color: '#17BECF' },
       name: this.selectedLicensee,
+      line: { width: 2 },
+      marker: { color: '#17BECF' },
       customdata: customData,
       hovertemplate: `
         <b>Licensee:</b> ${this.selectedLicensee}<br>
         <b>Year & Quarter:</b> %{x}<br>
-        <b>Sales:</b> %{y}<br>
-        <b>Source:</b> %{customdata.source}<extra></extra>
-      `,
+        <b>Sales:</b> %{y:,.0f}<br>
+        <extra></extra>
+      `
     };
 
-    const layout = {
-      title: `Sales Data for ${this.selectedLicensee}`,
-      xaxis: { title: 'Year and Quarter' },
-      yaxis: { title: 'Sales Amount' },
+    const layout: Partial<Plotly.Layout> = {
       height: 600,
-      margin: { t: 40, l: 50, r: 50, b: 100 },
+      autosize: true,
+      title: `Sales Data for ${this.selectedLicensee}`,
+      xaxis: {
+        title: 'Year and Quarter',
+        tickangle: -45,
+        tickmode: 'array',
+        tickvals: timePeriodsArray,
+        ticktext: timePeriodsArray
+      },
+      yaxis: {
+        title: 'Sales Amount',
+        tickformat: ',d',
+        type: 'linear',
+        rangemode: 'tozero',
+        range: [0, Math.ceil(Math.max(...yValues))]
+      },
+      margin: { t: 40, l: 50, r: 50, b: 100 }
     };
 
-    // Render plot inside the popup
-    const plotDiv = document.getElementById('salesPlot');
-    if (plotDiv) {
-      Plotly.newPlot(plotDiv, [trace], layout);
+    // Wait for Plotly to be loaded
+    const interval = setInterval(() => {
+      if (window['Plotly']) {
+        clearInterval(interval);
+        Plotly.newPlot('salesPlot', [trace], layout)
+          .then(() => {
+            console.log('Graph plotted successfully');
+            this.isLoading = false;
+
+            myDiv.on('plotly_click', (data: any) => {
+              this.handlePointClick(data);
+            });
+          })
+          .catch((error: any) => {
+            console.error('Error plotting graph:', error);
+          });
+      }
+    }, 100);
+  }
+
+
+  private sanitizeHtml(input: string): string {
+    // Implement HTML sanitization logic here
+    // You can use a library like DOMPurify or Angular's built-in sanitizer
+    return input.replace(/[&<>"']/g, (char) => {
+      const entities: { [key: string]: string } = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return entities[char];
+    });
+  }
+  private sanitizeUrl(url: string): string {
+    // Implement URL sanitization logic here
+    // This is a basic example; consider using a more robust solution
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.toString();
+    } catch (e) {
+      console.error('Invalid URL:', url);
+      return '#';
     }
   }
+  handlePointClick(data: any): void {
+    const point = data.points[0];
+    const customData = point.customdata;
+
+    let infoText = `<strong>Licensee:</strong> ${this.sanitizeHtml(this.selectedLicensee)}<br>`;
+    infoText += `<strong>Year:</strong> ${this.sanitizeHtml(customData.year)}<br>`;
+    infoText += `<strong>Quarter:</strong> ${this.sanitizeHtml(customData.quarter)}<br>`;
+    infoText += `<strong>Sales:</strong> ${customData.sales.toFixed(2)}<br>`;
+
+    const extractDomain = (url: string): string => {
+      try {
+        const { hostname } = new URL(url);
+        return hostname.replace(/^www\./, '');
+      } catch (e) {
+        console.error('Invalid URL:', url);
+        return 'Invalid URL';
+      }
+    };
+
+    const createSafeLink = (url: string): string => {
+      const sanitizedUrl = this.sanitizeUrl(url);
+      const domain = extractDomain(sanitizedUrl);
+      return `<a href="${sanitizedUrl}" target="_blank" rel="noopener noreferrer">${this.sanitizeHtml(domain)}</a>`;
+    };
+
+    // Display sources excluding discarded sources
+    infoText += '<hr><strong>Sources:</strong><br>';
+    const sourcesArray = Array.isArray(customData.source) ? customData.source : [];
+    const displayedSources = sourcesArray.filter((source: any) => source.source !== source.discarded);
+
+    if (displayedSources.length > 0) {
+      displayedSources.forEach((source: any) => {
+        const links = source.link
+          ? source.link.split(';')
+              .filter((link: string) => link.trim() !== '')
+              .map(createSafeLink)
+              .join(', ')
+          : 'No link available';
+
+        infoText += `${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}<br>`;
+      });
+    } else {
+      infoText += 'No valid sources available.<br>';
+    }
+
+    // Display discarded sources
+    const discardedSet = new Set<string>();
+    sourcesArray.forEach((source: any) => {
+      if (source.source === source.discarded) {
+        const links = source.link
+          ? source.link.split(';')
+              .filter((link: string) => link.trim() !== '')
+              .map(createSafeLink)
+              .join(', ')
+          : 'No link available';
+        discardedSet.add(`${this.sanitizeHtml(source.source)}: ${source.sales} ${links ? `(${links})` : ''}`);
+      }
+    });
+
+    if (discardedSet.size > 0) {
+      infoText += '<hr><strong>Discarded:</strong><br>';
+      discardedSet.forEach(item => {
+        infoText += `${item}<br>`;
+      });
+    }
+
+    this.showPopup(infoText);
+}
+
+showPopup(infoText: string): void {
+    this.popupText = infoText;
+    this.isPopupVisible = true;
+    this.isSalesPopupVisible = true; // Ensure the sales popup is still visible
+}
+
+hidePopup(): void {
+    this.isPopupVisible = false;
+}
+
+hideSalesPopup(): void {
+    this.isSalesPopupVisible = false;
+}
+
 
 }

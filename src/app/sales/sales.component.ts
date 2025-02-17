@@ -331,40 +331,30 @@ export class SalesComponent implements OnInit {
 
 
   plotComparisonData(): void {
+    // 1) Purge any existing plot so we start fresh
+    Plotly.purge('comparisonDiv');
+
+    // 2) Check if there's any data at all
     if (!this.salesList || this.salesList.length === 0) {
       console.error('No sales data available');
       return;
     }
 
-    const comparisonDiv: any = document.getElementById('comparisonDiv');
-    if (!comparisonDiv) {
-      console.error('Target div for Plotly comparison graph not found');
-      return;
-    }
+    // 3) Group sales data by year, quarter, and company
+    const salesMap = new Map<string, { total: number, companies: Map<string, { sales: number }> }>();
 
-    const salesMap = new Map<string, { total: number, companies: Map<string, { sales: number, sources: any[] }> }>();
-
-    // Group sales data by year, quarter, and company and gather all sources
     this.salesList.forEach(item => {
       if (item.years && item.quarters && item.company && item.sales !== undefined) {
         const key = `${item.years}|${item.quarters}`;
         let data = salesMap.get(key);
         if (!data) {
-          data = { total: Number(item.total || 0), companies: new Map<string, { sales: number, sources: any[] }>() };
+          data = { total: Number(item.total || 0), companies: new Map<string, { sales: number }>() };
           salesMap.set(key, data);
         }
 
         if (!data.companies.has(item.company)) {
-          data.companies.set(item.company, { sales: Number(item.sales), sources: [] });
+          data.companies.set(item.company, { sales: Number(item.sales) });
         }
-
-        data.companies.get(item.company)!.sources.push({
-          source: item.source,
-          sales: item.source_sales,
-          used: item.used,
-          discarded: item.discarded,
-          link: item.link,
-        });
       }
     });
 
@@ -372,6 +362,7 @@ export class SalesComponent implements OnInit {
     const companies = Array.from(new Set(this.salesList.map(item => item.company)));
 
     const traces: Partial<Plotly.PlotData>[] = [];
+    const initialOthersMap = new Map<string, number>(); // Store the initial "Others" value for each year/quarter
 
     // Create company traces
     companies.forEach(company => {
@@ -388,7 +379,6 @@ export class SalesComponent implements OnInit {
             year,
             quarter,
             sales: [data.sales],
-            sources: data.sources,
           });
         } else {
           yValues.push(0);
@@ -397,7 +387,6 @@ export class SalesComponent implements OnInit {
             year,
             quarter,
             sales: [0],
-            sources: [],
           });
         }
       });
@@ -408,29 +397,33 @@ export class SalesComponent implements OnInit {
         type: 'bar',
         name: company,
         marker: { color: this.generateRandomColor() },
-
         customdata: customData,
       });
     });
 
-    // Calculate initial "Others" trace
-    const initialOthers = xValues.map(key => {
+    // STEP 4: Calculate initial "Others" trace.
+    const othersMap = new Map<string, number>(); // Tracks the dynamic "Others" values
+    xValues.forEach(key => {
       const data = salesMap.get(key);
       if (data) {
         const companySum = Array.from(data.companies.values()).reduce((sum, val) => sum + val.sales, 0);
-        return Math.max(0, data.total - companySum);
+        const othersValue = Math.max(0, data.total - companySum);
+        othersMap.set(key, othersValue);
+        initialOthersMap.set(key, othersValue);  // Store the initial value for "Others"
       }
-      return 0;
     });
 
+    // STEP 5: Create "Others" trace
     const othersTrace: Partial<Plotly.PlotData> = {
       x: xValues,
-      y: [...initialOthers],
+      y: [...othersMap.values()],
       type: 'bar',
       name: 'Others',
       marker: { color: 'lightgrey' },
       hoverinfo: 'y+name',
       hovertemplate: '%{y:.1f}<extra></extra>',
+      showlegend: true,
+      visible: true,
     };
     traces.push(othersTrace);
 
@@ -456,37 +449,68 @@ export class SalesComponent implements OnInit {
       },
     };
 
-    // Plot the graph and set up dynamic recalculation
-    Plotly.newPlot('comparisonDiv', traces, layout).then(() => {
-      this.isLoading = false; // Stop loading once plot is rendered
+    // STEP 6: Render the plot and bind restyle event to update "Others".
+    Plotly.newPlot('comparisonDiv', traces, layout).then((chartDiv: any) => {
+      this.isLoading = false;
 
-      comparisonDiv.on('plotly_click', (data: any) => {
-        this.handlePointClick(data);
-      });
+      // Handle the plotly_restyle event
+      let isUpdatingOthers = false;
+      chartDiv.on('plotly_restyle', () => {
+        if (isUpdatingOthers) return;
+        isUpdatingOthers = true;
 
-      // Dynamic recalculation for "Others" on visibility change
-      comparisonDiv.on('plotly_restyle', (eventData: any) => {
-        this.isLoading = false; // Stop loading once plot is rendered
+        const currentData: any[] = chartDiv.data;
+        const othersIndex = currentData.length - 1;
 
-        const visibilityArray = eventData[0].visible;
+        // Recalculate the "Others" trace dynamically
+        const updatedOthers = xValues.map((key, idx) => {
+          let sum = 0;
 
-        // Recalculate "Others" values dynamically based on visible traces
-        const updatedOthers = xValues.map((key, index) => {
-          const data = salesMap.get(key);
-          if (data) {
-            const visibleCompanySum = Array.from(data.companies.entries())
-              .filter(([company], i) => visibilityArray[i] !== 'legendonly') // Only include visible companies
-              .reduce((sum, [, val]) => sum + val.sales, 0);
-            return Math.max(0, data.total - visibleCompanySum);
+          // Sum the sales from visible company traces (excluding 'legendonly' traces)
+          for (let i = 0; i < currentData.length - 1; i++) {
+            if (currentData[i].visible !== 'legendonly') {
+              sum += currentData[i].y[idx];
+            }
           }
-          return 0;
+
+          // If all company bars are hidden, use the total sales for "Others"
+          const initialValue = initialOthersMap.get(key) || 0;
+          const totalSales = salesMap.get(key)?.total || 0;
+
+          if (currentData.filter(trace => trace.visible !== 'legendonly').length === 0) {
+            // If no company bars are visible, set "Others" to the total sales
+            return totalSales;
+          } else {
+            // Subtract the sum of visible company bars from the total sales
+            return Math.max(0, totalSales - sum);
+          }
         });
 
-        // Update the "Others" trace dynamically
-        Plotly.restyle('comparisonDiv', { y: [updatedOthers] }, [traces.length - 1]);
+        const maxOthers = Math.max(...updatedOthers);
+        const newVisible = maxOthers > 0;
+        const newShowLegend = maxOthers > 0;
+        const newName = maxOthers > 0 ? 'Others' : '';
+
+        // Update the "Others" trace with new values
+        Plotly.update(
+          'comparisonDiv',
+          {
+            y: [updatedOthers],
+            visible: [newVisible],
+            showlegend: [newShowLegend],
+            name: [newName]
+          },
+          {} as any,
+          [othersIndex]
+        ).then(() => {
+          isUpdatingOthers = false;
+        }).catch(() => {
+          isUpdatingOthers = false;
+        });
       });
     });
   }
+
 
 
 

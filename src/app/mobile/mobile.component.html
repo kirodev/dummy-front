@@ -49,8 +49,8 @@
       <option value="exactDate">Match Specific Date</option>
       <option value="startDateInside">Start Date Within Range</option>
       <option value="endDateInside">End Date Within Range</option>
-      <option value="fullPeriod">Start And End Date in Range</option>
-      <option value="anyDateInside">Start Or End Date in Range</option>
+      <option value="fullPeriod">Start AND End Date in Range</option>
+      <option value="anyDateInside">Start OR End Date in Range</option>
 
     </select>
   </div>
@@ -139,10 +139,11 @@
       <tr>
         <th class="empty-header"></th>
         <th *ngFor="let licensee of displayLicensees"
-            class="vertical-header clickable-header"
-            (click)="showPopupForLicensee(licensee)">
+          class="vertical-header clickable-header"
+          (click)="showPopupForLicensee(licensee)">
           {{ licensee }}
         </th>
+
       </tr>
     </thead>
     <tbody>
@@ -176,22 +177,14 @@
 
 </div>
 
-<div *ngIf="isSalesPopupVisible" class="popup-overlay">
-  <div class="popup-content">
-    <button class="btn-close" (click)="hideSalesPopup()">&#x2715;</button>
-    <h2>Sales Data for {{ selectedLicensee }}</h2>
-
-    <!-- Plotly graph container -->
-    <div id="salesPlot" style="width: 100%; height: 400px;"></div>
-  </div>
-</div>
-
 
 
 <!-- Popup Overlay -->
 <div *ngIf="isPopupVisible" class="popup-overlay">
   <div class="popup-content">
     <button class="btn-close" (click)="hidePopup()">&#x2715;</button>
+
+
     <app-timeline-overview
       *ngIf="selectedLicensor"
       [licensor]="selectedLicensor"
@@ -199,6 +192,33 @@
     </app-timeline-overview>
   </div>
 </div>
+
+<!--
+<div *ngIf="isSalesPopupVisible" class="popup-overlay">
+
+  <div class="popup-content">
+
+    <button class="btn-close" (click)="hideSalesPopup()">&#x2715;</button>
+    <h2>Sales Data for {{ selectedLicensee }}</h2>
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="message-container">
+        <img src="assets/4.gif" alt="Loading" class="loading-gif">
+        <span class="loading-text">Loading data, please wait...</span>
+      </div>
+    </div>
+    <div id="salesPlot"></div>
+
+    <div *ngIf="isPopupVisible" class="popup-overlay">
+      <div class="popup-content" [ngClass]="{'small-popup': isSmallPopup}">
+        <button class="popup-close" (click)="hidePopup()">&#x2715;</button>
+        <div [innerHTML]="popupText"></div>
+      </div>
+    </div>
+  </div>
+</div> -->
+
+
+
 <br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br>
