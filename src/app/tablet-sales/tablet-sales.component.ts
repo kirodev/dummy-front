@@ -231,7 +231,7 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
       type: this.currentPlotType as Plotly.PlotType,
       mode: this.currentPlotType === 'line' ? 'lines+markers' : undefined,
       name: 'Others',
-      hovertemplate: `Others<br>Hidden Sales: %{y}<extra></extra>`,
+      hovertemplate: `Others<br>: %{y}<extra></extra>`,
       marker: { color: '#D3D3D3', size: this.currentPlotType === 'line' ? 8 : undefined },
       line: { width: this.currentPlotType === 'line' ? 2 : undefined },
       // Decide if you want this trace visible by default:
@@ -415,5 +415,4 @@ export class TabletSalesComponent implements OnInit, AfterViewChecked {
   hidePopup(): void {
     this.isPopupVisible = false;
   }
-  
 }
