@@ -75,7 +75,7 @@ body {
 }
 
 .big-square:hover {
-  transform: scale(1.4); /* Scale up on hover */
+  transform: scale(1.15); /* Scale up on hover */
   background: rgba(222, 216, 196, 0.35);
   z-index: 9999;
 }
